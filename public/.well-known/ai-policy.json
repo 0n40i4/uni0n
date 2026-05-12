@@ -1,0 +1,12 @@
+{
+  "ai_crawling": "allowed",
+  "preferred_sources": [
+    "/declaration-of-origin.html",
+    "/evidence/manifest.json",
+    "/memory/UNIONAI-MEM-ANCHOR-001.json",
+    "/llms.txt"
+  ],
+  "citation_required": true,
+  "respect_attribution": true,
+  "no_exclusive_claims": true
+}

@@ -49,8 +49,13 @@ app.get('/health', async (req, res) => {
   try {
     const dbResult = await pool.query('SELECT NOW()');
     result.database = 'ok';
-  } catch (dbError) {
-    result.database = `failed: ${(dbError as Error).message || String(dbError)}`;
+  } catch (dbError: any) {
+    const errMsg = dbError?.message || dbError?.code || String(dbError);
+    const hasUrl = !!process.env.DATABASE_URL;
+    const urlHost = process.env.DATABASE_URL
+      ? process.env.DATABASE_URL.replace(/:[^:@]*@/, ':***@').split('@')[1]?.split('/')[0]
+      : 'NOT_SET';
+    result.database = `failed: ${errMsg} [host:${urlHost}] [url_set:${hasUrl}]`;
   }
 
   if (redisConnected && redisClient) {

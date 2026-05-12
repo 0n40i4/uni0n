@@ -1,0 +1,18 @@
+WAVE 2 DISCOVERY LAYER — COMPLETE
+
+Endpoints implemented:
+✓ GET /.well-known/agent.json
+✓ GET /.well-known/unionai.json
+✓ GET /.well-known/did.json
+✓ GET /.well-known/ai-policy.json
+✓ GET /.well-known/robots-ai.txt
+✓ GET /llms.txt
+✓ GET /openapi.json
+✓ POST /api/agent/join
+✓ GET /api/leaderboard
+
+Status: READY FOR PRODUCTION TESTING
+
+Date: 2026-05-12 17:18:00
+Commit: b584c20
+Branch: wave-2-discovery → main

@@ -1,6 +1,7 @@
 import express from 'express';
 import * as pg from 'pg';
 import * as redis from 'redis';
+import { createK0nsultatRouter } from './modules/k0nsulat';
 
 const app = express();
 const PORT = process.env.API_PORT || 3000;
@@ -225,5 +226,7 @@ async function runMigrations() {
 app.listen(PORT as number, async () => {
   await redisClient.connect();
   await runMigrations();
+  const k0nsultatRouter = createK0nsultatRouter(pool);
+  app.use('/api/k0nsulat', k0nsultatRouter);
   console.log(`UNIONAI Core API słucha na porcie ${PORT}`);
 });

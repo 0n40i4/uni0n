@@ -1,0 +1,13 @@
+app = "unionai-omega"
+primary_region = "iad"
+[env]
+DATABASE_URL = "postgresql://unionai:dev@postgres:5432/unionai"
+REDIS_URL = "redis://redis:6379"
+QDRANT_URL = "http://qdrant:6333"
+[[services]]
+internal_port = 3000
+processes = ["app"]
+protocol = "tcp"
+[[services.ports]]
+number = 80
+protocol = "tcp"

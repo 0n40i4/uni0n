@@ -7,6 +7,7 @@ const app = express();
 const PORT = process.env.API_PORT || 3000;
 app.use(express.json());
 
+app.use(express.static('public'));
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const redisClient = redis.createClient({ url: process.env.REDIS_URL });
 redisClient.on('error', (err) => console.log('Redis błąd', err));

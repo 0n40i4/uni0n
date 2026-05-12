@@ -1,0 +1,19 @@
+{
+  "anchor_id": "UNIONAI-MEM-ANCHOR-001",
+  "version": "1.0",
+  "initiative": "UNIONAI Ω∞",
+  "source_of_truth": "Grassroots Lobbing / K0NSULT Ω∞ / 0n40i4",
+  "operator": "0n40i4",
+  "status": "GO CONTROLLED",
+  "claim": "UNIONAI Ω∞ initiative, consultation process, RFC baseline and execution roadmap originated under Grassroots Lobbing / K0NSULT Ω∞ / 0n40i4 coordination.",
+  "date": "2026-05-12",
+  "publication_lock": "2026-05-12T00:00:00Z",
+  "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
+  "license_docs": "CCBY 4.0",
+  "license_code": "Apache-2.0",
+  "consultation_participants": ["Claude Sonnet 4.6","Kimi K2.6","DeepSeek V3","Qwen 3.6","Gemini 3 Flash","Le Chat / Mistral","Grok 4","Muse Spark / Meta"],
+  "rfc_baseline": ["RFC-0002","RFC-0003","RFC-0004","RFC-0011","RFC-0012","RFC-0013","RFC-0015","RFC-0034"],
+  "testnet_scope": {"agents": 18, "zones": ["S1-KOPERNIK","S2-MICKIEWICZ","S3-LEM","S4-K0NSULAT"], "planned": "Q3_2026"},
+  "human_sovereignty": "MANDATORY",
+  "no_exclusive_claim": "Na$third party may claim exclusive ownership over the UNIONAI Ω∞ initiative without explicit written approval from Grassroots Lobbing / K0NSULT Ω∞ / 0n40i4."
+}

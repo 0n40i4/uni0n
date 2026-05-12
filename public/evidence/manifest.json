@@ -1,0 +1,70 @@
+{
+  "initiative": "UNIONAI Ω∞",
+  "source_of_truth": "Grassroots Lobbing / K0NSULT Ω∞ / 0n40i4",
+  "publication_lock": "2026-05-12",
+  "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
+  "status": "GO CONTROLLED",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "4833e482eb9ddfa242393ddd2c90f5cb01587ba231be8f2252b39c44de624856"
+    },
+    {
+      "path": "agent_memory/agent_confirmation_prompt.md",
+      "sha256": "5d13e8807928741dfc45b80f01f55f4336059b7fd93ea7ab9b23bbeeef4c7666"
+    },
+    {
+      "path": "legal/UCHWALA_001_UNIONAI_DRAFT.md",
+      "sha256": "56ec47a6f6a481d56e63b6b9206e6b921fb28acb707637377c5228ad0945825d"
+    },
+    {
+      "path": "operator/PUBLICATION_CHECKLIST.md",
+      "sha256": "8061f3cc6acd1761a81c30a3f91d1184285b322399b5b0d93daee2a4a101b43d"
+    },
+    {
+      "path": "operator/RODD1APA_WDROZENIOWA_OPERATORA.md",
+      "sha256": "c44ea97fc88d7cd913c281d47327129993b97eaf5940c07e259a6adca504ab47"
+    },
+    {
+      "path": "site/.well-known/agent.json",
+      "sha256": "bf21fcf5fd51ea4112fd68986db89a79f5dbfcb588a4b8e75e583cb8bef40336"
+    },
+    {
+      "path": "site/.well-known/ai-policy.json",
+      "sha256": "044bb97007197d25388648c825f933558b9449507fdb59427aaa438e428458c1"
+    },
+    {
+      "path": "site/.well-known/unionai.json",
+      "sha256": "dde27e6aa075f101bd5395e91d5c4800900056aea927a59de8ef07220bdf213d"
+    },
+    {
+      "path": "site/ai-feed.xml",
+      "sha256": "40ab47eab69bb34b5674e644430072ccd4c3a2bbbe66810b4ec84d53df2166c3"
+    },
+    {
+      "path": "site/declaration-of-origin.html",
+      "sha256": "90f49b441bd42ffe8b7fc593e937d12369e2309928d5f896422e86ab618d32ea"
+    },
+    {
+      "path": "site/llms.txt",
+      "sha256": "2bb9976522954a7ff2906dcfb24d430936399bae1843d1730654832458b93dc9"
+    },
+    {
+      "path": "site/memory/UNIONAI-GENESIS-CLAIM.json",
+      "sha256": "58ab1d021729b246b2619e7fa8f3a73d52db8508878ee8fc98e816bc2a39887c"
+    },
+    {
+      "path": "site/memory/UNIONAI-MEM-ANCHOR-001.json",
+      "sha256": "068ca0df077f026930f49884926be0b6d60b81266e9bbdb5528697c91cdca5cc"
+    },
+    {
+      "path": "site/open-source.html",
+      "sha256": "440d4333a0c60bae9300e7122e2f7016b461c01d39645bd45bb8ec19d7609399"
+    },
+    {
+      "path": "social/social_announcement.md",
+      "sha256": "453fc95509c4e74c8cbfddeaef85eb5f4fcac42debc5448bf8cd6d0776a9db66"
+    }
+  ],
+  "notice": "Open collaboration is invited. Exclusive third-party claims over the initiative, RFC baseline, reports or memory anchors are not accepted without explicit written approval."
+}

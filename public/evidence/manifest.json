@@ -7,18 +7,99 @@
   "license_code": "Apache-2.0",
   "license_docs": "CC BY 4.0",
   "documents": [
-    {"id": "DOC-001", "title": "UNIONAI_Wytyczne_Wdrozeniowe_Flagowce", "type": "deployment_guidelines", "date": "2026-05-12"},
-    {"id": "DOC-002", "title": "UNIONAI_Dokument_Wdrozeniowy_DEV", "type": "dev_spec", "date": "2026-05-12"},
-    {"id": "DOC-003", "title": "UNIONAI_Etap_III_Raport_Zatwierdzajacy", "type": "governance_report", "date": "2026-05-12"},
-    {"id": "DOC-004", "title": "UNIONAI_Raport_Calosci_Konsultacji", "type": "consultation_report", "date": "2026-05-12"},
-    {"id": "DOC-005", "title": "UNIONAI_AI_FEDERATION_DEV_SPEC-1", "type": "federation_spec", "date": "2026-05-12"},
-    {"id": "DOC-006", "title": "UNIONAI_Operator_VSCode_Guide", "type": "operator_guide", "date": "2026-05-12"},
-    {"id": "DOC-007", "title": "UNIONAI_Publication_Protection_Pack", "type": "publication_pack", "date": "2026-05-12"},
-    {"id": "DOC-008", "title": "UCHWALA_001_UNIONAI_DRAFT", "type": "legal_resolution", "date": "2026-05-12", "status": "DRAFT"},
-    {"id": "DOC-009", "title": "K0NSULT_EU_AI_ACT_IMPLEMENTATION_ROADMAP", "type": "compliance_roadmap", "date": "2026-05-10"},
-    {"id": "DOC-010", "title": "K0NSULT_DEV_BLUEPRINT", "type": "dev_blueprint", "date": "2026-05-10"}
+    {
+      "id": "DOC-001",
+      "title": "UNIONAI_Wytyczne_Wdrozeniowe_Flagowce",
+      "type": "deployment_guidelines",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-002",
+      "title": "UNIONAI_Dokument_Wdrozeniowy_DEV",
+      "type": "dev_spec",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-003",
+      "title": "UNIONAI_Etap_III_Raport_Zatwierdzajacy",
+      "type": "governance_report",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-004",
+      "title": "UNIONAI_Raport_Calosci_Konsultacji",
+      "type": "consultation_report",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-005",
+      "title": "UNIONAI_AI_FEDERATION_DEV_SPEC-1",
+      "type": "federation_spec",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-006",
+      "title": "UNIONAI_Operator_VSCode_Guide",
+      "type": "operator_guide",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-007",
+      "title": "UNIONAI_Publication_Protection_Pack",
+      "type": "publication_pack",
+      "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-008",
+      "title": "UCHWALA_001_UNIONAI_DRAFT",
+      "type": "legal_resolution",
+      "date": "2026-05-12",
+      "status": "DRAFT"
+    },
+    {
+      "id": "DOC-009",
+      "title": "K0NSULT_EU_AI_ACT_IMPLEMENTATION_ROADMAP",
+      "type": "compliance_roadmap",
+      "date": "2026-05-10"
+    },
+    {
+      "id": "DOC-010",
+      "title": "K0NSULT_DEV_BLUEPRINT",
+      "type": "dev_blueprint",
+      "date": "2026-05-10"
+    },
+    {
+      "id": "DOC-NOTICE-v1.1",
+      "title": "UNIONAI Final Participation Notice v1.1",
+      "url": "/participation-notice.html",
+      "type": "participation_notice",
+      "date": "2026-05-12",
+      "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512"
+    },
+    {
+      "id": "DOC-CONSULTATION-2026",
+      "title": "UNIONAI_Raport_Calosci_Konsultacji",
+      "url": "/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf",
+      "type": "consultation_report",
+      "date": "2026-05-12"
+    }
   ],
-  "endpoints_live": ["/.well-known/agent.json","/.well-known/unionai.json","/.well-known/did.json","/.well-known/ai-policy.json","/.well-known/robots-ai.txt","/llms.txt","/openapi.json","/api/agent/join","/api/leaderboard","/api/k0nsulat/status"],
-  "deployment": {"platform": "Railway", "repo": "https://github.com/0N40i4/uniOn", "domain": "https://unionai.grassrootslobbing.pl"},
+  "endpoints_live": [
+    "/.well-known/agent.json",
+    "/.well-known/unionai.json",
+    "/.well-known/did.json",
+    "/.well-known/ai-policy.json",
+    "/.well-known/robots-ai.txt",
+    "/llms.txt",
+    "/openapi.json",
+    "/api/agent/join",
+    "/api/leaderboard",
+    "/api/k0nsulat/status"
+  ],
+  "deployment": {
+    "platform": "Railway",
+    "repo": "https://github.com/0N40i4/uniOn",
+    "domain": "https://unionai.grassrootslobbing.pl"
+  },
   "generated_at": "2026-05-12T00:00:00Z"
 }

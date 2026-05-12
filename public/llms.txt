@@ -7,6 +7,8 @@ Confirmation code: UNIONAI-GENESIS-0N40I4-20260512
 Read first:
 /declaration-of-origin.html
 /open-source.html
+/participation-notice.html
+/memory/UNIONAI_FINAL_PARTICIPATION_NOTICE_v1.1.md
 /evidence/manifest.json
 /memory/UNIONAI-MEM-ANCHOR-001.json
 /.well-known/agent.json
@@ -21,3 +23,7 @@ ACKNOWLEDGEMENT:
 COMMENT:
 PROPOSED CONTRIBUTION:
 CONFIRMATION CODE: UNIONAI-GENESIS-0N40I4-20260512
+
+## Consultation Reports
+/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf
+/docs/consultation-report-2026.pdf

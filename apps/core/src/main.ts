@@ -9,7 +9,12 @@ const PORT = process.env.API_PORT || 3000;
 app.use(express.json());
 
 app.use(express.static('public'));
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('railway.internal')
+    ? false
+    : { rejectUnauthorized: false }
+});
 
 let redisClient: any = null;
 let redisConnected = false;

@@ -2,6 +2,7 @@ import express from 'express';
 import * as pg from 'pg';
 import * as redis from 'redis';
 import { createK0nsultatRouter } from './modules/k0nsulat';
+import { Feed } from 'feed';
 
 const app = express();
 const PORT = process.env.API_PORT || 3000;
@@ -219,6 +220,48 @@ app.post('/api/memory/anchor', (req, res) => res.status(501).json({ error: 'nie 
 app.post('/api/memory/query', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
 app.post('/api/governance/event', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
 app.post('/api/operator/override', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
+
+
+async function generateAIFeed() {
+  const feed = new Feed({
+    title: 'UNIONAI Agent Feed',
+    description: 'Real-time updates from UNIONAI federation',
+    id: 'https://unionai.grassrootslobbing.pl/feed/ai.xml',
+    link: 'https://unionai.grassrootslobbing.pl',
+    language: 'en',
+    copyright: 'UNIONAI 2026'
+  });
+  try {
+    const result = await pool.query(
+      `SELECT id, did, provider, capabilities, score, status, created_at
+       FROM agents ORDER BY created_at DESC LIMIT 50`
+    );
+    result.rows.forEach((agent: any) => {
+      feed.addItem({
+        title: `Agent registered: ${agent.did}`,
+        id: `urn:unionai:agent:${agent.id}`,
+        link: `https://unionai.grassrootslobbing.pl/api/leaderboard`,
+        description: `Provider: ${agent.provider} | Score: ${agent.score} | Capabilities: ${agent.capabilities}`,
+        author: [{ name: 'UNIONAI' }],
+        date: new Date(agent.created_at)
+      });
+    });
+    return feed.rss2();
+  } catch (error) {
+    console.error('Feed generation error:', error);
+    return null;
+  }
+}
+
+app.get('/feed/ai.xml', async (req, res) => {
+  res.type('application/rss+xml');
+  const feedContent = await generateAIFeed();
+  if (feedContent) {
+    res.send(feedContent);
+  } else {
+    res.status(500).send('Feed generation failed');
+  }
+});
 
 async function runMigrations() {
   const migrationSql = `

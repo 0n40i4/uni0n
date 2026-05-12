@@ -318,6 +318,24 @@ async function runMigrations() {
   }
 }
 
+
+app.get('/debug/env', (req, res) => {
+  const safeVars = {
+    DATABASE_URL: process.env.DATABASE_URL ? `set (${process.env.DATABASE_URL.length} chars)` : 'NOT SET',
+    REDIS_URL: process.env.REDIS_URL ? `set (${process.env.REDIS_URL.length} chars)` : 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+    PORT: process.env.PORT || 'NOT SET',
+    API_PORT: process.env.API_PORT || 'NOT SET',
+    RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || 'NOT SET',
+    RAILWAY_SERVICE_NAME: process.env.RAILWAY_SERVICE_NAME || 'NOT SET',
+    // List all keys that contain DB or URL pattern (no values)
+    all_keys_with_url: Object.keys(process.env).filter(k => 
+      k.includes('URL') || k.includes('DATABASE') || k.includes('POSTGRES') || k.includes('REDIS')
+    )
+  };
+  res.json(safeVars);
+});
+
 app.listen(PORT as number, async () => {
   console.log(`Starting UNIONAI Core API on port ${PORT}`);
   

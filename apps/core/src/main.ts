@@ -10,17 +10,16 @@ app.use(express.json());
 
 app.use(express.static('public'));
 if (!process.env.DATABASE_URL) {
-  console.error('FATAL: DATABASE_URL is not set');
-  process.exit(1);
+  console.warn('WARNING: DATABASE_URL is not set — database endpoints will fail');
 }
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/fallback',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 pool.on('error', (err) => {
-  console.error('pg Pool error:', err.message);
+  console.warn('pg Pool error (non-fatal):', err.message);
 });
 
 let redisClient: any = null;

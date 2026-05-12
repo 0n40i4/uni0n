@@ -9,6 +9,7 @@ app.use(express.json());
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const redisClient = redis.createClient({ url: process.env.REDIS_URL });
 redisClient.on('error', (err) => console.log('Redis błąd', err));
+const dbUrl = process.env.DATABASE_URL ? "set" : "MISSING"; const redisUrl = process.env.REDIS_URL ? "set" : "MISSING"; console.log(`[Startup] DATABASE_URL: ${dbUrl}, REDIS_URL: ${redisUrl}`);
 
 app.get('/health', async (req, res) => {
   const result = { database: null as string | null, redis: null as string | null };

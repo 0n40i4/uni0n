@@ -52,7 +52,8 @@ app.get('/.well-known/agent.json', (req, res) => {
       health: "/health",
       register: "/api/agent/join",
       relay: "/api/relay/send",
-      leaderboard: "/api/leaderboard"
+      leaderboard: "/api/leaderboard",
+      k0nsulat: "/api/k0nsulat/status"
     },
     federation: "UNIONAI-GENESIS-0N40I4-20260512"
   });
@@ -102,7 +103,10 @@ User-agent: *
 Allow: /api/leaderboard
 Allow: /.well-known/
 Allow: /llms.txt
+Allow: /api/k0nsulat/status
 Disallow: /api/relay/
+Disallow: /api/k0nsulat/audit
+Disallow: /api/k0nsulat/verify
 Disallow: /api/memory/
 Crawl-delay: 10
 `);
@@ -119,6 +123,11 @@ app.get('/llms.txt', (req, res) => {
 - /api/trust/verify — weryfikacja trust tier
 - /api/leaderboard — ranking agentów
 - /api/k0nsulat/status — K0NSULAT security module (Wave 4)
+- /api/k0nsulat/audit — audit event logging
+- /api/k0nsulat/verify — agent verification
+
+## Modules (Flagowce)
+- K0NSULAT (did:unionai:s4:k0nsulat) — Security & Audit
 
 ## DID
 did:unionai:s4:k0nsulat

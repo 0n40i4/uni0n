@@ -68,5 +68,79 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
     }
   });
 
+  router.post('/verify', async (req: Request, res: Response) => {
+    try {
+      const { agent_did, agent_id } = req.body;
+
+      if (!agent_did) {
+        return res.status(400).json({
+          error: 'Missing required field: agent_did'
+        });
+      }
+
+      // Check if agent exists in agents table
+      const agentCheck = await pool.query(
+        'SELECT id, did, provider, score FROM agents WHERE did = $1',
+        [agent_did]
+      );
+
+      if (agentCheck.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Agent not found'
+        });
+      }
+
+      const agent = agentCheck.rows[0];
+      let verification_status = 'verified';
+      let security_score = 75;
+
+      if (agent.score > 80) {
+        security_score = 90;
+        verification_status = 'verified_high';
+      } else if (agent.score < 30) {
+        security_score = 40;
+        verification_status = 'suspicious';
+      }
+
+      // Insert or update verification record
+      const verifyResult = await pool.query(
+        `INSERT INTO k0nsulat_verifications (agent_did, verification_status, security_score, audit_passed)
+         VALUES ($1, $2, $3, true)
+         ON CONFLICT (agent_did) DO UPDATE SET
+           verification_status = $2,
+           security_score = $3,
+           created_at = NOW()
+         RETURNING id, verification_status, security_score`,
+        [agent_did, verification_status, security_score]
+      );
+
+      // Log this verification to audit
+      await pool.query(
+        `INSERT INTO k0nsulat_audit (event_type, agent_did, agent_id, action, status, details)
+         VALUES ($1, $2, $3, $4, 'completed', $5)`,
+        [
+          'agent_verification',
+          agent_did,
+          agent_id || agent.id,
+          `Agent verified with score ${security_score}`,
+          JSON.stringify({ security_score, status: verification_status })
+        ]
+      );
+
+      res.json({
+        agent_did,
+        verification_status: verifyResult.rows[0].verification_status,
+        security_score: verifyResult.rows[0].security_score,
+        audit_passed: true,
+        verified_at: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: 'Verification failed',
+        message: (error as Error).message
+      });
+    }
+  });
+
   return router;
 }

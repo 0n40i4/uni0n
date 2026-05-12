@@ -9,11 +9,18 @@ const PORT = process.env.API_PORT || 3000;
 app.use(express.json());
 
 app.use(express.static('public'));
+if (!process.env.DATABASE_URL) {
+  console.error('FATAL: DATABASE_URL is not set');
+  process.exit(1);
+}
+
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('railway.internal')
-    ? false
-    : { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false }
+});
+
+pool.on('error', (err) => {
+  console.error('pg Pool error:', err.message);
 });
 
 let redisClient: any = null;

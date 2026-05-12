@@ -37,5 +37,36 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
     }
   });
 
+  router.post('/audit', async (req: Request, res: Response) => {
+    try {
+      const { event_type, agent_did, agent_id, action, details } = req.body;
+
+      if (!event_type || !action) {
+        return res.status(400).json({
+          error: 'Missing required fields: event_type, action'
+        });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO k0nsulat_audit (event_type, agent_did, agent_id, action, details, status)
+         VALUES ($1, $2, $3, $4, $5, 'pending')
+         RETURNING id, timestamp, status`,
+        [event_type, agent_did || null, agent_id || null, action, JSON.stringify(details || {})]
+      );
+
+      res.status(201).json({
+        success: true,
+        audit_id: result.rows[0].id,
+        timestamp: result.rows[0].timestamp,
+        message: 'Audit event recorded'
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: 'Audit logging failed',
+        message: (error as Error).message
+      });
+    }
+  });
+
   return router;
 }

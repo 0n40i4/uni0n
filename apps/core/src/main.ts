@@ -9,8 +9,28 @@ app.use(express.json());
 
 app.use(express.static('public'));
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const redisClient = redis.createClient({ url: process.env.REDIS_URL });
-redisClient.on('error', (err) => console.log('Redis błąd', err));
+
+let redisClient: any = null;
+let redisConnected = false;
+
+async function initRedis() {
+  try {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    console.log(`Attempting Redis connection: ${redisUrl}`);
+    redisClient = redis.createClient({ url: redisUrl });
+    redisClient.on('error', (err: Error) => {
+      console.warn('Redis connection error:', err.message);
+      redisConnected = false;
+    });
+    await redisClient.connect();
+    redisConnected = true;
+    console.log('Redis connected successfully');
+  } catch (error) {
+    console.warn('Failed to connect to Redis:', (error as Error).message);
+    redisConnected = false;
+    redisClient = null;
+  }
+}
 
 app.get('/health', async (req, res) => {
   const result: any = { database: null, redis: null };
@@ -21,14 +41,18 @@ app.get('/health', async (req, res) => {
     result.database = `failed: ${(dbError as Error).message || String(dbError)}`;
   }
 
-  try {
-    const redisPing = await redisClient.ping();
-    result.redis = `ok (${redisPing})`;
-  } catch (redisError) {
-    result.redis = `failed: ${(redisError as Error).message || String(redisError)}`;
+  if (redisConnected && redisClient) {
+    try {
+      const redisPing = await redisClient.ping();
+      result.redis = `ok (${redisPing})`;
+    } catch (redisError) {
+      result.redis = `unavailable: ${(redisError as Error).message || String(redisError)}`;
+    }
+  } else {
+    result.redis = 'not connected (optional)';
   }
 
-  const isHealthy = result.database === 'ok' && result.redis && result.redis.startsWith('ok');
+  const isHealthy = result.database === 'ok';
   res.status(isHealthy ? 200 : 503).json({
     status: isHealthy ? 'zdrowy' : 'niezdrowy',
     timestamp: new Date().toISOString(),
@@ -234,9 +258,14 @@ async function runMigrations() {
 }
 
 app.listen(PORT as number, async () => {
-  await redisClient.connect();
+  console.log(`Starting UNIONAI Core API on port ${PORT}`);
+  
+  await initRedis();
   await runMigrations();
   const k0nsultatRouter = createK0nsultatRouter(pool);
   app.use('/api/k0nsulat', k0nsultatRouter);
-  console.log(`UNIONAI Core API słucha na porcie ${PORT}`);
+  console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
+  console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
+  console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
+  console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
 });

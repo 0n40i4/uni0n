@@ -1,13 +1,23 @@
-app = "unionai-omega"
+app = "unionai-core"
 primary_region = "iad"
+
 [env]
-DATABASE_URL = "postgresql://unionai:dev@postgres:5432/unionai"
-REDIS_URL = "redis://redis:6379"
-QDRANT_URL = "http://qdrant:6333"
+NODE_ENV = "production"
+
 [[services]]
 internal_port = 3000
-processes = ["app"]
 protocol = "tcp"
-[[services.ports]]
-number = 80
-protocol = "tcp"
+auto_stop_machines = true
+auto_start_machines = true
+
+  [[services.ports]]
+  port = 80
+  handlers = ["http"]
+  force_https = true
+
+  [[services.ports]]
+  port = 443
+  handlers = ["tls", "http"]
+
+[build]
+dockerfile = "Dockerfile.core"

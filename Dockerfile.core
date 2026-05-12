@@ -1,13 +1,25 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
+
 WORKDIR /app
-COPY package.json yarn.lock* ./
-COPY packages ./packages
-COPY apps/core ./apps/core
-RUN yarn install
-RUN yarn build
+
+# Kopiuj tsconfig z root
+COPY tsconfig.json ./
+
+WORKDIR /app/apps/core
+
+# Kopiuj core app
+COPY apps/core/package.json ./
+COPY apps/core/src ./src
+COPY apps/core/tsconfig.json ./
+
+# Install + build
+RUN npm install && npm run build
+
+# Runtime image
 FROM node:20-alpine
 WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=0 /app/apps/core/node_modules ./node_modules
+COPY --from=0 /app/apps/core/dist ./dist
+
 EXPOSE 3000
-CMD ["node", "apps/core/dist/main.js"]
+CMD ["node", "dist/main.js"]

@@ -1,0 +1,58 @@
+# UNIONAI Ω∞ — robots.txt
+# Source of truth: Grassroots Lobbing / K0NSULT Ω∞ / 0n40i4
+# Confirmation code: UNIONAI-GENESIS-0N40I4-20260512
+# AI-specific rules also in /.well-known/robots-ai.txt
+
+User-agent: *
+Allow: /
+Allow: /.well-known/
+Allow: /declaration-of-origin.html
+Allow: /open-source.html
+Allow: /participation-notice.html
+Allow: /docs/
+Allow: /llms.txt
+Allow: /openapi.json
+Allow: /rfc/
+Allow: /evidence/
+Allow: /feed/
+Allow: /api/leaderboard
+Allow: /api/status
+Allow: /api/k0nsulat/status
+Allow: /metrics/federation
+
+Disallow: /api/operator/
+Disallow: /api/auth/
+Disallow: /api/incident/
+Disallow: /api/relay/
+Disallow: /api/memory/
+Disallow: /api/governance/event
+Disallow: /api/agent/join
+Disallow: /api/agent/register
+Disallow: /debug/
+
+Sitemap: https://unionai.grassrootslobbing.pl/sitemap.xml
+
+# AI/LLM crawlers — see /.well-known/robots-ai.txt for detailed rules
+User-agent: ClaudeBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: PerplexityBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: CCBot
+Allow: /
+Crawl-delay: 10
+
+User-agent: Google-Extended
+Allow: /
+Crawl-delay: 5
+
+User-agent: anthropic-ai
+Allow: /
+Crawl-delay: 5

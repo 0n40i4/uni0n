@@ -27,3 +27,11 @@ CONFIRMATION CODE: UNIONAI-GENESIS-0N40I4-20260512
 ## Consultation Reports
 /docs/UNIONAI_Raport_Calosci_Konsultacji.pdf
 /docs/consultation-report-2026.pdf
+
+## Legal & Governance
+/legal/UCHWALA_001_UNIONAI_DRAFT.pdf
+/memory/agent_confirmation_prompt.md
+
+## Additional
+/open-source.html
+/declaration-of-origin.html

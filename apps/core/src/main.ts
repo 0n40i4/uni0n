@@ -7,6 +7,9 @@ import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
+import { createProviderApplication, getProviderApplication, listProviderApplications, approveProviderApplication, rejectProviderApplication } from './modules/provider';
+import { getComplianceMatrix, getComplianceMatrixAsHtml } from './modules/compliance';
+import { generateEvidenceManifest, getEvidenceManifest, saveEvidenceManifest } from './modules/evidence';
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
 const app = express();
@@ -661,6 +664,107 @@ app.patch('/api/rfc/:id/status', async (req, res) => {
     res.json(rfc);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+
+// ============ PROVIDER ONBOARDING ============
+app.post('/api/provider/join', async (req, res) => {
+  try {
+    const { name, email, organization, api_endpoint } = req.body;
+    const app_data = await createProviderApplication(pool, name, email, organization, api_endpoint);
+    res.status(201).json({
+      id: app_data.id,
+      confirmation_code: app_data.confirmation_code,
+      status: app_data.status,
+      message: 'Provider application received. Please check your email for confirmation instructions.'
+    });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/provider/applications', async (req, res) => {
+  try {
+    const applications = await listProviderApplications(pool);
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/provider/:providerId', async (req, res) => {
+  try {
+    const application = await getProviderApplication(pool, req.params.providerId);
+    res.json(application);
+  } catch (error) {
+    res.status(404).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/provider/:providerId/approve', async (req, res) => {
+  try {
+    const { reviewer } = req.body;
+    const application = await approveProviderApplication(pool, req.params.providerId, reviewer || 'operator');
+    res.json({ status: 'APPROVED', provider_id: application.id });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/provider/:providerId/reject', async (req, res) => {
+  try {
+    const { reviewer } = req.body;
+    const application = await rejectProviderApplication(pool, req.params.providerId, reviewer || 'operator');
+    res.json({ status: 'REJECTED', provider_id: application.id });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+
+// ============ COMPLIANCE MATRIX ============
+app.get('/compliance/matrix.json', async (req, res) => {
+  try {
+    const matrix = await getComplianceMatrix(pool);
+    res.json(matrix);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/compliance', async (req, res) => {
+  try {
+    const html = await getComplianceMatrixAsHtml(pool);
+    res.type('text/html');
+    res.send(html);
+  } catch (error) {
+    res.status(500).send('Compliance matrix error');
+  }
+});
+
+
+// ============ EVIDENCE AUTOMATION ============
+app.get('/evidence/live', async (req, res) => {
+  try {
+    const manifest = generateEvidenceManifest();
+    res.json(manifest);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/evidence/refresh', async (req, res) => {
+  try {
+    const manifest = generateEvidenceManifest();
+    const saved = saveEvidenceManifest(manifest);
+    if (saved) {
+      res.json({ status: 'refreshed', documents_count: manifest.documents.length });
+    } else {
+      res.status(500).json({ error: 'Failed to save manifest' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 

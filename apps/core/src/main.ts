@@ -614,6 +614,7 @@ app.get('/rfc/feed.xml', async (req, res) => {
     const rfcs = await getRFCIndex(pool);
     const feed = new Feed({
       title: 'UNIONAI RFC Feed',
+      id: 'https://unionai.grassrootslobbing.pl/rfc/feed.xml',
       description: 'UNIONAI Governance RFC Updates',
       link: 'https://unionai.grassrootslobbing.pl/rfc',
       language: 'en',

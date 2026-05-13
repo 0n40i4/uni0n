@@ -342,16 +342,100 @@ async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_k0nsulat_audit_agent_did ON k0nsulat_audit(agent_did);
     CREATE INDEX IF NOT EXISTS idx_k0nsulat_verifications_status ON k0nsulat_verifications(verification_status);
   `;
+  const wave2DevNextMigrations = `
+    CREATE TABLE IF NOT EXISTS incident_reports (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      severity VARCHAR(20) NOT NULL CHECK (severity IN ('LOW', 'MAJOR', 'CRITICAL')),
+      status VARCHAR(20) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'FROZEN', 'RESOLVED', 'EXPORTED')),
+      description TEXT,
+      incident_type VARCHAR(100),
+      hash TEXT UNIQUE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS incident_actions (
+      id SERIAL PRIMARY KEY,
+      incident_id INT NOT NULL REFERENCES incident_reports(id) ON DELETE CASCADE,
+      action VARCHAR(200) NOT NULL,
+      actor VARCHAR(255),
+      actor_did VARCHAR(255),
+      timestamp TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_incident_reports_status ON incident_reports(status);
+    CREATE INDEX IF NOT EXISTS idx_incident_reports_severity ON incident_reports(severity);
+    CREATE INDEX IF NOT EXISTS idx_incident_reports_hash ON incident_reports(hash);
+    CREATE INDEX IF NOT EXISTS idx_incident_actions_incident_id ON incident_actions(incident_id);
+
+    DROP TABLE IF EXISTS rfc_registry CASCADE;
+    CREATE TABLE rfc_registry (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'ACTIVE', 'FROZEN', 'SUPERSEDED')),
+      description TEXT,
+      hash TEXT UNIQUE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      content_markdown TEXT,
+      tags TEXT[] DEFAULT '{}',
+      dependencies TEXT[] DEFAULT '{}'
+    );
+    CREATE INDEX IF NOT EXISTS idx_rfc_status ON rfc_registry(status);
+    CREATE INDEX IF NOT EXISTS idx_rfc_created_at ON rfc_registry(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_rfc_tags ON rfc_registry USING GIN(tags);
+    INSERT INTO rfc_registry (id, title, status, description, tags) VALUES
+      ('RFC-001', 'UNIONAI Federation Protocol', 'ACTIVE', 'Core federation protocol specification', '{federation,protocol}'),
+      ('RFC-002', 'Semantic Drift Mitigation', 'ACTIVE', 'Methods for detecting and preventing semantic drift', '{semantics,safety}'),
+      ('RFC-003', 'Relay Optimization', 'DRAFT', 'Message relay performance improvements', '{relay,optimization}'),
+      ('RFC-004', 'Memory Anchoring System', 'ACTIVE', 'Distributed memory anchoring for consistency', '{memory,consistency}'),
+      ('RFC-005', 'Governance Event Tracking', 'ACTIVE', 'Tracking governance decisions', '{governance,audit}'),
+      ('RFC-006', 'Trust Tier System', 'ACTIVE', 'Agent trust classification and scoring', '{trust,classification}'),
+      ('RFC-007', 'Operator Override Protocol', 'DRAFT', 'Human-in-the-loop override mechanism', '{governance,human-override}'),
+      ('RFC-008', 'Evidence Registry Format', 'ACTIVE', 'Standardized format for evidence storage', '{evidence,registry}')
+    ON CONFLICT (id) DO NOTHING;
+
+    CREATE TABLE IF NOT EXISTS provider_applications (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      organization TEXT NOT NULL,
+      api_endpoint TEXT,
+      confirmation_code TEXT UNIQUE NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+      created_at TIMESTAMP DEFAULT NOW(),
+      reviewed_at TIMESTAMP,
+      reviewer TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_provider_applications_status ON provider_applications(status);
+    CREATE INDEX IF NOT EXISTS idx_provider_applications_email ON provider_applications(email);
+    CREATE INDEX IF NOT EXISTS idx_provider_applications_confirmation_code ON provider_applications(confirmation_code);
+  `;
   try {
     await pool.query(migrationSql);
     await pool.query(WAVE6_MIGRATIONS);
     await pool.query(WAVE7_MIGRATIONS);
+    await pool.query(wave2DevNextMigrations);
     console.log('K0NSULAT migrations applied successfully');
     console.log('WAVE6+7 migrations applied successfully');
+    console.log('WAVE2 DEV-NEXT migrations (002/003/004) applied successfully');
   } catch (error) {
     console.error('Migration error:', error);
   }
 }
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'UNIONAI Core API',
+    version: '0.1.0',
+    status: 'GO CONTROLLED',
+    docs: '/docs/',
+    health: '/health',
+    api_status: '/api/status',
+    metrics: '/metrics/federation',
+    rfc_index: '/rfc/index.json',
+    evidence: '/evidence/manifest.json'
+  });
+});
 
 
 app.get('/debug/env', (req, res) => {

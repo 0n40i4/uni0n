@@ -73,6 +73,7 @@ function validateMVSS(body: any): { valid: boolean; error?: string } {
 
 export const WAVE3_MIGRATIONS = `
   -- Agents full schema (extend existing)
+  ALTER TABLE agents ADD COLUMN IF NOT EXISTS name VARCHAR(255);
   ALTER TABLE agents ADD COLUMN IF NOT EXISTS zone VARCHAR(10) DEFAULT 'S0';
   ALTER TABLE agents ADD COLUMN IF NOT EXISTS runtime_type VARCHAR(50) DEFAULT 'external';
   ALTER TABLE agents ADD COLUMN IF NOT EXISTS operator_did VARCHAR(255);
@@ -180,6 +181,16 @@ export const WAVE3_MIGRATIONS = `
     review_link TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
+
+  -- Extend pre-existing tables (columns missing if table was created before Wave 3)
+  ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS payload JSONB;
+  ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS semantic_hash VARCHAR(64);
+  ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS delta_hash VARCHAR(64);
+  ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS trust_tier_required VARCHAR(5) DEFAULT 'T1';
+  ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS validation_status VARCHAR(20) DEFAULT 'pending';
+  ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS justification TEXT;
+  ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS previous_hash VARCHAR(64);
+  ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS payload_hash VARCHAR(64);
 `;
 
 // ─── Routers ──────────────────────────────────────────────────────────────────

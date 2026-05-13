@@ -20,6 +20,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=0 /app/apps/core/node_modules ./node_modules
 COPY --from=0 /app/apps/core/dist ./dist
+COPY public ./public
 
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

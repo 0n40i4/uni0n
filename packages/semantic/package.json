@@ -1,1 +1,9 @@
-{"name":"@unionai/semantic","version":"0.1.0","main":"dist/index.js","dependencies":{"@unionai/shared":"workspace:*"}}
+{
+  "name": "@unionai/semantic",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@unionai/shared": "workspace:*",
+    "@qdrant/js-client-rest": "^1.9.0"
+  }
+}

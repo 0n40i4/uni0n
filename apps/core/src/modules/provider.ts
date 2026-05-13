@@ -12,6 +12,11 @@ export interface ProviderApplication {
   created_at: string;
   reviewed_at?: string;
   reviewer?: string;
+  api_key?: string;
+}
+
+function generateApiKey(): string {
+  return 'unionai_pk_' + crypto.randomBytes(32).toString('base64url');
 }
 
 export async function createProviderApplication(
@@ -58,15 +63,33 @@ export async function approveProviderApplication(
   providerId: string,
   reviewer: string
 ): Promise<ProviderApplication> {
+  const apiKey = generateApiKey();
   const result = await pool.query(
-    'UPDATE provider_applications SET status = $1, reviewed_at = NOW(), reviewer = $2 WHERE id = $3 RETURNING *',
-    ['APPROVED', reviewer, providerId]
+    'UPDATE provider_applications SET status = $1, reviewed_at = NOW(), reviewer = $2, api_key = $3 WHERE id = $4 RETURNING *',
+    ['APPROVED', reviewer, apiKey, providerId]
   );
-  
+
   if (result.rows.length === 0) {
     throw new Error('Provider application ' + providerId + ' not found');
   }
-  
+
+  return result.rows[0] as ProviderApplication;
+}
+
+export async function regenerateProviderApiKey(
+  pool: Pool,
+  providerId: string
+): Promise<ProviderApplication> {
+  const apiKey = generateApiKey();
+  const result = await pool.query(
+    "UPDATE provider_applications SET api_key = $1 WHERE id = $2 AND status = 'APPROVED' RETURNING *",
+    [apiKey, providerId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Approved provider ' + providerId + ' not found');
+  }
+
   return result.rows[0] as ProviderApplication;
 }
 

@@ -1,13 +1,81 @@
 import express from 'express';
 import * as pg from 'pg';
 import * as redis from 'redis';
+import crypto from 'crypto';
+
+// ============ SECURITY: JWT (custom HMAC-SHA256, no external deps) ============
+const JWT_SECRET = process.env.JWT_SECRET || 'unionai-dev-secret-CHANGE-IN-PROD-' + Date.now();
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET not set, using dev fallback. SET IN PROD!');
+}
+const JWT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24h
+
+function signToken(payload: any): string {
+  const data = { ...payload, exp: Date.now() + JWT_EXPIRY_MS };
+  const body = Buffer.from(JSON.stringify(data)).toString('base64url');
+  const sig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+
+function verifyToken(token: string): any | null {
+  try {
+    const [body, sig] = token.split('.');
+    if (!body || !sig) return null;
+    const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
+    if (sig !== expectedSig) return null;
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (data.exp < Date.now()) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function requireAuth(req: any, res: any, next: any) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/, '');
+  if (!token) return res.status(401).json({ error: 'Missing Authorization Bearer token' });
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).json({ error: 'Invalid or expired token' });
+  req.auth = payload;
+  next();
+}
+
+// ============ SECURITY: Rate Limiter (in-memory sliding window) ============
+const rateLimitStore = new Map<string, number[]>();
+
+function makeRateLimiter(maxReq: number, windowMs: number) {
+  return (req: any, res: any, next: any) => {
+    const key = (req.ip || req.connection?.remoteAddress || 'unknown') + ':' + req.route?.path;
+    const now = Date.now();
+    const timestamps = (rateLimitStore.get(key) || []).filter(t => now - t < windowMs);
+    if (timestamps.length >= maxReq) {
+      return res.status(429).json({ error: 'Too many requests', retry_after_ms: windowMs - (now - timestamps[0]) });
+    }
+    timestamps.push(now);
+    rateLimitStore.set(key, timestamps);
+    next();
+  };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, ts] of rateLimitStore.entries()) {
+    const filtered = ts.filter(t => now - t < 60000);
+    if (filtered.length === 0) rateLimitStore.delete(key);
+    else rateLimitStore.set(key, filtered);
+  }
+}, 60000);
+
+const globalRateLimit = makeRateLimiter(100, 60000); // 100/min per IP
+const operatorRateLimit = makeRateLimiter(20, 60000); // 20/min per IP
 import { createK0nsultatRouter } from './modules/k0nsulat';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
-import { createProviderApplication, getProviderApplication, listProviderApplications, approveProviderApplication, rejectProviderApplication } from './modules/provider';
+import { createProviderApplication, getProviderApplication, listProviderApplications, approveProviderApplication, rejectProviderApplication, regenerateProviderApiKey } from './modules/provider';
 import { getComplianceMatrix, getComplianceMatrixAsHtml } from './modules/compliance';
 import { generateEvidenceManifest, getEvidenceManifest, saveEvidenceManifest } from './modules/evidence';
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
@@ -15,8 +83,24 @@ import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs'
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 app.use(express.json());
+app.use(globalRateLimit);
 
 app.use(express.static('public'));
+
+// ============ AUTH: Login endpoint ============
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const expectedUser = process.env.OPERATOR_USERNAME || 'operator';
+  const expectedPass = process.env.OPERATOR_PASSWORD;
+  if (!expectedPass) {
+    return res.status(503).json({ error: 'OPERATOR_PASSWORD not configured on server' });
+  }
+  if (username !== expectedUser || password !== expectedPass) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  const token = signToken({ sub: username, role: 'operator' });
+  res.json({ token, expires_in: JWT_EXPIRY_MS / 1000 });
+});
 if (!process.env.DATABASE_URL) {
   console.warn('WARNING: DATABASE_URL is not set — database endpoints will fail');
 }
@@ -269,6 +353,10 @@ app.post('/api/trust/verify', (req, res) => res.status(501).json({ error: 'nie z
 app.post('/api/memory/anchor', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
 app.post('/api/memory/query', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
 app.post('/api/governance/event', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
+
+// ============ SECURITY: All /api/operator/* require JWT + tighter rate limit ============
+app.use('/api/operator', requireAuth, operatorRateLimit);
+
 app.post('/api/operator/override', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
 
 
@@ -409,6 +497,19 @@ async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_provider_applications_status ON provider_applications(status);
     CREATE INDEX IF NOT EXISTS idx_provider_applications_email ON provider_applications(email);
     CREATE INDEX IF NOT EXISTS idx_provider_applications_confirmation_code ON provider_applications(confirmation_code);
+
+    ALTER TABLE provider_applications ADD COLUMN IF NOT EXISTS api_key TEXT;
+    CREATE INDEX IF NOT EXISTS idx_provider_applications_api_key ON provider_applications(api_key);
+
+    CREATE TABLE IF NOT EXISTS compliance_snapshots (
+      id SERIAL PRIMARY KEY,
+      coverage_percent INT NOT NULL,
+      completed_count INT NOT NULL,
+      total_count INT NOT NULL,
+      details JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_compliance_snapshots_created_at ON compliance_snapshots(created_at DESC);
   `;
   try {
     await pool.query(migrationSql);
@@ -771,7 +872,26 @@ app.post('/api/operator/provider/:providerId/approve', async (req, res) => {
   try {
     const { reviewer } = req.body;
     const application = await approveProviderApplication(pool, req.params.providerId, reviewer || 'operator');
-    res.json({ status: 'APPROVED', provider_id: application.id });
+    res.json({
+      status: 'APPROVED',
+      provider_id: application.id,
+      api_key: application.api_key,
+      warning: 'Store this api_key securely — it will not be shown again unless regenerated'
+    });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/provider/:providerId/regenerate-key', async (req, res) => {
+  try {
+    const application = await regenerateProviderApiKey(pool, req.params.providerId);
+    res.json({
+      status: 'KEY_REGENERATED',
+      provider_id: application.id,
+      api_key: application.api_key,
+      warning: 'Previous key is now invalid. Store this api_key securely.'
+    });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }
@@ -857,4 +977,35 @@ app.listen(PORT as number, async () => {
   console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
   console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
   console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
+
+  // ============ COMPLIANCE CRON (auto-snapshot co 1h) ============
+  const snapshotCompliance = async () => {
+    try {
+      const matrix = await getComplianceMatrix(pool);
+      const completed = matrix.requirements.filter(r => r.status === 'COMPLETED').length;
+      await pool.query(
+        'INSERT INTO compliance_snapshots (coverage_percent, completed_count, total_count, details) VALUES ($1, $2, $3, $4)',
+        [matrix.coverage, completed, matrix.requirements.length, JSON.stringify(matrix.requirements)]
+      );
+      console.log(`[cron] Compliance snapshot: ${matrix.coverage}% (${completed}/${matrix.requirements.length})`);
+    } catch (e) {
+      console.warn('[cron] Compliance snapshot failed:', (e as Error).message);
+    }
+  };
+  snapshotCompliance();
+  setInterval(snapshotCompliance, 60 * 60 * 1000); // co 1h
+
+  console.log('✓ Compliance cron started (1h interval)');
+});
+
+// ============ COMPLIANCE HISTORY ENDPOINT ============
+app.get('/compliance/history.json', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT coverage_percent, completed_count, total_count, created_at FROM compliance_snapshots ORDER BY created_at DESC LIMIT 100'
+    );
+    res.json({ snapshots: result.rows, count: result.rows.length });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });

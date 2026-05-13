@@ -214,6 +214,10 @@ app.get('/metrics', async (req, res) => {
     `relay_drift_ratio ${rm.drift_ratio.toFixed(4)}`,
     '# HELP relay_latency_ms Last relay/send latency in milliseconds',
     `relay_latency_ms ${rm.last_latency_ms}`,
+    '# HELP relay_provider_failover_total Provider failover events (L1 cache + L2 sentinel)',
+    `relay_provider_failover_total ${rm.provider_failover_total}`,
+    '# HELP relay_tracing_spans_total Distributed tracing spans recorded',
+    `relay_tracing_spans_total ${rm.tracing_spans_total}`,
     '# HELP relay_frozen Relay frozen by operator (1=frozen)',
     `relay_frozen ${rm.relay_frozen ? 1 : 0}`,
     '# HELP memory_frozen Memory layer frozen by operator (1=frozen)',
@@ -681,7 +685,7 @@ app.post('/api/incident/export', async (req, res) => {
 });
 
 // ============ MISSING OPERATOR ENDPOINTS ============
-app.get('/api/operator/status', async (req, res) => {
+app.get('/api/operator/status', requireAuth, operatorRateLimit, async (req, res) => {
   try {
     const relayCount = await pool.query('SELECT COUNT(*) FROM relay_events').then(r => +r.rows[0].count).catch(() => 0);
     const memoryCount = await pool.query('SELECT COUNT(*) FROM memory_anchors').then(r => +r.rows[0].count).catch(() => 0);
@@ -715,7 +719,7 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
-app.post('/api/operator/unfreeze-relay', async (req, res) => {
+app.post('/api/operator/unfreeze-relay', requireAuth, operatorRateLimit, async (req, res) => {
   try {
     if (redisClient) {
       await redisClient.del('relay_frozen');
@@ -728,7 +732,7 @@ app.post('/api/operator/unfreeze-relay', async (req, res) => {
   }
 });
 
-app.post('/api/operator/unfreeze-memory', async (req, res) => {
+app.post('/api/operator/unfreeze-memory', requireAuth, operatorRateLimit, async (req, res) => {
   try {
     if (redisClient) {
       await redisClient.del('memory_frozen');

@@ -52,8 +52,10 @@ export const relayMetrics = {
   errors_total: 0,
   timeouts_total: 0,
   fallback_total: 0,
+  provider_failover_total: 0,
+  tracing_spans_total: 0,
   last_latency_ms: 0,
-  drift_ratio: 0,   // fallback_total / route_total
+  drift_ratio: 0,
 };
 
 export function getRelayMetrics() {
@@ -66,6 +68,8 @@ export function getRelayMetrics() {
 }
 
 const RELAY_TIMEOUT_MS = parseInt(process.env.RELAY_TIMEOUT_MS || '8000', 10);
+const PROVIDER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
+const FALLBACK_SENTINEL_DID = process.env.CORE_DID || 'did:unionai:s4:k0nsulat';
 
 function withDbTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   return Promise.race([
@@ -74,6 +78,82 @@ function withDbTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
       setTimeout(() => reject(new Error(`DB_TIMEOUT: ${label} exceeded ${RELAY_TIMEOUT_MS}ms`)), RELAY_TIMEOUT_MS)
     )
   ]);
+}
+
+// ─── Provider Cache (in-memory, 5min TTL, survives DB outage) ─────────────────
+interface CachedProvider { did: string; trust_score: number; trust_tier: string; last_seen: number; }
+const providerCache: CachedProvider[] = [];
+
+function updateProviderCache(rows: any[]): void {
+  const now = Date.now();
+  for (const r of rows) {
+    const i = providerCache.findIndex(p => p.did === r.did);
+    const entry = { did: r.did, trust_score: r.trust_score || 100, trust_tier: r.trust_tier || 'T1', last_seen: now };
+    if (i >= 0) providerCache[i] = entry;
+    else providerCache.push(entry);
+  }
+  // evict expired
+  const cutoff = now - PROVIDER_CACHE_TTL_MS;
+  for (let i = providerCache.length - 1; i >= 0; i--) {
+    if (providerCache[i].last_seen < cutoff) providerCache.splice(i, 1);
+  }
+}
+
+function getCachedProviders(exclude_did: string): CachedProvider[] {
+  const cutoff = Date.now() - PROVIDER_CACHE_TTL_MS;
+  return providerCache
+    .filter(p => p.did !== exclude_did && p.last_seen > cutoff)
+    .sort((a, b) => b.trust_score - a.trust_score);
+}
+
+// ─── Distributed Tracing ───────────────────────────────────────────────────────
+function makeSpanId(): string {
+  return 'sp-' + crypto.randomUUID();
+}
+
+interface Span {
+  span_id: string;
+  trace_id: string;
+  operation: string;
+  t0: number;
+}
+
+function startSpan(trace_id: string, operation: string): Span {
+  return { span_id: makeSpanId(), trace_id, operation, t0: Date.now() };
+}
+
+async function endSpan(pool: pg.Pool, span: Span, attrs: {
+  src_did?: string; dst_did?: string; provider_did?: string;
+  status?: string; fallback_used?: boolean; claim_level?: string;
+  payload_hash?: string; metadata?: object;
+}): Promise<number> {
+  const latency_ms = Date.now() - span.t0;
+  relayMetrics.tracing_spans_total++;
+  try {
+    await pool.query(
+      `INSERT INTO relay_spans
+         (trace_id, span_id, operation, src_did, dst_did, provider_did,
+          latency_ms, status, fallback_used, claim_level, payload_hash, metadata, ended_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW())`,
+      [
+        span.trace_id, span.span_id, span.operation,
+        attrs.src_did || null, attrs.dst_did || null, attrs.provider_did || null,
+        latency_ms, attrs.status || 'ok',
+        attrs.fallback_used || false, attrs.claim_level || 'T1',
+        attrs.payload_hash || null, JSON.stringify(attrs.metadata || {})
+      ]
+    );
+  } catch (e) {
+    console.warn('[span] save failed (non-fatal):', (e as Error).message);
+  }
+  appendReplayLog({
+    ts: new Date().toISOString(), event: 'span.end',
+    span_id: span.span_id, trace_id: span.trace_id,
+    operation: span.operation, latency_ms, status: attrs.status || 'ok',
+    fallback_used: attrs.fallback_used || false,
+    src_did: attrs.src_did, dst_did: attrs.dst_did, provider_did: attrs.provider_did,
+  });
+  return latency_ms;
 }
 
 // Trust tier from score
@@ -213,7 +293,34 @@ export const WAVE3_MIGRATIONS = `
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
 
-  -- Extend pre-existing tables (columns missing if table was created before Wave 3)
+  -- Distributed tracing spans
+  CREATE TABLE IF NOT EXISTS relay_spans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trace_id VARCHAR(100) NOT NULL,
+    span_id VARCHAR(100) NOT NULL UNIQUE,
+    operation VARCHAR(50) NOT NULL,
+    src_did VARCHAR(255),
+    dst_did VARCHAR(255),
+    provider_did VARCHAR(255),
+    latency_ms INT,
+    status VARCHAR(20) DEFAULT 'ok',
+    fallback_used BOOLEAN DEFAULT FALSE,
+    claim_level VARCHAR(5) DEFAULT 'T1',
+    payload_hash VARCHAR(64),
+    metadata JSONB,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    ended_at TIMESTAMPTZ
+  );
+  CREATE INDEX IF NOT EXISTS idx_relay_spans_trace_id ON relay_spans(trace_id);
+  CREATE INDEX IF NOT EXISTS idx_relay_spans_started_at ON relay_spans(started_at DESC);
+
+  -- Extend pre-existing tables (columns missing if created before Wave 3 or by another migration)
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS payload_hash VARCHAR(64);
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS previous_hash VARCHAR(64);
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS current_hash VARCHAR(64);
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS replay_log_path TEXT;
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS semantic_score FLOAT DEFAULT 0;
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS fallback_used BOOLEAN DEFAULT FALSE;
   ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS payload JSONB;
   ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS semantic_hash VARCHAR(64);
   ALTER TABLE memory_anchors ADD COLUMN IF NOT EXISTS delta_hash VARCHAR(64);
@@ -241,7 +348,8 @@ export function createWave3Router(pool: pg.Pool): Router {
       return res.status(400).json({ error: 'MVSS_INVALID', message: validation.error });
     }
     const body = req.body;
-    const trace_id = makeTraceId();
+    const trace_id = body.trace_id || makeTraceId(); // honour caller trace_id for hop continuity
+    const span = startSpan(trace_id, 'relay.send');
     const payload_hash = sha256(JSON.stringify(body));
 
     // Get previous hash for chain
@@ -300,6 +408,17 @@ export function createWave3Router(pool: pg.Pool): Router {
 
     relayMetrics.last_latency_ms = Date.now() - t0;
 
+    // End tracing span (async, non-blocking)
+    endSpan(pool, span, {
+      src_did: body.src_did, dst_did: body.dst_did,
+      provider_did: body.dst_did || null,
+      status: db_status === 'received' ? 'ok' : 'degraded',
+      fallback_used: db_status !== 'received',
+      claim_level: trust_tier_val,
+      payload_hash,
+      metadata: { intent_type: body.intent?.type, db_status, previous_hash },
+    }).catch(() => {});
+
     // JSONL replay log (always, even in degraded mode)
     appendReplayLog({
       trace_id, ts: new Date().toISOString(),
@@ -315,6 +434,7 @@ export function createWave3Router(pool: pg.Pool): Router {
     res.status(201).json({
       success: true,
       trace_id,
+      span_id: span.span_id,
       status: db_status,
       trust_tier: trust_tier_val,
       hash: current_hash,
@@ -334,7 +454,8 @@ export function createWave3Router(pool: pg.Pool): Router {
     if (!src_did || !intent) {
       return res.status(400).json({ error: 'src_did and intent required' });
     }
-    const trace_id = makeTraceId();
+    const trace_id = req.body.trace_id || makeTraceId();
+    const span = startSpan(trace_id, 'relay.route');
 
     // Trust gating
     let score = trust?.score || 100;
@@ -359,22 +480,24 @@ export function createWave3Router(pool: pg.Pool): Router {
       });
     }
 
-    // Routing logic: syntactic fallback (Qdrant semantic routing not yet provisioned)
     const fallback_used = !intent_embedding;
-    let target_did: string | null = null;
     let route_type = fallback_used ? 'syntactic_fallback' : 'semantic';
-    let route_confidence = fallback_used ? 0.4 : 0.9; // semantic = 0.9 placeholder
-
+    let route_confidence = fallback_used ? 0.4 : 0.9;
     if (fallback_used) {
       relayMetrics.fallback_total++;
       relayMetrics.drift_ratio = relayMetrics.fallback_total / relayMetrics.route_total;
     }
 
-    // Find candidate agents with matching capabilities
+    // Provider resolution — 3-level failover
+    let target_did: string | null = null;
+    let failover_level = 0;
+    const provider_chain: string[] = [];
+
+    // Level 0 — DB lookup (primary)
     try {
       const candidates = await withDbTimeout(
         pool.query(
-          `SELECT did, trust_score, trust_tier, capability_manifest
+          `SELECT did, trust_score, trust_tier
            FROM agents
            WHERE status = 'active' AND did != $1
            ORDER BY trust_score DESC LIMIT 5`,
@@ -383,41 +506,86 @@ export function createWave3Router(pool: pg.Pool): Router {
         'relay/route candidates'
       );
       if (candidates.rows.length > 0) {
-        target_did = candidates.rows[0].did;
+        updateProviderCache(candidates.rows);
+        target_did = candidates.rows[0].did as string;
+        provider_chain.push(target_did);
         if (fallback_used) route_confidence = 0.5 + (candidates.rows[0].trust_score / 2000);
       }
-    } catch (_) {}
+    } catch (e) {
+      relayMetrics.errors_total++;
+      console.warn('[relay/route] DB candidates failed, entering failover:', (e as Error).message);
+    }
+
+    // Level 1 — provider cache (fallback on DB failure or empty result)
+    if (!target_did) {
+      failover_level = 1;
+      relayMetrics.provider_failover_total++;
+      const cached = getCachedProviders(src_did);
+      if (cached.length > 0) {
+        target_did = cached[0].did;
+        provider_chain.push(target_did);
+        route_confidence = 0.3;
+        route_type = 'cache_fallback';
+        console.warn('[relay/route] failover L1: using cached provider', target_did);
+      }
+    }
+
+    // Level 2 — sentinel (K0NSULAT itself)
+    if (!target_did) {
+      failover_level = 2;
+      target_did = FALLBACK_SENTINEL_DID;
+      provider_chain.push(target_did);
+      route_confidence = 0.1;
+      route_type = 'sentinel_fallback';
+      console.warn('[relay/route] failover L2: routing to sentinel', FALLBACK_SENTINEL_DID);
+    }
 
     const payload_hash = sha256(JSON.stringify(req.body));
     const previous_hash = '0'.repeat(64);
     const current_hash = sha256(previous_hash + payload_hash + trace_id);
+    const route_status = failover_level > 0 ? `failover_l${failover_level}` : 'routed';
 
-    // Save relay event
+    // Persist relay event
     try {
       await withDbTimeout(
         pool.query(
           `INSERT INTO relay_events
              (trace_id, src_did, dst_did, route_status, fallback_used, payload_hash, current_hash)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [trace_id, src_did, target_did, 'routed', fallback_used, payload_hash, current_hash]
+          [trace_id, src_did, target_did, route_status, fallback_used || failover_level > 0, payload_hash, current_hash]
         ),
         'relay/route DB-insert'
       );
     } catch (_) {}
+
+    // End span
+    endSpan(pool, span, {
+      src_did, dst_did: target_did,
+      provider_did: target_did,
+      status: failover_level > 0 ? 'failover' : 'ok',
+      fallback_used: fallback_used || failover_level > 0,
+      claim_level: tierInfo.tier,
+      payload_hash,
+      metadata: { route_type, route_confidence, failover_level, provider_chain },
+    }).catch(() => {});
 
     appendReplayLog({
       trace_id, ts: new Date().toISOString(),
       event: 'relay.route',
       src_did, target_did, route_type, fallback_used,
       route_confidence, payload_hash, current_hash,
+      failover_level, provider_chain,
     });
 
     res.json({
       trace_id,
+      span_id: span.span_id,
       target_did,
       route_type,
       route_confidence: parseFloat(route_confidence.toFixed(4)),
-      fallback_used,
+      fallback_used: fallback_used || failover_level > 0,
+      failover_level,
+      provider_chain,
       trust_tier: tierInfo.tier,
       hash: current_hash,
       timestamp: new Date().toISOString(),
@@ -719,6 +887,50 @@ export function createWave3Router(pool: pg.Pool): Router {
         id: result.rows[0].id,
         confirmation_code: confirmation_code || 'UNIONAI-GENESIS-0N40I4-20260512',
         timestamp: result.rows[0].created_at,
+      });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
+  // ── GET /api/relay/trace/:trace_id ── full hop chain with spans ──────────────
+  router.get('/relay/trace/:trace_id', async (req: Request, res: Response) => {
+    const { trace_id } = req.params;
+    try {
+      const [events, spans] = await Promise.all([
+        withDbTimeout(
+          pool.query(
+            `SELECT trace_id, src_did, dst_did, route_status, fallback_used,
+                    payload_hash, previous_hash, current_hash, created_at
+             FROM relay_events WHERE trace_id = $1 ORDER BY created_at ASC`,
+            [trace_id]
+          ),
+          'relay/trace events'
+        ),
+        withDbTimeout(
+          pool.query(
+            `SELECT span_id, operation, src_did, dst_did, provider_did,
+                    latency_ms, status, fallback_used, claim_level, metadata, started_at, ended_at
+             FROM relay_spans WHERE trace_id = $1 ORDER BY started_at ASC`,
+            [trace_id]
+          ),
+          'relay/trace spans'
+        ),
+      ]);
+      const total_latency_ms = spans.rows.reduce((s: number, r: any) => s + (r.latency_ms || 0), 0);
+      const has_failover = spans.rows.some((r: any) => r.fallback_used);
+      res.json({
+        trace_id,
+        spans: spans.rows,
+        events: events.rows,
+        summary: {
+          span_count: spans.rows.length,
+          event_count: events.rows.length,
+          total_latency_ms,
+          has_failover,
+          claim_levels: [...new Set(spans.rows.map((r: any) => r.claim_level))],
+          status: has_failover ? 'degraded' : (spans.rows.length > 0 ? 'ok' : 'not_found'),
+        },
       });
     } catch (e) {
       res.status(500).json({ error: (e as Error).message });

@@ -751,13 +751,26 @@ app.post('/api/operator/evidence/refresh', async (req, res) => {
 
 
 // ============ START SERVER ============
+// ============ START SERVER ============
 app.listen(PORT as number, async () => {
   console.log(`Starting UNIONAI Core API on port ${PORT}`);
+  
+  // Initialize Redis + Migrations
   await initRedis();
   await runMigrations();
+  
+  // Mount routers AFTER initialization
+  const k0nsultatRouter = createK0nsultatRouter(pool);
+  app.use('/api/k0nsulat', k0nsultatRouter);
+  
+  const wave6Router = createWave6Router(pool);
+  app.use('/api', wave6Router);
+  
+  const wave7Router = createWave7Router(pool, redisClient);
+  app.use('/api', wave7Router);
+  
   console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
   console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
   console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
   console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
 });
-

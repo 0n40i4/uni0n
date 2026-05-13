@@ -511,17 +511,18 @@ async function runMigrations() {
     );
     CREATE INDEX IF NOT EXISTS idx_compliance_snapshots_created_at ON compliance_snapshots(created_at DESC);
   `;
-  try {
-    await pool.query(migrationSql);
-    await pool.query(WAVE6_MIGRATIONS);
-    await pool.query(WAVE7_MIGRATIONS);
-    await pool.query(wave2DevNextMigrations);
-    console.log('K0NSULAT migrations applied successfully');
-    console.log('WAVE6+7 migrations applied successfully');
-    console.log('WAVE2 DEV-NEXT migrations (002/003/004) applied successfully');
-  } catch (error) {
-    console.error('Migration error:', error);
-  }
+  const runStep = async (label: string, sql: string) => {
+    try {
+      await pool.query(sql);
+      console.log(`[migrations] ${label}: applied successfully`);
+    } catch (error) {
+      console.warn(`[migrations] ${label}: SKIPPED — ${(error as Error).message}`);
+    }
+  };
+  await runStep('K0NSULAT', migrationSql);
+  await runStep('WAVE6', WAVE6_MIGRATIONS);
+  await runStep('WAVE7', WAVE7_MIGRATIONS);
+  await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
 }
 
 app.get('/', (req, res) => {

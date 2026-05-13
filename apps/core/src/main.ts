@@ -393,10 +393,23 @@ async function generateAIFeed() {
 
 app.get('/feed/ai.xml', async (req, res) => {
   res.type('application/rss+xml');
-  const feedContent = await generateAIFeed();
-  if (feedContent) {
-    res.send(feedContent);
-  } else {
+  try {
+    const feedContent = await generateAIFeed();
+    if (feedContent) {
+      res.send(feedContent);
+      return;
+    }
+    const emptyFeed = new Feed({
+      title: 'UNIONAI Agent Feed',
+      description: 'Real-time updates from UNIONAI federation (no agents yet)',
+      id: 'https://unionai.grassrootslobbing.pl/feed/ai.xml',
+      link: 'https://unionai.grassrootslobbing.pl',
+      language: 'en',
+      copyright: 'UNIONAI 2026'
+    });
+    res.send(emptyFeed.rss2());
+  } catch (err) {
+    console.error('[feed/ai.xml] fatal:', (err as Error).stack || err);
     res.status(500).send('Feed generation failed');
   }
 });
@@ -519,6 +532,20 @@ async function runMigrations() {
       console.warn(`[migrations] ${label}: SKIPPED — ${(error as Error).message}`);
     }
   };
+  const agentsTableMigration = `
+    CREATE TABLE IF NOT EXISTS agents (
+      id SERIAL PRIMARY KEY,
+      did VARCHAR(255) UNIQUE NOT NULL,
+      provider VARCHAR(100),
+      capabilities TEXT,
+      score INT DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'pending',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_agents_created_at ON agents(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+  `;
+  await runStep('AGENTS', agentsTableMigration);
   await runStep('K0NSULAT', migrationSql);
   await runStep('WAVE6', WAVE6_MIGRATIONS);
   await runStep('WAVE7', WAVE7_MIGRATIONS);

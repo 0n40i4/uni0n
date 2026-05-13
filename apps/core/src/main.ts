@@ -6,6 +6,7 @@ import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
+import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
@@ -548,6 +549,48 @@ app.get('/metrics/federation', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+
+// ============ DOCUMENTATION PORTAL ============
+app.get('/docs', (req, res) => {
+  try {
+    const index = getDocsIndex();
+    res.type('text/html');
+    res.send(renderDocsHTML(index));
+  } catch (error) {
+    res.status(500).send('Documentation portal error');
+  }
+});
+
+app.get('/docs/governance', (req, res) => {
+  try {
+    const index = getDocsIndex();
+    res.type('text/html');
+    res.send(renderDocsSection('governance', index));
+  } catch (error) {
+    res.status(500).send('Governance documentation error');
+  }
+});
+
+app.get('/docs/rfc', (req, res) => {
+  try {
+    const index = getDocsIndex();
+    res.type('text/html');
+    res.send(renderDocsSection('rfc', index));
+  } catch (error) {
+    res.status(500).send('RFC documentation error');
+  }
+});
+
+app.get('/docs/evidence', (req, res) => {
+  try {
+    const index = getDocsIndex();
+    res.type('text/html');
+    res.send(renderDocsSection('evidence', index));
+  } catch (error) {
+    res.status(500).send('Evidence documentation error');
   }
 });
 

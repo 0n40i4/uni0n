@@ -83,6 +83,14 @@
       "url": "/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf",
       "type": "consultation_report",
       "date": "2026-05-12"
+    },
+    {
+      "id": "DOC-011",
+      "title": "UNIONAI_Uzupelniajacy_Pakiet_Governance_Evidence_DEV",
+      "type": "governance_evidence_supplement",
+      "date": "2026-05-13",
+      "source": "Google Drive / k0nsult_memory",
+      "note": "Supplementary governance + evidence package for DEV phase"
     }
   ],
   "endpoints_live": [
@@ -102,5 +110,5 @@
     "repo": "https://github.com/0N40i4/uniOn",
     "domain": "https://unionai.grassrootslobbing.pl"
   },
-  "generated_at": "2026-05-12T00:00:00Z"
+  "generated_at": "2026-05-13T06:00:00Z"
 }

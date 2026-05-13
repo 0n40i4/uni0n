@@ -72,6 +72,7 @@ const operatorRateLimit = makeRateLimiter(20, 60000); // 20/min per IP
 import { createK0nsultatRouter } from './modules/k0nsulat';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
+import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS } from './modules/wave3';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
@@ -365,18 +366,11 @@ app.get('/api/leaderboard', (req, res) => res.json({
   total_agents: 0, leaderboard: []
 }));
 
-app.post('/api/relay/send', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/relay/route', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/agent/register', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/trust/verify', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/memory/anchor', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/memory/query', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/governance/event', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
+// Wave 3 router handles: relay/send, relay/route, agent/register,
+// trust/verify, memory/anchor, memory/query, governance/event, participation/acknowledge
+// (mounted in app.listen callback after pool/redis init)
 
-// ============ SECURITY: All /api/operator/* require JWT + tighter rate limit ============
-app.use('/api/operator', requireAuth, operatorRateLimit);
-
-app.post('/api/operator/override', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
+// Operator router mounted in app.listen callback (after pool init)
 
 
 async function generateAIFeed() {
@@ -566,6 +560,7 @@ async function runMigrations() {
   `;
   await runStep('AGENTS', agentsTableMigration);
   await runStep('K0NSULAT', migrationSql);
+  await runStep('WAVE3', WAVE3_MIGRATIONS);
   await runStep('WAVE6', WAVE6_MIGRATIONS);
   await runStep('WAVE7', WAVE7_MIGRATIONS);
   await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
@@ -1013,13 +1008,21 @@ app.listen(PORT as number, async () => {
   // Mount routers AFTER initialization
   const k0nsultatRouter = createK0nsultatRouter(pool);
   app.use('/api/k0nsulat', k0nsultatRouter);
-  
+
+  // Wave 3: Semantic Relay, DID-lite, Memory, Trust, Governance
+  const wave3Router = createWave3Router(pool);
+  app.use('/api', wave3Router);
+
+  // Operator override console (JWT protected)
+  const operatorRouter = createOperatorRouter(pool);
+  app.use('/api/operator', requireAuth, operatorRateLimit, operatorRouter);
+
   const wave6Router = createWave6Router(pool);
   app.use('/api', wave6Router);
-  
+
   const wave7Router = createWave7Router(pool, redisClient);
   app.use('/api', wave7Router);
-  
+
   console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
   console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
   console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);

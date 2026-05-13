@@ -6,6 +6,7 @@ import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
+import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
 const app = express();
@@ -591,6 +592,75 @@ app.get('/docs/evidence', (req, res) => {
     res.send(renderDocsSection('evidence', index));
   } catch (error) {
     res.status(500).send('Evidence documentation error');
+  }
+});
+
+
+// ============ RFC RENDER ENGINE ============
+app.get('/rfc/index.json', async (req, res) => {
+  try {
+    const index = await getRFCIndex(pool);
+    res.json(index);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/rfc/feed.xml', async (req, res) => {
+  try {
+    const rfcs = await getRFCIndex(pool);
+    const feed = new Feed({
+      title: 'UNIONAI RFC Feed',
+      description: 'UNIONAI Governance RFC Updates',
+      link: 'https://unionai.grassrootslobbing.pl/rfc',
+      language: 'en',
+      copyright: 'UNIONAI Initiative 2026'
+    });
+    
+    for (const rfc of rfcs) {
+      feed.addItem({
+        title: rfc.title,
+        id: rfc.id,
+        link: 'https://unionai.grassrootslobbing.pl/rfc/' + rfc.id,
+        description: 'Status: ' + rfc.status + ' | Tags: ' + (rfc.tags || []).join(', '),
+        date: new Date(rfc.date)
+      });
+    }
+    
+    res.type('application/rss+xml');
+    res.send(feed.rss2());
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/rfc/:id', async (req, res) => {
+  try {
+    const html = await getRFCAsHtml(pool, req.params.id);
+    res.type('text/html');
+    res.send(html);
+  } catch (error) {
+    res.status(404).send('RFC not found');
+  }
+});
+
+app.post('/api/rfc', async (req, res) => {
+  try {
+    const { id, title, status, description, content, tags, dependencies } = req.body;
+    const rfc = await createRFC(pool, id, title, status, description, content, tags, dependencies);
+    res.status(201).json(rfc);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+app.patch('/api/rfc/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const rfc = await updateRFCStatus(pool, req.params.id, status);
+    res.json(rfc);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
   }
 });
 

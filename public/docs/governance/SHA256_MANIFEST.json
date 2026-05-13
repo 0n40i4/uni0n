@@ -1,0 +1,93 @@
+{
+  "created": "2026-05-12T23:43:27.228886Z",
+  "files": [
+    {
+      "file": "01_UNIONAI_RFC_MASTER_INDEX_v1.md",
+      "sha256": "cce04c3a8f6c75d0cce013e1cdd2926f0ae0749a6ae9370694ff2c0c6c9ccee7"
+    },
+    {
+      "file": "01_UNIONAI_RFC_MASTER_INDEX_v1.pdf",
+      "sha256": "9a11ac8b380df1f91b57e62b03f0b15e2c8aac196ae928df055223335ba91a2f"
+    },
+    {
+      "file": "02_UNIONAI_PUBLIC_EVIDENCE_REGISTER_v1.md",
+      "sha256": "b9d0ccf14c2bbec8244f6037fb2131239cbe28eff4b7f4027c80731fce3cefae"
+    },
+    {
+      "file": "02_UNIONAI_PUBLIC_EVIDENCE_REGISTER_v1.pdf",
+      "sha256": "e33ff85fad814ef7f40d32f2f70bf6299fc7c603424c740e7c0e494d611b08e7"
+    },
+    {
+      "file": "03_UNIONAI_OPERATOR_CONSTITUTION_v1.md",
+      "sha256": "3854d5eff6821be5e233e0b9a9c92c3e46e145fbaaea76fcf2e26d73f65294ac"
+    },
+    {
+      "file": "03_UNIONAI_OPERATOR_CONSTITUTION_v1.pdf",
+      "sha256": "060c043e8edd6cc2768e434425bc91220578611a78661f1bb686acbe5abd7f10"
+    },
+    {
+      "file": "04_UNIONAI_TESTNET_GENESIS_CHECKLIST_v1.md",
+      "sha256": "ae68c283bac748168a930e4effca973e6e7a9bc4cbfdf2eb76a0ebcea4e7d6b8"
+    },
+    {
+      "file": "04_UNIONAI_TESTNET_GENESIS_CHECKLIST_v1.pdf",
+      "sha256": "9ab173f57eede5a6d08d8cdbef48ca578880d4cfd99ce6484fa7070a10669b85"
+    },
+    {
+      "file": "05_UNIONAI_HUMAN_OVERRIDE_PLAYBOOK_v1.md",
+      "sha256": "4184e59f1b5bcafb826c256cd34ffc5f321e7cb6ab39f3a25ceb9228f36ae1ad"
+    },
+    {
+      "file": "05_UNIONAI_HUMAN_OVERRIDE_PLAYBOOK_v1.pdf",
+      "sha256": "8062402f63ba63c3c1e94211c79287f3fd11812d57156f65e8dcb6ed8f830baf"
+    },
+    {
+      "file": "06_UNIONAI_VISUAL_ARCHITECTURE_PACK_v1.md",
+      "sha256": "29b24f4d097307bd8bf8cb8edf28ecdbff38ee023d02a7112feb362036b66f93"
+    },
+    {
+      "file": "06_UNIONAI_VISUAL_ARCHITECTURE_PACK_v1.pdf",
+      "sha256": "7f93099dddc15e7959ea67aeee9521386538f211856a40b4b2d3c817b5c7de98"
+    },
+    {
+      "file": "07_UNIONAI_PROVIDER_INVITATION_PACKAGE_v1.md",
+      "sha256": "6e368a292d53cc337322c11f162beb17886f396e27390aa8c6b3855c812dea64"
+    },
+    {
+      "file": "07_UNIONAI_PROVIDER_INVITATION_PACKAGE_v1.pdf",
+      "sha256": "dd86db27e5a48e1148a04feb7a0cee4fc883d1faeefdddc6123e469dada9a5b9"
+    },
+    {
+      "file": "08_UNIONAI_WIRE_v0_SPEC_v1.md",
+      "sha256": "6fc7a222d1ba873ac0d821e92bee68a7b5eab33746f98adf1f3abcf949aab632"
+    },
+    {
+      "file": "08_UNIONAI_WIRE_v0_SPEC_v1.pdf",
+      "sha256": "be498a1edd7e7f77b15a88e869e12d39d01409019a1a762efb3e26f16f640c21"
+    },
+    {
+      "file": "09_UNIONAI_MEMORY_POLICY_v1.md",
+      "sha256": "bc78729c45d8c88c5aa40b45c38967cc8e891e537f3f08b00b90146bdadb3eac"
+    },
+    {
+      "file": "09_UNIONAI_MEMORY_POLICY_v1.pdf",
+      "sha256": "f55fb86c21aed2e8c46317ea64c0940e7514f6465b7e04cbe117b2a9bf3ea458"
+    },
+    {
+      "file": "10_UNIONAI_PUBLIC_TIMELINE_v1.md",
+      "sha256": "a512c122298bd5d7aa1d0fe0face39a42bbcce4293818439e235c4617451b30f"
+    },
+    {
+      "file": "10_UNIONAI_PUBLIC_TIMELINE_v1.pdf",
+      "sha256": "a1d0136f486c58d231aebaea4dab38ec7c82b05f62b0f7eec9771d5aca2a9ac5"
+    },
+    {
+      "file": "11_UNIONAI_WDROZENIE_BRAKUJACYCH_DOKUMENTOW_v1.md",
+      "sha256": "cc0cbde9da3330f10333de01d750a39b1d78baca1e24f94b67317fe2b3105388"
+    },
+    {
+      "file": "11_UNIONAI_WDROZENIE_BRAKUJACYCH_DOKUMENTOW_v1.pdf",
+      "sha256": "907ff79d621c8c3cb9ec94d84e9e629b5a4bc4ef68529850f74c20205ca3555c"
+    }
+  ]
+}

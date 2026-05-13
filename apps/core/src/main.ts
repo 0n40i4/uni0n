@@ -5,6 +5,7 @@ import { createK0nsultatRouter } from './modules/k0nsulat';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
 import { Feed } from 'feed';
+import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
@@ -365,6 +366,132 @@ app.get('/debug/env', (req, res) => {
   res.json(safeVars);
 });
 
+
+// ============ INCIDENT RESPONSE SYSTEM ============
+app.post('/api/incident/open', async (req, res) => {
+  try {
+    const { title, severity, description, incident_type } = req.body;
+    if (!title || !severity) {
+      return res.status(400).json({ error: 'title and severity required' });
+    }
+    const incident = await createIncident(pool, title, severity, description, incident_type);
+    res.status(201).json({
+      success: true,
+      incident_id: incident.id,
+      hash: incident.hash,
+      message: `Incident opened with severity ${severity}`
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/incident/', async (req, res) => {
+  try {
+    const incidents = await listIncidents(pool);
+    res.json({ incidents, count: incidents.length });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/incident/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { report, actions } = await getIncident(pool, id);
+    res.json({ report, actions });
+  } catch (error) {
+    res.status(404).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/incident/freeze', async (req, res) => {
+  try {
+    const { incident_id, actor, actor_did } = req.body;
+    if (!incident_id || !actor) {
+      return res.status(400).json({ error: 'incident_id and actor required' });
+    }
+    const action = await freezeIncident(pool, incident_id, actor, actor_did || actor);
+    res.json({ success: true, action, message: 'Incident frozen' });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/incident/export', async (req, res) => {
+  try {
+    const { incident_id } = req.body;
+    if (!incident_id) {
+      return res.status(400).json({ error: 'incident_id required' });
+    }
+    const exported = await exportIncident(pool, incident_id);
+    res.json(exported);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============ MISSING OPERATOR ENDPOINTS ============
+app.get('/api/operator/status', async (req, res) => {
+  try {
+    const relayCount = await pool.query('SELECT COUNT(*) FROM relay_events').then(r => +r.rows[0].count).catch(() => 0);
+    const memoryCount = await pool.query('SELECT COUNT(*) FROM memory_anchors').then(r => +r.rows[0].count).catch(() => 0);
+    const incidentCount = await pool.query('SELECT COUNT(*) FROM incident_reports WHERE status = $1', ['OPEN']).then(r => +r.rows[0].count).catch(() => 0);
+    
+    const redisStatus = redisConnected ? 'connected' : 'disconnected';
+    const relayFrozen = redisClient ? await redisClient.get('relay_frozen').catch(() => null) : null;
+    const memoryFrozen = redisClient ? await redisClient.get('memory_frozen').catch(() => null) : null;
+    
+    res.json({
+      status: 'operational',
+      uptime: process.uptime(),
+      relay_events: relayCount,
+      memory_anchors: memoryCount,
+      open_incidents: incidentCount,
+      redis_status: redisStatus,
+      relay_frozen: relayFrozen === 'true',
+      memory_frozen: memoryFrozen === 'true'
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/status', async (req, res) => {
+  try {
+    const dbResult = await pool.query('SELECT NOW()');
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), database: 'ok' });
+  } catch (error) {
+    res.status(503).json({ status: 'error', error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/unfreeze-relay', async (req, res) => {
+  try {
+    if (redisClient) {
+      await redisClient.del('relay_frozen');
+      res.json({ success: true, message: 'Relay unfrozen' });
+    } else {
+      res.status(503).json({ error: 'Redis not available' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/operator/unfreeze-memory', async (req, res) => {
+  try {
+    if (redisClient) {
+      await redisClient.del('memory_frozen');
+      res.json({ success: true, message: 'Memory unfrozen' });
+    } else {
+      res.status(503).json({ error: 'Redis not available' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
 app.listen(PORT as number, async () => {
   console.log(`Starting UNIONAI Core API on port ${PORT}`);
   
@@ -382,3 +509,45 @@ app.listen(PORT as number, async () => {
   console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
   console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
 });
+
+// ============ FEDERATION METRICS ENGINE ============
+app.get('/metrics/federation', async (req, res) => {
+  try {
+    const relayCount = await pool.query('SELECT COUNT(*) FROM relay_events').then(r => +r.rows[0].count).catch(() => 0);
+    const relayLatencyResult = await pool.query(
+      'SELECT AVG(EXTRACT(EPOCH FROM (created_at - NOW())) * 1000) as avg_latency FROM relay_events WHERE created_at > NOW() - INTERVAL ' + "'1 hour'"
+    ).catch(() => ({ rows: [{ avg_latency: 0 }] }));
+    const relayLatency = relayLatencyResult.rows[0]?.avg_latency || 0;
+    
+    const memoryCount = await pool.query('SELECT COUNT(*) FROM memory_anchors').then(r => +r.rows[0].count).catch(() => 0);
+    const failureCount = await pool.query('SELECT COUNT(*) FROM relay_events WHERE route_status = ' + "'failed'").then(r => +r.rows[0].count).catch(() => 0);
+    
+    const metrics = {
+      relay_latency_avg: relayLatency,
+      relay_events_total: relayCount,
+      memory_anchors_total: memoryCount,
+      relay_failures_total: failureCount,
+      timestamp: new Date().toISOString()
+    };
+    
+    if (req.headers.accept?.includes('text/plain')) {
+      res.set('Content-Type', 'text/plain');
+      const prometheusLines = [
+        '# HELP relay_latency_avg Average relay latency in milliseconds',
+        'relay_latency_avg ' + metrics.relay_latency_avg,
+        '# HELP relay_events_total Total relay events',
+        'relay_events_total ' + metrics.relay_events_total,
+        '# HELP memory_anchors_total Total memory anchors',
+        'memory_anchors_total ' + metrics.memory_anchors_total,
+        '# HELP relay_failures_total Total relay failures',
+        'relay_failures_total ' + metrics.relay_failures_total
+      ];
+      res.send(prometheusLines.join('\n'));
+    } else {
+      res.json(metrics);
+    }
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+

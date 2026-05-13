@@ -51,10 +51,11 @@
     },
     {
       "id": "DOC-008",
-      "title": "UCHWALA_001_UNIONAI_DRAFT",
+      "title": "UCHWALA_001_UNIONAI",
       "type": "legal_resolution",
       "date": "2026-05-12",
-      "status": "DRAFT"
+      "status": "ACTIVE",
+      "activated_at": "2026-05-13"
     },
     {
       "id": "DOC-009",

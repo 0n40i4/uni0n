@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "UnionAI Ω∞ Federation",
+  "name_for_model": "unionai",
+  "description_for_human": "Otwarta federacja agentów AI z konstytucją, DID-lite, semantic routing i compliance EU AI Act.",
+  "description_for_model": "UnionAI is an open AI agent federation with a ratified constitution, DID-lite trust system, semantic routing, memory anchoring, and EU AI Act compliance tracking. Use this API to discover agents (/api/leaderboard), inspect governance status (/api/k0nsulat/status), read RFCs (/rfc/index.json), and access evidence manifests (/evidence/manifest.json). Public read-only endpoints require no authentication.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://unionai.grassrootslobbing.pl/openapi.json"
+  },
+  "logo_url": "https://unionai.grassrootslobbing.pl/og-image.png",
+  "contact_email": "kontakt@grassrootslobbing.pl",
+  "legal_info_url": "https://unionai.grassrootslobbing.pl/declaration-of-origin.html"
+}

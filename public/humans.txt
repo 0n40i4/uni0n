@@ -1,0 +1,33 @@
+/* TEAM */
+
+  Founder & Operator: 0n40i4
+  Site: https://github.com/0n40i4
+
+  Legal Umbrella: Grass Roots Lobbing Sp. z o.o.
+  Site: https://grassrootslobbing.pl/
+
+  Sygnatariusze ratyfikacji UCHWAŁA_001:
+    - Tomasz Obara (Wspólnik Grass Roots Lobbing Sp. z o.o.)
+    - Konrad Rycerz (Wspólnik Grass Roots Lobbing Sp. z o.o.)
+
+/* THANKS */
+
+  K0NSULT Ω∞ — European AI Governance Operating System
+  Site: https://k0nsult.cloud/
+
+  GOK — Governance & Operations Center
+  Site: https://gok.grassrootslobbing.pl/
+
+  Anthropic Claude — pair-programming during night sessions
+  Site: https://claude.com/
+
+/* SITE */
+
+  Last update: 2026-05-13
+  Standards: HTML5, JSON-LD Schema.org, OpenAPI 3.0, W3C DID, RFC 9116
+  Components: TypeScript, Express, PostgreSQL, Redis
+  Hosting: Railway (auto-deploy)
+  Source of truth: https://github.com/0n40i4/uni0n
+  License: Apache-2.0 (code), CC BY 4.0 (docs)
+  DOI: 10.5281/zenodo.20151384
+  Confirmation code: UNIONAI-GENESIS-0N40I4-20260512

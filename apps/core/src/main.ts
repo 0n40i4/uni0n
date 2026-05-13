@@ -72,7 +72,7 @@ const operatorRateLimit = makeRateLimiter(20, 60000); // 20/min per IP
 import { createK0nsultatRouter } from './modules/k0nsulat';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
-import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS } from './modules/wave3';
+import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS, getRelayMetrics } from './modules/wave3';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
@@ -195,25 +195,42 @@ app.get('/health', async (req, res) => {
 
 app.get('/metrics', async (req, res) => {
   const w6 = await getWave7Metrics(pool);
-  const agentCount = await pool.query('SELECT COUNT(*) FROM agents').then(r => +r.rows[0].count).catch(() => 0);
+  const rm = getRelayMetrics();
   res.set('Content-Type', 'text/plain');
   const lines = [
-    '# UNIONAI Prometheus-style metrics',
-    `# HELP relay_count Total relay events`,
+    '# HELP relay_events_total Total relay events (DB)',
     `relay_events_total ${w6.relay_events_total}`,
-    `# HELP agent_count Registered agents`,
+    '# HELP relay_sent_total Relay send calls since last restart',
+    `relay_sent_total ${rm.sent_total}`,
+    '# HELP relay_route_total Relay route calls since last restart',
+    `relay_route_total ${rm.route_total}`,
+    '# HELP relay_errors_total Relay DB errors since last restart',
+    `relay_errors_total ${rm.errors_total}`,
+    '# HELP relay_timeouts_total Relay DB timeouts since last restart',
+    `relay_timeouts_total ${rm.timeouts_total}`,
+    '# HELP relay_fallback_total Syntactic fallback routes (no Qdrant embedding)',
+    `relay_fallback_total ${rm.fallback_total}`,
+    '# HELP relay_drift_ratio Ratio of fallback routes to total routes (0=semantic, 1=all_fallback)',
+    `relay_drift_ratio ${rm.drift_ratio.toFixed(4)}`,
+    '# HELP relay_latency_ms Last relay/send latency in milliseconds',
+    `relay_latency_ms ${rm.last_latency_ms}`,
+    '# HELP relay_frozen Relay frozen by operator (1=frozen)',
+    `relay_frozen ${rm.relay_frozen ? 1 : 0}`,
+    '# HELP memory_frozen Memory layer frozen by operator (1=frozen)',
+    `memory_frozen ${rm.memory_frozen ? 1 : 0}`,
+    '# HELP agents_registered_total Registered agents (DB)',
     `agents_registered_total ${w6.agents_registered_total}`,
-    `# HELP memory_anchor_count Total memory anchors`,
+    '# HELP memory_anchors_total Total memory anchors (DB)',
     `memory_anchors_total ${w6.memory_anchors_total}`,
-    `# HELP trust_events_count Total trust events`,
+    '# HELP trust_verifications_total Trust verifications (DB)',
     `trust_verifications_total ${w6.trust_verifications_total}`,
-    `# HELP governance_events_count Total governance events`,
+    '# HELP governance_events_total Governance events (DB)',
     `governance_events_total ${w6.governance_events_total}`,
-    `# HELP audit_logs_count Total audit log entries`,
+    '# HELP audit_logs_total Operator audit log entries (DB)',
     `audit_logs_total ${w6.audit_logs_total}`,
-    `# HELP rfc_count RFC registry entries`,
+    '# HELP operator_overrides_total Operator override actions (DB)',
     `operator_overrides_total ${w6.operator_overrides_total}`,
-    `# HELP uptime_seconds Process uptime`,
+    '# HELP uptime_seconds Process uptime in seconds',
     `uptime_seconds ${process.uptime().toFixed(2)}`,
   ];
   res.send(lines.join('\n') + '\n');
@@ -581,7 +598,7 @@ app.get('/', (req, res) => {
 });
 
 
-app.get('/debug/env', (req, res) => {
+app.get('/debug/env', requireAuth, (req, res) => {
   const safeVars = {
     DATABASE_URL: process.env.DATABASE_URL ? `set (${process.env.DATABASE_URL.length} chars)` : 'NOT SET',
     REDIS_URL: process.env.REDIS_URL ? `set (${process.env.REDIS_URL.length} chars)` : 'NOT SET',
@@ -910,7 +927,7 @@ app.get('/api/provider/:providerId', async (req, res) => {
   }
 });
 
-app.post('/api/operator/provider/:providerId/approve', async (req, res) => {
+app.post('/api/operator/provider/:providerId/approve', requireAuth, async (req, res) => {
   try {
     const { reviewer } = req.body;
     const application = await approveProviderApplication(pool, req.params.providerId, reviewer || 'operator');
@@ -925,7 +942,7 @@ app.post('/api/operator/provider/:providerId/approve', async (req, res) => {
   }
 });
 
-app.post('/api/operator/provider/:providerId/regenerate-key', async (req, res) => {
+app.post('/api/operator/provider/:providerId/regenerate-key', requireAuth, async (req, res) => {
   try {
     const application = await regenerateProviderApiKey(pool, req.params.providerId);
     res.json({
@@ -939,7 +956,7 @@ app.post('/api/operator/provider/:providerId/regenerate-key', async (req, res) =
   }
 });
 
-app.post('/api/operator/provider/:providerId/reject', async (req, res) => {
+app.post('/api/operator/provider/:providerId/reject', requireAuth, async (req, res) => {
   try {
     const { reviewer } = req.body;
     const application = await rejectProviderApplication(pool, req.params.providerId, reviewer || 'operator');
@@ -981,7 +998,7 @@ app.get('/evidence/live', async (req, res) => {
   }
 });
 
-app.post('/api/operator/evidence/refresh', async (req, res) => {
+app.post('/api/operator/evidence/refresh', requireAuth, async (req, res) => {
   try {
     const manifest = generateEvidenceManifest();
     const saved = saveEvidenceManifest(manifest);

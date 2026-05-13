@@ -45,6 +45,37 @@ export const freezeState = {
   governance: false,
 };
 
+// ─── Relay Metrics (in-process counters, reset on restart) ───────────────────
+export const relayMetrics = {
+  sent_total: 0,
+  route_total: 0,
+  errors_total: 0,
+  timeouts_total: 0,
+  fallback_total: 0,
+  last_latency_ms: 0,
+  drift_ratio: 0,   // fallback_total / route_total
+};
+
+export function getRelayMetrics() {
+  return {
+    ...relayMetrics,
+    relay_frozen: freezeState.relay,
+    memory_frozen: freezeState.memory,
+    governance_paused: freezeState.governance,
+  };
+}
+
+const RELAY_TIMEOUT_MS = parseInt(process.env.RELAY_TIMEOUT_MS || '8000', 10);
+
+function withDbTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`DB_TIMEOUT: ${label} exceeded ${RELAY_TIMEOUT_MS}ms`)), RELAY_TIMEOUT_MS)
+    )
+  ]);
+}
+
 // Trust tier from score
 function trustTier(score: number): { tier: string; status: string; permissions: string[] } {
   if (score >= 900) return { tier: 'T4', status: 'ORACLE',      permissions: ['route','relay','memory_write','governance','review'] };
@@ -200,6 +231,8 @@ export function createWave3Router(pool: pg.Pool): Router {
 
   // ── POST /api/relay/send ──────────────────────────────────────────────────
   router.post('/relay/send', async (req: Request, res: Response) => {
+    const t0 = Date.now();
+    relayMetrics.sent_total++;
     if (freezeState.relay) {
       return res.status(503).json({ error: 'RELAY_FROZEN', message: 'Relay is frozen by operator' });
     }
@@ -212,10 +245,11 @@ export function createWave3Router(pool: pg.Pool): Router {
     const payload_hash = sha256(JSON.stringify(body));
 
     // Get previous hash for chain
-    let previous_hash = '0000000000000000000000000000000000000000000000000000000000000000';
+    let previous_hash = '0'.repeat(64);
     try {
-      const prev = await pool.query(
-        'SELECT current_hash FROM relay_events ORDER BY created_at DESC LIMIT 1'
+      const prev = await withDbTimeout(
+        pool.query('SELECT current_hash FROM relay_events ORDER BY created_at DESC LIMIT 1'),
+        'relay/send chain-lookup'
       );
       if (prev.rows.length > 0 && prev.rows[0].current_hash) {
         previous_hash = prev.rows[0].current_hash;
@@ -225,37 +259,48 @@ export function createWave3Router(pool: pg.Pool): Router {
     const current_hash = sha256(previous_hash + payload_hash + trace_id);
 
     // Trust check
-    let trust_tier_val = 'T0';
+    let trust_tier_val = 'T1';
     try {
-      const agent = await pool.query('SELECT trust_score, trust_tier FROM agents WHERE did = $1', [body.src_did]);
+      const agent = await withDbTimeout(
+        pool.query('SELECT trust_score, trust_tier FROM agents WHERE did = $1', [body.src_did]),
+        'relay/send trust-lookup'
+      );
       if (agent.rows.length > 0) {
         trust_tier_val = agent.rows[0].trust_tier || 'T1';
-      } else {
-        trust_tier_val = 'T1'; // unknown agent: probation
       }
     } catch (_) {}
 
     const date = new Date().toISOString().slice(0, 10);
     const replay_log_path = `logs/replay/relay-${date}.jsonl`;
 
-    // Save to DB
+    // Save to DB (degraded mode: if timeout, still accept relay as received_offline)
+    let db_status = 'received';
     try {
-      await pool.query(
-        `INSERT INTO relay_events
-           (trace_id, intent_id, src_did, dst_did, route_status, semantic_score,
-            fallback_used, payload_hash, previous_hash, current_hash, replay_log_path)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [
-          trace_id, body.intent_id || null, body.src_did, body.dst_did || null,
-          'received', body.semantic?.similarity || 0,
-          false, payload_hash, previous_hash, current_hash, replay_log_path
-        ]
+      await withDbTimeout(
+        pool.query(
+          `INSERT INTO relay_events
+             (trace_id, intent_id, src_did, dst_did, route_status, semantic_score,
+              fallback_used, payload_hash, previous_hash, current_hash, replay_log_path)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+          [
+            trace_id, body.intent_id || null, body.src_did, body.dst_did || null,
+            'received', body.semantic?.similarity || 0,
+            false, payload_hash, previous_hash, current_hash, replay_log_path
+          ]
+        ),
+        'relay/send DB-insert'
       );
     } catch (e) {
-      console.warn('[relay/send] DB insert error:', (e as Error).message);
+      const msg = (e as Error).message;
+      relayMetrics.errors_total++;
+      if (msg.startsWith('DB_TIMEOUT')) relayMetrics.timeouts_total++;
+      db_status = 'received_offline';
+      console.warn('[relay/send] degraded mode:', msg);
     }
 
-    // JSONL replay log
+    relayMetrics.last_latency_ms = Date.now() - t0;
+
+    // JSONL replay log (always, even in degraded mode)
     appendReplayLog({
       trace_id, ts: new Date().toISOString(),
       event: 'relay.send',
@@ -263,21 +308,25 @@ export function createWave3Router(pool: pg.Pool): Router {
       intent_type: body.intent?.type,
       payload_hash, previous_hash, current_hash,
       trust_tier: trust_tier_val,
+      db_status,
+      latency_ms: relayMetrics.last_latency_ms,
     });
 
     res.status(201).json({
       success: true,
       trace_id,
-      status: 'received',
+      status: db_status,
       trust_tier: trust_tier_val,
       hash: current_hash,
       replay_log: replay_log_path,
+      latency_ms: relayMetrics.last_latency_ms,
       timestamp: new Date().toISOString(),
     });
   });
 
   // ── POST /api/relay/route ─────────────────────────────────────────────────
   router.post('/relay/route', async (req: Request, res: Response) => {
+    relayMetrics.route_total++;
     if (freezeState.relay) {
       return res.status(503).json({ error: 'RELAY_FROZEN' });
     }
@@ -291,7 +340,10 @@ export function createWave3Router(pool: pg.Pool): Router {
     let score = trust?.score || 100;
     let tier = trust?.tier;
     try {
-      const agent = await pool.query('SELECT trust_score, trust_tier FROM agents WHERE did = $1', [src_did]);
+      const agent = await withDbTimeout(
+        pool.query('SELECT trust_score, trust_tier FROM agents WHERE did = $1', [src_did]),
+        'relay/route trust-lookup'
+      );
       if (agent.rows.length > 0) {
         score = agent.rows[0].trust_score;
         tier = agent.rows[0].trust_tier;
@@ -307,27 +359,32 @@ export function createWave3Router(pool: pg.Pool): Router {
       });
     }
 
-    // Routing logic P0: syntactic fallback (no Qdrant yet)
+    // Routing logic: syntactic fallback (Qdrant semantic routing not yet provisioned)
     const fallback_used = !intent_embedding;
     let target_did: string | null = null;
-    let route_type = 'syntactic_fallback';
+    let route_type = fallback_used ? 'syntactic_fallback' : 'semantic';
+    let route_confidence = fallback_used ? 0.4 : 0.9; // semantic = 0.9 placeholder
 
-    if (!fallback_used) {
-      route_type = 'semantic';
+    if (fallback_used) {
+      relayMetrics.fallback_total++;
+      relayMetrics.drift_ratio = relayMetrics.fallback_total / relayMetrics.route_total;
     }
 
     // Find candidate agents with matching capabilities
     try {
-      const caps = intent?.type || 'relay';
-      const candidates = await pool.query(
-        `SELECT did, trust_score, trust_tier, capability_manifest
-         FROM agents
-         WHERE status = 'active' AND did != $1
-         ORDER BY trust_score DESC LIMIT 5`,
-        [src_did]
+      const candidates = await withDbTimeout(
+        pool.query(
+          `SELECT did, trust_score, trust_tier, capability_manifest
+           FROM agents
+           WHERE status = 'active' AND did != $1
+           ORDER BY trust_score DESC LIMIT 5`,
+          [src_did]
+        ),
+        'relay/route candidates'
       );
       if (candidates.rows.length > 0) {
         target_did = candidates.rows[0].did;
+        if (fallback_used) route_confidence = 0.5 + (candidates.rows[0].trust_score / 2000);
       }
     } catch (_) {}
 
@@ -337,11 +394,14 @@ export function createWave3Router(pool: pg.Pool): Router {
 
     // Save relay event
     try {
-      await pool.query(
-        `INSERT INTO relay_events
-           (trace_id, src_did, dst_did, route_status, fallback_used, payload_hash, current_hash)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [trace_id, src_did, target_did, 'routed', fallback_used, payload_hash, current_hash]
+      await withDbTimeout(
+        pool.query(
+          `INSERT INTO relay_events
+             (trace_id, src_did, dst_did, route_status, fallback_used, payload_hash, current_hash)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [trace_id, src_did, target_did, 'routed', fallback_used, payload_hash, current_hash]
+        ),
+        'relay/route DB-insert'
       );
     } catch (_) {}
 
@@ -349,13 +409,14 @@ export function createWave3Router(pool: pg.Pool): Router {
       trace_id, ts: new Date().toISOString(),
       event: 'relay.route',
       src_did, target_did, route_type, fallback_used,
-      payload_hash, current_hash,
+      route_confidence, payload_hash, current_hash,
     });
 
     res.json({
       trace_id,
       target_did,
       route_type,
+      route_confidence: parseFloat(route_confidence.toFixed(4)),
       fallback_used,
       trust_tier: tierInfo.tier,
       hash: current_hash,
@@ -664,6 +725,39 @@ export function createWave3Router(pool: pg.Pool): Router {
     }
   });
 
+  // ── GET /api/relay/status ── drift baseline + metrics ────────────────────────
+  router.get('/relay/status', async (_req: Request, res: Response) => {
+    let db_relay_count = 0;
+    let db_fallback_count = 0;
+    try {
+      const r = await pool.query('SELECT COUNT(*) FROM relay_events');
+      db_relay_count = +r.rows[0].count;
+      const f = await pool.query('SELECT COUNT(*) FROM relay_events WHERE fallback_used = TRUE');
+      db_fallback_count = +f.rows[0].count;
+    } catch (_) {}
+
+    const drift = db_relay_count > 0 ? db_fallback_count / db_relay_count : 0;
+    res.json({
+      relay_frozen: freezeState.relay,
+      in_process: {
+        sent_total: relayMetrics.sent_total,
+        route_total: relayMetrics.route_total,
+        errors_total: relayMetrics.errors_total,
+        timeouts_total: relayMetrics.timeouts_total,
+        fallback_total: relayMetrics.fallback_total,
+        last_latency_ms: relayMetrics.last_latency_ms,
+        drift_ratio: parseFloat(relayMetrics.drift_ratio.toFixed(4)),
+      },
+      db: {
+        relay_events_total: db_relay_count,
+        fallback_events_total: db_fallback_count,
+        semantic_drift_ratio: parseFloat(drift.toFixed(4)),
+        semantic_mode: 'syntactic_fallback_until_qdrant',
+      },
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   return router;
 }
 
@@ -755,6 +849,32 @@ export function createOperatorRouter(pool: pg.Pool): Router {
         `SELECT * FROM operator_actions ORDER BY created_at DESC LIMIT 1000`
       );
       res.json(rows.rows);
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
+  // Relay replay log reader (last N events from DB)
+  router.get('/relay/replay', async (req: Request, res: Response) => {
+    const limit = Math.min(parseInt((req.query.limit as string) || '100', 10), 1000);
+    const since = req.query.since as string | undefined;
+    try {
+      const params: any[] = [limit];
+      const sinceClause = since ? 'AND created_at > $2' : '';
+      if (since) params.push(since);
+      const rows = await pool.query(
+        `SELECT trace_id, intent_id, src_did, dst_did, route_status, fallback_used,
+                payload_hash, previous_hash, current_hash, created_at
+         FROM relay_events
+         WHERE 1=1 ${sinceClause}
+         ORDER BY created_at DESC LIMIT $1`,
+        params
+      );
+      res.json({
+        events: rows.rows,
+        count: rows.rows.length,
+        replay_integrity: rows.rows.length > 0 ? 'hash_chain_available' : 'empty',
+      });
     } catch (e) {
       res.status(500).json({ error: (e as Error).message });
     }

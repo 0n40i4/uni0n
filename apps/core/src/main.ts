@@ -496,28 +496,6 @@ app.post('/api/operator/unfreeze-memory', async (req, res) => {
     res.status(500).json({ error: (error as Error).message });
   }
 });
-
-
-// ============ INITIALIZE ROUTERS ============
-const k0nsultatRouter = createK0nsultatRouter(pool);
-app.use('/api/k0nsulat', k0nsultatRouter);
-
-const wave6Router = createWave6Router(pool);
-app.use('/api', wave6Router);
-
-const wave7Router = createWave7Router(pool, redisClient);
-app.use('/api', wave7Router);
-
-app.listen(PORT as number, async () => {
-  console.log(`Starting UNIONAI Core API on port ${PORT}`);
-  await initRedis();
-  await runMigrations();
-  console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
-  console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
-  console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
-  console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
-});
-
 app.get('/metrics/federation', async (req, res) => {
   try {
     const relayCount = await pool.query('SELECT COUNT(*) FROM relay_events').then(r => +r.rows[0].count).catch(() => 0);
@@ -769,5 +747,17 @@ app.post('/api/operator/evidence/refresh', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
+});
+
+
+// ============ START SERVER ============
+app.listen(PORT as number, async () => {
+  console.log(`Starting UNIONAI Core API on port ${PORT}`);
+  await initRedis();
+  await runMigrations();
+  console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
+  console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
+  console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);
+  console.log(`  Redis status: ${redisConnected ? 'connected' : 'optional fallback'}`);
 });
 

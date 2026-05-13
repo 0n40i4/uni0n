@@ -118,20 +118,39 @@ let redisClient: any = null;
 let redisConnected = false;
 
 async function initRedis() {
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  console.log(`Attempting Redis connection: ${redisUrl}`);
+  let connectTimeout: ReturnType<typeof setTimeout> | null = null;
   try {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    console.log(`Attempting Redis connection: ${redisUrl}`);
-    redisClient = redis.createClient({ url: redisUrl });
+    redisClient = redis.createClient({
+      url: redisUrl,
+      socket: {
+        reconnectStrategy: false,        // don't retry — fail fast
+        connectTimeout: 3000,            // 3s connect timeout
+      }
+    });
     redisClient.on('error', (err: Error) => {
-      console.warn('Redis connection error:', err.message);
+      // Only log first error, suppress the rest to avoid log flooding
+      if (redisConnected !== false) {
+        console.warn('[redis] connection error (Redis is optional):', err.message);
+      }
       redisConnected = false;
     });
-    await redisClient.connect();
+    // Race connect() against a 4-second timeout so startup never hangs
+    await Promise.race([
+      redisClient.connect(),
+      new Promise<never>((_, reject) => {
+        connectTimeout = setTimeout(() => reject(new Error('Redis connect timeout (4s)')), 4000);
+      })
+    ]);
+    if (connectTimeout) clearTimeout(connectTimeout);
     redisConnected = true;
     console.log('Redis connected successfully');
   } catch (error) {
-    console.warn('Failed to connect to Redis:', (error as Error).message);
+    if (connectTimeout) clearTimeout(connectTimeout);
+    console.warn('[redis] unavailable (non-fatal):', (error as Error).message);
     redisConnected = false;
+    try { await redisClient?.quit(); } catch (_) { /* ignore */ }
     redisClient = null;
   }
 }

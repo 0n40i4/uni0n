@@ -346,13 +346,45 @@ app.get('/api/leaderboard', (req, res) => res.json({
   total_agents: 0, leaderboard: []
 }));
 
-app.post('/api/relay/send', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/relay/route', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/agent/register', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/trust/verify', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/memory/anchor', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/memory/query', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
-app.post('/api/governance/event', (req, res) => res.status(501).json({ error: 'nie zaimplementowano' }));
+// Wave endpoints are mounted via createWave6Router/createWave7Router after init.
+// Keep only /api/agent/register here (DB insert), because it's not provided by wave routers.
+app.post('/api/agent/register', async (req, res) => {
+  try {
+    const { did, provider, capabilities, operator_did, status } = req.body || {};
+    if (!did) {
+      return res.status(400).json({ error: 'missing_fields', required: ['did'] });
+    }
+    if (!String(did).startsWith('did:')) {
+      return res.status(400).json({ error: 'invalid_did', message: 'did must start with did:' });
+    }
+
+    const capabilitiesText = Array.isArray(capabilities)
+      ? capabilities.join(',')
+      : (typeof capabilities === 'string' ? capabilities : '');
+
+    const insert = await pool.query(
+      `INSERT INTO agents (did, provider, capabilities, status)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (did) DO UPDATE SET
+         provider = EXCLUDED.provider,
+         capabilities = EXCLUDED.capabilities,
+         status = EXCLUDED.status
+       RETURNING id, did, provider, capabilities, status, created_at`,
+      [did, provider || 'unknown', capabilitiesText, status || 'active']
+    );
+
+    const traceId = crypto.randomUUID();
+    await pool.query(
+      `INSERT INTO governance_events (trace_id,event_type,operator_did,target,action,status)
+       VALUES ($1,'agent_register',$2,$3,'register','recorded')`,
+      [traceId, operator_did || 'operator', did]
+    ).catch(() => {});
+
+    res.status(201).json({ success: true, trace_id: traceId, agent: insert.rows[0] });
+  } catch (e: any) {
+    res.status(500).json({ error: 'db_error', message: e.message });
+  }
+});
 
 // ============ SECURITY: All /api/operator/* require JWT + tighter rate limit ============
 app.use('/api/operator', requireAuth, operatorRateLimit);

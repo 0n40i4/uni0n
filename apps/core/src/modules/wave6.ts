@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import * as pg from 'pg';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // === WAVE 6 MIGRATIONS ===
 
@@ -132,6 +134,17 @@ async function getPrevHash(pool: pg.Pool): Promise<string> {
   return lastHash;
 }
 
+const REPLAY_LOG_DIR = process.env.REPLAY_LOG_DIR || path.join(process.cwd(), 'logs', 'replay');
+
+function appendReplayLog(traceId: string, payload: any): string {
+  fs.mkdirSync(REPLAY_LOG_DIR, { recursive: true });
+  const day = new Date().toISOString().slice(0, 10);
+  const filePath = path.join(REPLAY_LOG_DIR, `relay-${day}.jsonl`);
+  const row = JSON.stringify({ trace_id: traceId, ts: new Date().toISOString(), ...payload });
+  fs.appendFileSync(filePath, row + '\n', 'utf8');
+  return filePath;
+}
+
 async function writeAudit(pool: pg.Pool, opts: {
   trace_id?: string; event_type: string; actor_did: string;
   operator_id?: string; action: string; payload?: any;
@@ -176,8 +189,16 @@ export function createWave6Router(pool: pg.Pool): Router {
          VALUES ($1,$2,$3,'accepted',1.0,false,$4)`,
         [p.intent_id, p.src_did, p.dst_did, traceId]
       );
-      await writeAudit(pool, { trace_id: traceId, event_type: 'relay_send', actor_did: p.src_did, action: 'relay/send', payload: { intent_id: p.intent_id } });
-      res.status(202).json({ accepted: true, trace_id: traceId, intent_id: p.intent_id, status: 'accepted' });
+      const replayPath = appendReplayLog(traceId, {
+        event_type: 'relay_send',
+        intent_id: p.intent_id,
+        src_did: p.src_did,
+        dst_did: p.dst_did,
+        protocol: p.protocol,
+        timestamp: p.timestamp,
+      });
+      await writeAudit(pool, { trace_id: traceId, event_type: 'relay_send', actor_did: p.src_did, action: 'relay/send', payload: { intent_id: p.intent_id, replay_path: replayPath } });
+      res.status(202).json({ accepted: true, trace_id: traceId, intent_id: p.intent_id, status: 'accepted', replay_log: replayPath });
     } catch (e: any) { res.status(500).json({ error: 'db_error', message: e.message }); }
   });
 

@@ -2,6 +2,7 @@ import express from 'express';
 import * as pg from 'pg';
 import * as redis from 'redis';
 import { createK0nsultatRouter } from './modules/k0nsulat';
+import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { Feed } from 'feed';
 
 const app = express();
@@ -81,7 +82,31 @@ app.get('/health', async (req, res) => {
   });
 });
 
-app.get('/metrics', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+app.get('/metrics', async (req, res) => {
+  const w6 = await getWave6Metrics(pool);
+  const agentCount = await pool.query('SELECT COUNT(*) FROM agents').then(r => +r.rows[0].count).catch(() => 0);
+  res.set('Content-Type', 'text/plain');
+  const lines = [
+    '# UNIONAI Prometheus-style metrics',
+    `# HELP relay_count Total relay events`,
+    `relay_count ${w6.relay_count}`,
+    `# HELP agent_count Registered agents`,
+    `agent_count ${agentCount}`,
+    `# HELP memory_anchor_count Total memory anchors`,
+    `memory_anchor_count ${w6.memory_anchor_count}`,
+    `# HELP trust_events_count Total trust events`,
+    `trust_events_count ${w6.trust_events_count}`,
+    `# HELP governance_events_count Total governance events`,
+    `governance_events_count ${w6.governance_events_count}`,
+    `# HELP audit_logs_count Total audit log entries`,
+    `audit_logs_count ${w6.audit_logs_count}`,
+    `# HELP rfc_count RFC registry entries`,
+    `rfc_count ${w6.rfc_count}`,
+    `# HELP uptime_seconds Process uptime`,
+    `uptime_seconds ${process.uptime().toFixed(2)}`,
+  ];
+  res.send(lines.join('\n') + '\n');
+});
 
 app.get('/.well-known/agent.json', (req, res) => {
   res.json({
@@ -312,7 +337,9 @@ async function runMigrations() {
   `;
   try {
     await pool.query(migrationSql);
+    await pool.query(WAVE6_MIGRATIONS);
     console.log('K0NSULAT migrations applied successfully');
+    console.log('WAVE6 migrations applied successfully');
   } catch (error) {
     console.error('Migration error:', error);
   }
@@ -343,6 +370,8 @@ app.listen(PORT as number, async () => {
   await runMigrations();
   const k0nsultatRouter = createK0nsultatRouter(pool);
   app.use('/api/k0nsulat', k0nsultatRouter);
+  const wave6Router = createWave6Router(pool);
+  app.use('/api', wave6Router);
   console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
   console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);
   console.log(`  Redis: ${process.env.REDIS_URL ? 'configured' : 'localhost (default)'}`);

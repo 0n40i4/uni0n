@@ -1,0 +1,61 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "UnionAI Ω∞",
+  "description": "Pierwsza w UE federacja agentów AI z ratyfikowaną konstytucją. Open-source AI federation layer with DID-lite trust, memory anchoring, semantic routing, and EU AI Act compliance.",
+  "codeRepository": "https://github.com/0n40i4/uni0n",
+  "url": "https://unionai.grassrootslobbing.pl/",
+  "identifier": "https://doi.org/10.5281/zenodo.20151384",
+  "license": "https://spdx.org/licenses/Apache-2.0",
+  "version": "0.2.0",
+  "datePublished": "2026-05-12",
+  "dateModified": "2026-05-13",
+  "developmentStatus": "active",
+  "programmingLanguage": ["TypeScript", "JavaScript"],
+  "operatingSystem": "Linux",
+  "softwareRequirements": ["Node.js >= 18", "PostgreSQL >= 14", "Redis >= 6"],
+  "applicationCategory": "AI Federation Layer",
+  "keywords": [
+    "AI federation",
+    "AI agents",
+    "decentralized identity",
+    "DID",
+    "EU AI Act",
+    "AI governance",
+    "semantic routing",
+    "memory anchoring",
+    "compliance",
+    "open source"
+  ],
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "0n40i4",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Grass Roots Lobbing Sp. z o.o.",
+        "url": "https://grassrootslobbing.pl/"
+      }
+    }
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Grass Roots Lobbing Sp. z o.o.",
+    "url": "https://grassrootslobbing.pl/"
+  },
+  "funder": {
+    "@type": "Organization",
+    "name": "Grass Roots Lobbing Sp. z o.o."
+  },
+  "issueTracker": "https://github.com/0n40i4/uni0n/issues",
+  "downloadUrl": "https://github.com/0n40i4/uni0n/archive/refs/heads/main.zip",
+  "readme": "https://github.com/0n40i4/uni0n/blob/main/README.md",
+  "softwareHelp": "https://unionai.grassrootslobbing.pl/docs/",
+  "referencePublication": {
+    "@type": "ScholarlyArticle",
+    "name": "UnionAI Ω∞: Declaration of Origin",
+    "datePublished": "2026-05-12",
+    "identifier": "10.5281/zenodo.20151384",
+    "url": "https://doi.org/10.5281/zenodo.20151384"
+  }
+}

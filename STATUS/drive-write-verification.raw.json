@@ -1,0 +1,53 @@
+{
+  "task_id": "DRIVE-WRITE-VERIFY-P0",
+  "trace_id": "trace-de21c3f9b22a4bc4",
+  "timestamp_start": "2026-05-13T23:45:25.843444+00:00",
+  "target_folder_id": "1hoSPochjVE0FNWRDJ79G2q3S-vRq_MgM",
+  "storage_path": "UNIONAI/K0NSULT-EVIDENCE",
+  "claim_level": "BLOCKED",
+  "steps": {
+    "upload": {
+      "status": "BLOCKED",
+      "timestamp": "2026-05-13T23:45:31.907862+00:00",
+      "error": "<HttpError 403 when requesting https://www.googleapis.com/upload/drive/v3/files?fields=id%2Cname%2CmodifiedTime%2Cmd5Checksum%2Csize&supportsAllDrives=true&alt=json&uploadType=multipart returned \"Service Accounts do not have storage quota. Leverage shared drives (https://developers.google.com/workspace/drive/api/guides/about-shareddrives), or use OAuth delegation (http://support.google.com/a/answer/7281227) instead.\". Details: \"[{'message': 'Service Accounts do not have storage quota. Leverage shared drives (https://developers.google.com/workspace/drive/api/guides/about-shareddrives), or use OAuth delegation (http://support.google.com/a/answer/7281227) instead.', 'domain': 'usageLimits', 'reason': 'storageQuotaExceeded'}]\">"
+    },
+    "list": {
+      "status": "VERIFIED",
+      "timestamp": "2026-05-13T23:45:32.185378+00:00",
+      "count": 0,
+      "contains_uploaded": false
+    },
+    "overwrite": {
+      "status": "BLOCKED",
+      "timestamp": "2026-05-13T23:45:32.185413+00:00",
+      "error": "upload_not_available"
+    },
+    "delete": {
+      "status": "BLOCKED",
+      "timestamp": "2026-05-13T23:45:32.185427+00:00",
+      "error": "upload_not_available"
+    },
+    "audit_trace": {
+      "status": "VERIFIED",
+      "timestamp": "2026-05-13T23:45:32.185439+00:00",
+      "audit_ref": "STATUS/drive-write-verification.md",
+      "trace_id": "trace-de21c3f9b22a4bc4"
+    },
+    "claim_tagging_persistence": {
+      "status": "VERIFIED",
+      "timestamp": "2026-05-13T23:45:32.185453+00:00",
+      "claim_tags": [
+        "VERIFIED",
+        "SELF-ASSERTED",
+        "BLOCKED",
+        "ROADMAP"
+      ],
+      "persistence_ref": "STATUS/drive-write-verification.md"
+    }
+  },
+  "artifact": {
+    "path": "/home/kopernik/uni0n/EVIDENCE/2026-05-14/WAVE3/lem-wave3-l001.patch",
+    "sha256": "1efc303500dfc33a282ed06545bd3d26748863c7aa816142575b2d429af035f0"
+  },
+  "timestamp_end": "2026-05-13T23:45:32.185478+00:00"
+}

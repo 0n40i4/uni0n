@@ -1,1 +1,12 @@
-{"extends":"../../tsconfig.json","compilerOptions":{"jsx":"react-jsx","outDir":"./dist","rootDir":"./src"},"include":["src/**/*"]}
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*"]
+}

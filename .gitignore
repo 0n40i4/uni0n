@@ -10,3 +10,10 @@ build/
 postgres_data/
 redis_data/
 .worktrees/
+
+# Secrets / OAuth runtime (operator-controlled, never archived)
+.secrets/
+**/*oauth*token*.json
+**/*oauth*client*.json
+**/credentials*.json
+**/client_secret*.json

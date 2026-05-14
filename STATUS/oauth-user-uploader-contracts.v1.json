@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_version": "v1",
+  "status": "GO_CONTROLLED++",
+  "claim_levels": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"],
+  "common": {
+    "headers_required": ["Authorization: Bearer <JWT>", "X-Trace-Id: <uuid|ulid>", "Content-Type: application/json"],
+    "forbidden": [
+      "silent overwrite",
+      "hidden delete",
+      "autonomous canonical replace",
+      "upload without trace_id",
+      "upload without audit metadata"
+    ],
+    "mandatory_response_fields": [
+      "trace_id",
+      "status",
+      "claim_level",
+      "timestamp",
+      "operator_scope",
+      "runtime_id",
+      "artifact_hash",
+      "storage_path",
+      "rollback_reference"
+    ],
+    "mandatory_error_fields": [
+      "error_code",
+      "error_type",
+      "claim_level",
+      "retryable",
+      "audit_required",
+      "trace_id"
+    ],
+    "audit_metadata_fields": [
+      "operator_id",
+      "session_id",
+      "approval_ref",
+      "reason",
+      "source_of_truth_ref"
+    ]
+  },
+  "endpoints": {
+    "POST /api/operator/drive/upload": {
+      "request_schema": {
+        "type": "object",
+        "required": [
+          "trace_id",
+          "runtime_id",
+          "operator_scope",
+          "claim_level",
+          "artifact",
+          "audit_metadata",
+          "rollback_metadata"
+        ],
+        "properties": {
+          "trace_id": {"type": "string", "minLength": 8},
+          "runtime_id": {"type": "string"},
+          "operator_scope": {"type": "string", "enum": ["drive.upload", "drive.write", "operator.admin"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "artifact": {
+            "type": "object",
+            "required": ["name", "mime_type", "content_base64", "artifact_hash", "target_folder_id"],
+            "properties": {
+              "name": {"type": "string"},
+              "mime_type": {"type": "string"},
+              "content_base64": {"type": "string"},
+              "artifact_hash": {"type": "string"},
+              "target_folder_id": {"type": "string"}
+            }
+          },
+          "audit_metadata": {"$ref": "#/$defs/audit_metadata"},
+          "rollback_metadata": {"$ref": "#/$defs/rollback_metadata"}
+        },
+        "additionalProperties": false
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["trace_id", "status", "claim_level", "timestamp", "operator_scope", "runtime_id", "artifact_hash", "storage_path", "rollback_reference", "file_id"],
+        "properties": {
+          "trace_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["ok", "blocked", "failed"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "operator_scope": {"type": "string"},
+          "runtime_id": {"type": "string"},
+          "artifact_hash": {"type": "string"},
+          "storage_path": {"type": "string"},
+          "rollback_reference": {"type": "string"},
+          "file_id": {"type": "string"}
+        },
+        "additionalProperties": false
+      },
+      "error_schema": {"$ref": "#/$defs/error"}
+    },
+    "POST /api/operator/drive/overwrite": {
+      "request_schema": {
+        "type": "object",
+        "required": ["trace_id", "runtime_id", "operator_scope", "claim_level", "target_file_id", "artifact", "audit_metadata", "rollback_metadata"],
+        "properties": {
+          "trace_id": {"type": "string", "minLength": 8},
+          "runtime_id": {"type": "string"},
+          "operator_scope": {"type": "string", "enum": ["drive.overwrite", "drive.write", "operator.admin"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "target_file_id": {"type": "string"},
+          "artifact": {
+            "type": "object",
+            "required": ["mime_type", "content_base64", "artifact_hash"],
+            "properties": {
+              "mime_type": {"type": "string"},
+              "content_base64": {"type": "string"},
+              "artifact_hash": {"type": "string"}
+            }
+          },
+          "audit_metadata": {"$ref": "#/$defs/audit_metadata"},
+          "rollback_metadata": {"$ref": "#/$defs/rollback_metadata"}
+        },
+        "additionalProperties": false
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["trace_id", "status", "claim_level", "timestamp", "operator_scope", "runtime_id", "artifact_hash", "storage_path", "rollback_reference", "file_id", "previous_revision"],
+        "properties": {
+          "trace_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["ok", "blocked", "failed"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "operator_scope": {"type": "string"},
+          "runtime_id": {"type": "string"},
+          "artifact_hash": {"type": "string"},
+          "storage_path": {"type": "string"},
+          "rollback_reference": {"type": "string"},
+          "file_id": {"type": "string"},
+          "previous_revision": {"type": "string"}
+        },
+        "additionalProperties": false
+      },
+      "error_schema": {"$ref": "#/$defs/error"}
+    },
+    "POST /api/operator/drive/delete": {
+      "request_schema": {
+        "type": "object",
+        "required": ["trace_id", "runtime_id", "operator_scope", "claim_level", "target_file_id", "audit_metadata", "rollback_metadata"],
+        "properties": {
+          "trace_id": {"type": "string", "minLength": 8},
+          "runtime_id": {"type": "string"},
+          "operator_scope": {"type": "string", "enum": ["drive.delete", "operator.admin"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "target_file_id": {"type": "string"},
+          "audit_metadata": {"$ref": "#/$defs/audit_metadata"},
+          "rollback_metadata": {"$ref": "#/$defs/rollback_metadata"}
+        },
+        "additionalProperties": false
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["trace_id", "status", "claim_level", "timestamp", "operator_scope", "runtime_id", "artifact_hash", "storage_path", "rollback_reference", "file_id", "deleted"],
+        "properties": {
+          "trace_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["ok", "blocked", "failed"]},
+          "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "operator_scope": {"type": "string"},
+          "runtime_id": {"type": "string"},
+          "artifact_hash": {"type": ["string", "null"]},
+          "storage_path": {"type": "string"},
+          "rollback_reference": {"type": "string"},
+          "file_id": {"type": "string"},
+          "deleted": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      },
+      "error_schema": {"$ref": "#/$defs/error"}
+    }
+  },
+  "$defs": {
+    "audit_metadata": {
+      "type": "object",
+      "required": ["operator_id", "session_id", "approval_ref", "reason", "source_of_truth_ref"],
+      "properties": {
+        "operator_id": {"type": "string"},
+        "session_id": {"type": "string"},
+        "approval_ref": {"type": "string"},
+        "reason": {"type": "string"},
+        "source_of_truth_ref": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "rollback_metadata": {
+      "type": "object",
+      "required": ["rollback_reference", "rollback_strategy"],
+      "properties": {
+        "rollback_reference": {"type": "string"},
+        "rollback_strategy": {"type": "string", "enum": ["restore_previous_revision", "restore_from_pack", "manual_operator"]}
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["error_code", "error_type", "claim_level", "retryable", "audit_required", "trace_id"],
+      "properties": {
+        "error_code": {"type": "string"},
+        "error_type": {"type": "string", "enum": ["AUTH", "SCOPE", "VALIDATION", "FREEZE", "PROVIDER", "RATE_LIMIT", "INTERNAL"]},
+        "claim_level": {"type": "string", "enum": ["VERIFIED", "SELF_ASSERTED", "BLOCKED", "ROADMAP"]},
+        "retryable": {"type": "boolean"},
+        "audit_required": {"type": "boolean"},
+        "trace_id": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

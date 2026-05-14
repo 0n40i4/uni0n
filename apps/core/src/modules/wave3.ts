@@ -6,38 +6,73 @@
 
 import { Router, Request, Response } from 'express';
 import * as pg from 'pg';
+import * as http from 'http';
+import { URL } from 'url';
 import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import { QdrantClient } from '@qdrant/js-client-rest';
 
-// ─── Qdrant semantic routing ───────────────────────────────────────────────────
+// ─── Qdrant semantic routing (custom http.request client — bypasses fetch/undici IPv6 bugs) ──
 const QDRANT_COLLECTION = 'unionai-intents';
 const VECTOR_SIZE = 384;
 const QDRANT_TIMEOUT_MS = parseInt(process.env.QDRANT_TIMEOUT_MS || '8000', 10);
 
-let qdrantClient: QdrantClient | null = null;
 let qdrantReady = false;
-
-function getQdrant(): QdrantClient | null {
-  if (!process.env.QDRANT_URL) return null;
-  if (!qdrantClient) {
-    qdrantClient = new QdrantClient({ url: process.env.QDRANT_URL, timeout: QDRANT_TIMEOUT_MS });
-  }
-  return qdrantClient;
-}
-
 let _lastQdrantError = '';
 
+/** Parse QDRANT_URL into { hostname, port } stripping IPv6 brackets for http.request. */
+function parseQdrantURL(): { hostname: string; port: number } | null {
+  const raw = process.env.QDRANT_URL;
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    return { hostname: u.hostname, port: parseInt(u.port || '6333', 10) };
+  } catch {
+    return null;
+  }
+}
+
+/** Raw HTTP request to Qdrant using Node.js http module (family:6 forces IPv6 stack). */
+function qdrantRequest(method: string, urlPath: string, body?: object): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const addr = parseQdrantURL();
+    if (!addr) return reject(new Error('QDRANT_URL not configured'));
+    const bodyStr = body ? JSON.stringify(body) : '';
+    const opts: http.RequestOptions = {
+      hostname: addr.hostname,
+      port: addr.port,
+      path: urlPath,
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(bodyStr),
+      },
+      family: 6,
+      timeout: QDRANT_TIMEOUT_MS,
+    };
+    const req = http.request(opts, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(data ? JSON.parse(data) : {}); }
+        catch { resolve(data); }
+      });
+    });
+    req.on('timeout', () => { req.destroy(); reject(new Error('qdrant timeout')); });
+    req.on('error', reject);
+    if (bodyStr) req.write(bodyStr);
+    req.end();
+  });
+}
+
 async function ensureQdrantCollection(): Promise<boolean> {
-  const c = getQdrant();
-  if (!c) return false;
+  if (!process.env.QDRANT_URL) return false;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const existing = await c.getCollections();
-      const names = (existing.collections || []).map((col: any) => col.name);
+      const existing = await qdrantRequest('GET', '/collections');
+      const names = ((existing.result?.collections) || []).map((col: any) => col.name);
       if (!names.includes(QDRANT_COLLECTION)) {
-        await c.createCollection(QDRANT_COLLECTION, {
+        await qdrantRequest('PUT', `/collections/${QDRANT_COLLECTION}`, {
           vectors: { size: VECTOR_SIZE, distance: 'Cosine' },
         });
         console.log(`[qdrant] created collection ${QDRANT_COLLECTION}`);
@@ -82,14 +117,12 @@ function keywordVector(text: string): number[] {
 async function upsertIntentVector(
   trace_id: string, intent_id: string, src_did: string, dst_did: string, intent_text: string
 ): Promise<boolean> {
-  const c = getQdrant();
-  if (!c || !qdrantReady) return false;
+  if (!qdrantReady) return false;
   try {
     const vec = keywordVector(intent_text);
     const uid = crypto.createHash('md5').update(trace_id).digest('hex').slice(0, 8) +
                 crypto.createHash('md5').update(intent_id).digest('hex').slice(0, 24);
-    await c.upsert(QDRANT_COLLECTION, {
-      wait: false,
+    await qdrantRequest('PUT', `/collections/${QDRANT_COLLECTION}/points?wait=false`, {
       points: [{ id: uid, vector: vec, payload: { trace_id, intent_id, src_did, dst_did, intent_text, ts: new Date().toISOString() } }],
     });
     return true;
@@ -102,17 +135,14 @@ async function upsertIntentVector(
 async function searchSimilarIntents(
   intent_text: string, exclude_did: string, topK = 5
 ): Promise<Array<{ did: string; score: number }>> {
-  const c = getQdrant();
-  if (!c || !qdrantReady) return [];
+  if (!qdrantReady) return [];
   try {
     const vec = keywordVector(intent_text);
-    const results = await c.search(QDRANT_COLLECTION, {
+    const results = await qdrantRequest('POST', `/collections/${QDRANT_COLLECTION}/points/search`, {
       vector: vec, limit: topK, with_payload: true,
-      filter: {
-        must_not: [{ key: 'src_did', match: { value: exclude_did } }],
-      },
+      filter: { must_not: [{ key: 'src_did', match: { value: exclude_did } }] },
     });
-    return results
+    return ((results.result) || [])
       .filter((r: any) => r.score > 0.3)
       .map((r: any) => ({ did: r.payload?.dst_did || r.payload?.src_did || '', score: r.score }))
       .filter((r: any) => r.did && r.did !== exclude_did);
@@ -1174,30 +1204,28 @@ export function createWave3Router(pool: pg.Pool): Router {
     if (!process.env.QDRANT_URL) {
       return res.status(503).json({ status: 'not_configured', message: 'QDRANT_URL not set' });
     }
-    const c = getQdrant();
-    if (!c) {
-      return res.status(503).json({ status: 'client_null', url: process.env.QDRANT_URL });
-    }
     try {
-      const [collections, cluster] = await Promise.allSettled([
-        c.getCollections(),
-        (c as any).getCluster ? (c as any).getCluster() : Promise.resolve(null),
-      ]);
-      const cols = collections.status === 'fulfilled' ? collections.value.collections : [];
+      const result = await qdrantRequest('GET', '/collections');
+      const cols: string[] = ((result.result?.collections) || []).map((c: any) => c.name);
+      if (!qdrantReady) { qdrantReady = true; _lastQdrantError = ''; }
       return res.json({
-        status: qdrantReady ? 'ok' : 'degraded',
+        status: 'ok',
         url: process.env.QDRANT_URL,
-        ready: qdrantReady,
-        collections: cols.map((c: any) => c.name),
-        collection_exists: cols.some((c: any) => c.name === QDRANT_COLLECTION),
-        last_error: _lastQdrantError || null,
+        ready: true,
+        collections: cols,
+        collection_exists: cols.includes(QDRANT_COLLECTION),
+        last_error: null,
         timeout_ms: QDRANT_TIMEOUT_MS,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
+      const msg = (err as Error).message;
+      _lastQdrantError = msg;
       return res.status(503).json({
-        status: 'error', ready: false, url: process.env.QDRANT_URL,
-        error: (err as Error).message, timestamp: new Date().toISOString(),
+        status: 'degraded', ready: false, url: process.env.QDRANT_URL,
+        collections: [], collection_exists: false,
+        last_error: msg, timeout_ms: QDRANT_TIMEOUT_MS,
+        timestamp: new Date().toISOString(),
       });
     }
   });

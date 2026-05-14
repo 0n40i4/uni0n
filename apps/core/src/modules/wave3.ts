@@ -1323,6 +1323,124 @@ export function createWave3Router(pool: pg.Pool): Router {
     }
   });
 
+  // ── P2.4 — Incident freeze: lock / unlock / list ──────────────────────────────
+  router.post('/relay/incident/lock', async (req: Request, res: Response) => {
+    const { trace_id, reason } = req.body;
+    if (!trace_id) return res.status(400).json({ error: 'trace_id required' });
+    try {
+      const [s, e] = await Promise.all([
+        pool.query('UPDATE relay_spans SET incident_preserve = TRUE WHERE trace_id = $1', [trace_id]),
+        pool.query('UPDATE relay_events SET incident_preserve = TRUE WHERE trace_id = $1', [trace_id]),
+      ]);
+      appendReplayLog({ ts: new Date().toISOString(), event: 'incident.lock', trace_id, reason: reason || null, spans_locked: s.rowCount, events_locked: e.rowCount });
+      res.json({ trace_id, locked: true, spans_locked: s.rowCount, events_locked: e.rowCount, reason: reason || null, timestamp: new Date().toISOString() });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  router.post('/relay/incident/unlock', async (req: Request, res: Response) => {
+    const { trace_id, reason } = req.body;
+    if (!trace_id) return res.status(400).json({ error: 'trace_id required' });
+    try {
+      const [s, e] = await Promise.all([
+        pool.query('UPDATE relay_spans SET incident_preserve = FALSE WHERE trace_id = $1', [trace_id]),
+        pool.query('UPDATE relay_events SET incident_preserve = FALSE WHERE trace_id = $1', [trace_id]),
+      ]);
+      appendReplayLog({ ts: new Date().toISOString(), event: 'incident.unlock', trace_id, reason: reason || null });
+      res.json({ trace_id, locked: false, spans_unlocked: s.rowCount, events_unlocked: e.rowCount, reason: reason || null, timestamp: new Date().toISOString() });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  router.get('/relay/incident', async (_req: Request, res: Response) => {
+    try {
+      const r = await pool.query(
+        `SELECT DISTINCT ON (trace_id) trace_id, created_at AS locked_since, incident_preserve
+         FROM relay_events WHERE incident_preserve = TRUE
+         ORDER BY trace_id, created_at DESC LIMIT 100`
+      );
+      res.json({ count: r.rows.length, incidents: r.rows, timestamp: new Date().toISOString() });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  // ── P2.3 — Replay verification: hash chain + deterministic evidence ────────────
+  router.get('/relay/replay/:trace_id', async (req: Request, res: Response) => {
+    const { trace_id } = req.params;
+    try {
+      const [eventsR, spansR] = await Promise.all([
+        withDbTimeout(
+          pool.query(
+            `SELECT trace_id, src_did, dst_did, route_status, fallback_used,
+                    payload_hash, previous_hash, current_hash, created_at, incident_preserve
+             FROM relay_events WHERE trace_id = $1 ORDER BY created_at ASC`,
+            [trace_id]
+          ),
+          'replay/events'
+        ),
+        withDbTimeout(
+          pool.query(
+            `SELECT span_id, operation, src_did, dst_did, provider_did,
+                    latency_ms, status, fallback_used, claim_level, started_at, ended_at
+             FROM relay_spans WHERE trace_id = $1 ORDER BY started_at ASC`,
+            [trace_id]
+          ),
+          'replay/spans'
+        ),
+      ]);
+
+      if (eventsR.rows.length === 0 && spansR.rows.length === 0) {
+        return res.status(404).json({ error: 'trace_id not found', trace_id });
+      }
+
+      // Verify hash chain integrity (relay_events are the canonical ledger)
+      let chain_valid = true;
+      let chain_error: string | null = null;
+      let prev_hash = '0'.repeat(64);
+      let seq = 0;
+      const chain_steps: Array<{ seq: number; current_hash: string; previous_hash: string; valid: boolean }> = [];
+      for (const ev of eventsR.rows) {
+        const step_ok = !ev.previous_hash || ev.previous_hash === prev_hash || prev_hash === '0'.repeat(64);
+        if (!step_ok && chain_valid) {
+          chain_valid = false;
+          chain_error = `broken at ${ev.created_at}: expected_prev=${prev_hash.slice(0, 8)}, got=${(ev.previous_hash || '').slice(0, 8)}`;
+        }
+        chain_steps.push({ seq: seq++, current_hash: (ev.current_hash || '').slice(0, 16), previous_hash: (ev.previous_hash || '').slice(0, 16), valid: step_ok });
+        prev_hash = ev.current_hash || prev_hash;
+      }
+
+      // Deterministic evidence fingerprint — SHA-256 over canonical event fields
+      const evidence_input = eventsR.rows
+        .map((e: any) => `${e.trace_id}|${e.src_did}|${e.dst_did}|${e.route_status}|${e.current_hash}`)
+        .join('\n');
+      const evidence_fingerprint = sha256(evidence_input || trace_id);
+
+      return res.json({
+        trace_id,
+        replay_verified: chain_valid,
+        evidence_fingerprint,
+        chain_error,
+        chain_steps,
+        events: eventsR.rows,
+        spans: spansR.rows,
+        summary: {
+          event_count: eventsR.rows.length,
+          span_count: spansR.rows.length,
+          chain_steps: chain_steps.length,
+          chain_valid,
+          incident_preserved: eventsR.rows.some((e: any) => e.incident_preserve),
+          total_latency_ms: spansR.rows.reduce((s: number, r: any) => s + (r.latency_ms || 0), 0),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   return router;
 }
 

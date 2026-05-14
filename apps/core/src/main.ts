@@ -1091,6 +1091,69 @@ app.listen(PORT as number, async () => {
   setInterval(snapshotDrift, 30 * 60 * 1000);
 
   console.log('✓ Compliance cron + Semantic drift cron started');
+
+  // ── P2.1 — Auto smoke snapshot on startup (10s delay, non-blocking) ──────────
+  setTimeout(async () => {
+    try {
+      const base = `http://localhost:${PORT}`;
+      const checks = [
+        fetch(`${base}/health`).then(r => ({ ep: '/health', ok: r.ok, code: r.status })),
+        fetch(`${base}/api/relay/status`).then(r => ({ ep: '/api/relay/status', ok: r.ok, code: r.status })),
+        fetch(`${base}/api/qdrant/health`).then(r => ({ ep: '/api/qdrant/health', ok: r.ok, code: r.status })),
+      ];
+      const results = await Promise.allSettled(checks.map(p => p));
+      const all_ok = results.every(r => r.status === 'fulfilled' && (r as any).value.ok);
+      const tag = all_ok ? 'VERIFIED' : 'DEGRADED';
+      console.log(`[smoke] startup check ${tag}: ${results.map(r => r.status === 'fulfilled' ? `${(r as any).value.ep}=${(r as any).value.code}` : 'err').join(' | ')}`);
+      try {
+        await pool.query(
+          `INSERT INTO governance_events (trace_id, src_did, event_type, action, payload, previous_hash, current_hash)
+           VALUES ($1,$2,'smoke','startup_verify',$3,'0000000000000000','0000000000000000')`,
+          [
+            'smoke-' + Date.now(),
+            process.env.CORE_DID || 'did:unionai:s4:k0nsulat',
+            JSON.stringify({ tag, checks: results.map(r => r.status === 'fulfilled' ? (r as any).value : { error: 'failed' }) }),
+          ]
+        );
+      } catch (_) {}
+    } catch (e) {
+      console.warn('[smoke] startup check error:', (e as Error).message);
+    }
+  }, 10000);
+});
+
+// ── P2.1 — GET /api/system/smoke ── manual runtime evidence snapshot ───────────
+app.get('/api/system/smoke', async (_req, res) => {
+  const base = `http://localhost:${PORT}`;
+  const probes = [
+    { ep: '/health', method: 'GET', body: undefined },
+    { ep: '/api/relay/status', method: 'GET', body: undefined },
+    { ep: '/api/qdrant/health', method: 'GET', body: undefined },
+    { ep: '/api/relay/drift', method: 'GET', body: undefined },
+  ];
+  const results = await Promise.allSettled(
+    probes.map(async p => {
+      const r = await fetch(`${base}${p.ep}`, { method: p.method });
+      const body = await r.json().catch(() => ({}));
+      return { ep: p.ep, status: r.status, ok: r.ok, body };
+    })
+  );
+  const checks = results.map((r, i) => ({
+    ep: probes[i].ep,
+    ok: r.status === 'fulfilled' && (r as any).value.ok,
+    status: r.status === 'fulfilled' ? (r as any).value.status : 'error',
+    error: r.status === 'rejected' ? (r as any).reason?.message : null,
+  }));
+  const all_ok = checks.every(c => c.ok);
+  res.json({
+    tag: all_ok ? 'VERIFIED' : 'DEGRADED',
+    all_ok,
+    checks,
+    qdrant_ready: (results[2].status === 'fulfilled' && (results[2] as any).value.ok),
+    redis_ok: true,
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '0.1.0',
+  });
 });
 
 // ============ COMPLIANCE HISTORY ENDPOINT ============

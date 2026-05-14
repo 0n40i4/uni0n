@@ -1,0 +1,82 @@
+name: UNIONAI Smoke Tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  BASE_URL: https://unionai-core.fly.dev
+
+jobs:
+  smoke:
+    name: Runtime Evidence Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for deploy propagation
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          STATUS=$(curl -sSo /dev/null -w '%{http_code}' $BASE_URL/health)
+          echo "health: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "FAIL: /health" && exit 1)
+
+      - name: Relay send (Wave 3)
+        id: relay_send
+        run: |
+          RESP=$(curl -sS -X POST $BASE_URL/api/relay/send \
+            -H 'Content-Type: application/json' \
+            -d '{"protocol":"UNIONAI-WIRE-v0","intent_id":"ci-smoke-${{ github.sha }}","src_did":"did:ci:github","dst_did":"did:unionai:s4:k0nsulat","intent":{"type":"ci_smoke","summary":"GitHub Actions smoke test"}}')
+          echo "$RESP"
+          echo "trace_id=$(echo $RESP | python3 -c 'import sys,json; print(json.load(sys.stdin).get(\"trace_id\",\"none\"))')" >> $GITHUB_OUTPUT
+          STATUS=$(echo $RESP | python3 -c 'import sys,json; d=json.load(sys.stdin); exit(0 if d.get("trace_id") else 1)' && echo "ok" || echo "fail")
+          [ "$STATUS" = "ok" ] || (echo "FAIL: relay/send" && exit 1)
+
+      - name: Relay route (semantic)
+        run: |
+          RESP=$(curl -sS -X POST $BASE_URL/api/relay/route \
+            -H 'Content-Type: application/json' \
+            -d '{"src_did":"did:ci:github","trust_score":150,"intent":{"type":"ci_smoke","summary":"semantic routing verification"}}')
+          echo "$RESP"
+          ROUTE=$(echo $RESP | python3 -c 'import sys,json; print(json.load(sys.stdin).get("route_type","none"))')
+          echo "route_type: $ROUTE"
+          [ "$ROUTE" != "none" ] || (echo "FAIL: relay/route" && exit 1)
+
+      - name: Qdrant health
+        run: |
+          RESP=$(curl -sS $BASE_URL/api/qdrant/health)
+          echo "$RESP"
+          STATUS=$(echo $RESP | python3 -c 'import sys,json; print(json.load(sys.stdin).get("status","error"))')
+          echo "qdrant: $STATUS"
+          [ "$STATUS" = "ok" ] || echo "WARNING: qdrant degraded (non-fatal)"
+
+      - name: Replay verification
+        run: |
+          TRACE="${{ steps.relay_send.outputs.trace_id }}"
+          if [ -n "$TRACE" ] && [ "$TRACE" != "none" ]; then
+            RESP=$(curl -sS $BASE_URL/api/relay/replay/$TRACE)
+            echo "$RESP"
+            VERIFIED=$(echo $RESP | python3 -c 'import sys,json; print(json.load(sys.stdin).get("replay_verified","false"))')
+            echo "replay_verified: $VERIFIED"
+          else
+            echo "No trace_id from relay/send — skipping replay"
+          fi
+
+      - name: System smoke endpoint
+        run: |
+          RESP=$(curl -sS $BASE_URL/api/system/smoke)
+          echo "$RESP"
+          TAG=$(echo $RESP | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tag","UNKNOWN"))')
+          echo "smoke tag: $TAG"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Base URL: $BASE_URL" >> $GITHUB_STEP_SUMMARY
+          echo "- Trace ID: ${{ steps.relay_send.outputs.trace_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

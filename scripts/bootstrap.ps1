@@ -1,182 +1,256 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  UNIONAI Operator Bootstrap — 1-click onboarding
+  UNIONAI Operator Bootstrap — 1-click onboarding + operations
 .DESCRIPTION
-  Checks prereqs, verifies Fly.io secrets, smoke-tests the live deployment.
-  Safe to re-run. Does NOT modify any existing secrets or deploy anything.
+  Checks prereqs, handles Fly.io OAuth login, verifies secrets, smoke-tests,
+  shows promotion status, daily snapshot, optional deploy + sync.
+  Safe to re-run at any time.
 .EXAMPLE
-  .\scripts\bootstrap.ps1
-  .\scripts\bootstrap.ps1 -Deploy     # also triggers fly deploy
-  .\scripts\bootstrap.ps1 -SmokeOnly  # only hits live endpoints
+  .\scripts\bootstrap.ps1                   # full bootstrap check
+  .\scripts\bootstrap.ps1 -Login           # force fly auth login
+  .\scripts\bootstrap.ps1 -Deploy          # bootstrap + deploy latest code
+  .\scripts\bootstrap.ps1 -Sync            # git pull + deploy
+  .\scripts\bootstrap.ps1 -SmokeOnly       # just hit live endpoints
+  .\scripts\bootstrap.ps1 -Status          # show promotion + snapshot status only
 #>
 param(
   [switch]$Deploy,
+  [switch]$Sync,
+  [switch]$Login,
   [switch]$SmokeOnly,
-  [string]$App = "unionai-core",
-  [string]$BaseUrl = "https://unionai-core.fly.dev"
+  [switch]$Status,
+  [string]$App     = "unionai-core",
+  [string]$BaseUrl = "https://unionai-core.fly.dev",
+  [string]$Repo    = "https://github.com/0n40i4/uni0n"
 )
 
 $ErrorActionPreference = "Continue"
-$OK    = "[OK]   "
-$FAIL  = "[FAIL] "
-$WARN  = "[WARN] "
-$INFO  = "[INFO] "
+$OK   = "[OK]  "
+$FAIL = "[FAIL]"
+$WARN = "[WARN]"
+$INFO = "[INFO]"
 
 function Write-Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
-function Write-OK($msg)   { Write-Host "$OK $msg" -ForegroundColor Green }
-function Write-Fail($msg) { Write-Host "$FAIL $msg" -ForegroundColor Red }
+function Write-OK($msg)   { Write-Host "$OK $msg"   -ForegroundColor Green }
+function Write-Fail($msg) { Write-Host "$FAIL $msg" -ForegroundColor Red   ; $script:Errors++ }
 function Write-Warn($msg) { Write-Host "$WARN $msg" -ForegroundColor Yellow }
-function Write-Info($msg) { Write-Host "$INFO $msg" -ForegroundColor Gray }
+function Write-Info($msg) { Write-Host "$INFO $msg" -ForegroundColor Gray  }
 
-$Errors = 0
+$script:Errors = 0
 
-# ─── SMOKE ONLY MODE ─────────────────────────────────────────────────────────────
+function Invoke-Api($path, $method = "GET", $body = $null) {
+  $params = @{
+    Uri            = "$BaseUrl$path"
+    Method         = $method
+    TimeoutSec     = 20
+    UseBasicParsing = $true
+    ErrorAction    = "SilentlyContinue"
+  }
+  if ($body) { $params.Body = $body; $params.ContentType = "application/json" }
+  try { Invoke-WebRequest @params } catch { $null }
+}
+
+# ─── STATUS ONLY ─────────────────────────────────────────────────────────────────
+if ($Status) {
+  Write-Step "Promotion + Snapshot Status"
+  $promo = Invoke-Api "/api/system/promotion"
+  if ($promo -and $promo.StatusCode -eq 200) {
+    $p = $promo.Content | ConvertFrom-Json
+    $color = if ($p.status -eq "VERIFIED") { "Green" } else { "Red" }
+    Write-Host "  Promotion:  $($p.status)" -ForegroundColor $color
+    Write-Host "  all_ok:     $($p.all_ok)" -ForegroundColor Gray
+    Write-Host "  deploy:     $($p.deploy_hash)" -ForegroundColor Gray
+    Write-Host "  checked:    $($p.last_checked)" -ForegroundColor Gray
+  } else {
+    Write-Warn "Could not reach promotion endpoint"
+  }
+
+  $snap = Invoke-Api "/api/system/snapshots/latest"
+  if ($snap -and $snap.StatusCode -eq 200) {
+    $s = $snap.Content | ConvertFrom-Json
+    Write-Host "  Last snap:  $($s.snapshot_date) tag=$($s.tag)" -ForegroundColor Gray
+    Write-Host "  drift:      $($s.drift_ratio)" -ForegroundColor Gray
+    Write-Host "  relay_total: $($s.relay_total)" -ForegroundColor Gray
+    Write-Host "  incidents:  $($s.incident_count)" -ForegroundColor Gray
+    Write-Host "  MD path:    $BaseUrl/status/$($s.snapshot_date)-runtime-snapshot.md" -ForegroundColor Gray
+  } else {
+    Write-Warn "No snapshots yet (first snapshot runs on app startup)"
+  }
+  exit $script:Errors
+}
+
+# ─── SMOKE ONLY ──────────────────────────────────────────────────────────────────
 if ($SmokeOnly) {
   Write-Step "Smoke testing $BaseUrl"
-  $endpoints = @(
-    @{ path = "/health"; expect = 200 },
-    @{ path = "/api/relay/status"; expect = 200 },
-    @{ path = "/api/qdrant/health"; expect = 200 },
-    @{ path = "/api/relay/drift"; expect = 200 },
-    @{ path = "/api/system/smoke"; expect = 200 }
+  $eps = @(
+    @{ p = "/health";                 e = 200 }
+    @{ p = "/api/system/smoke";       e = 200 }
+    @{ p = "/api/qdrant/health";      e = 200 }
+    @{ p = "/api/relay/status";       e = 200 }
+    @{ p = "/api/system/promotion";   e = 200 }
+    @{ p = "/api/system/snapshots/latest"; e = 200 }
   )
-  foreach ($ep in $endpoints) {
-    try {
-      $resp = Invoke-WebRequest -Uri "$BaseUrl$($ep.path)" -Method GET -TimeoutSec 15 -UseBasicParsing -ErrorAction SilentlyContinue
-      if ($resp.StatusCode -eq $ep.expect) { Write-OK "$($ep.path) => $($resp.StatusCode)" }
-      else { Write-Warn "$($ep.path) => $($resp.StatusCode) (expected $($ep.expect))"; $Errors++ }
-    } catch {
-      Write-Fail "$($ep.path) => $($_.Exception.Message)"; $Errors++
-    }
+  foreach ($ep in $eps) {
+    $r = Invoke-Api $ep.p
+    if ($r -and $r.StatusCode -eq $ep.e) { Write-OK "$($ep.p) => $($r.StatusCode)" }
+    else { Write-Warn "$($ep.p) => $($r.StatusCode)" }
   }
-  if ($Errors -eq 0) { Write-Host "`nALL SMOKE CHECKS PASSED" -ForegroundColor Green }
-  else { Write-Host "`n$Errors CHECK(S) FAILED" -ForegroundColor Red }
-  exit $Errors
+  if ($script:Errors -eq 0) { Write-Host "`nALL SMOKE CHECKS PASSED" -ForegroundColor Green }
+  exit $script:Errors
 }
 
 # ─── PREREQS ─────────────────────────────────────────────────────────────────────
 Write-Step "Checking prerequisites"
 
-# flyctl
-if (Get-Command fly -ErrorAction SilentlyContinue) {
-  $flyVer = (fly version 2>&1 | Select-String "v\d+\.\d+").Matches[0].Value
-  Write-OK "fly CLI found ($flyVer)"
+foreach ($cmd in @("fly", "git", "node")) {
+  if (Get-Command $cmd -ErrorAction SilentlyContinue) {
+    $v = & $cmd --version 2>&1 | Select-Object -First 1
+    Write-OK "$cmd — $v"
+  } elseif ($cmd -eq "node") {
+    Write-Warn "node not found (needed for local dev, not for Fly deploys)"
+  } else {
+    Write-Fail "$cmd not found"
+  }
+}
+
+# ─── FLY AUTH (OAuth) ────────────────────────────────────────────────────────────
+Write-Step "Fly.io authentication"
+$whoami = fly auth whoami 2>&1
+if ($whoami -match "@" -and -not $Login) {
+  Write-OK "Authenticated as: $whoami"
 } else {
-  Write-Fail "fly CLI not found — install from https://fly.io/docs/flyctl/install/"
-  $Errors++
+  if ($Login -or $whoami -notmatch "@") {
+    Write-Info "Opening browser for Fly.io OAuth login..."
+    fly auth login
+    $whoami = fly auth whoami 2>&1
+    if ($whoami -match "@") { Write-OK "Login successful: $whoami" }
+    else { Write-Fail "Login failed — run: fly auth login manually"; exit 1 }
+  }
 }
 
-# node
-if (Get-Command node -ErrorAction SilentlyContinue) {
-  $nodeVer = node --version 2>&1
-  Write-OK "Node.js found ($nodeVer)"
-} else {
-  Write-Warn "node not found (needed for local dev, not for Fly deploy)"
+# ─── OPTIONAL SYNC ───────────────────────────────────────────────────────────────
+if ($Sync) {
+  Write-Step "Syncing from GitHub ($Repo)"
+  $repoRoot = Split-Path $PSScriptRoot -Parent
+  Set-Location $repoRoot
+  git fetch origin main 2>&1 | Out-Null
+  git pull --ff-only origin main 2>&1
+  if ($LASTEXITCODE -ne 0) { Write-Fail "git pull failed — resolve conflicts first" }
+  else { Write-OK "Local repo synced with GitHub main" }
 }
 
-# git
-if (Get-Command git -ErrorAction SilentlyContinue) {
-  $gitVer = (git --version 2>&1)
-  Write-OK "git found ($gitVer)"
-} else {
-  Write-Fail "git not found"; $Errors++
-}
-
-# ─── FLY AUTH ────────────────────────────────────────────────────────────────────
-Write-Step "Checking Fly.io auth"
-try {
-  $whoami = fly auth whoami 2>&1
-  if ($whoami -match "@") { Write-OK "Fly authenticated as: $whoami" }
-  else { Write-Fail "Not authenticated — run: fly auth login"; $Errors++ }
-} catch {
-  Write-Fail "fly auth check failed: $_"; $Errors++
-}
-
-# ─── SECRETS ─────────────────────────────────────────────────────────────────────
-Write-Step "Checking Fly secrets for $App"
-$requiredSecrets = @("DATABASE_URL", "REDIS_URL", "QDRANT_URL", "NODE_ENV")
+# ─── SECRETS AUDIT ───────────────────────────────────────────────────────────────
+Write-Step "Auditing Fly secrets for $App"
+$required = @(
+  @{ name = "DATABASE_URL"; critical = $true  }
+  @{ name = "REDIS_URL";    critical = $true  }
+  @{ name = "QDRANT_URL";   critical = $true  }
+  @{ name = "NODE_ENV";     critical = $false }
+  @{ name = "JWT_SECRET";   critical = $false }
+)
 try {
   $secrets = fly secrets list --app $App 2>&1
-  foreach ($secret in $requiredSecrets) {
-    if ($secrets -match $secret) {
-      $deployed = if ($secrets -match "$secret.*Deployed") { "Deployed" } else { "Staged" }
-      Write-OK "$secret [$deployed]"
+  foreach ($s in $required) {
+    if ($secrets -match $s.name) {
+      $state = if ($secrets -match "$($s.name).*Deployed") { "Deployed" } else { "Staged" }
+      Write-OK "$($s.name) [$state]"
+      if ($state -eq "Staged") { Write-Warn "  → Run: fly secrets deploy --app $App" }
     } else {
-      Write-Fail "$secret NOT SET — run: fly secrets set $secret=<value> --app $App"
-      $Errors++
+      if ($s.critical) { Write-Fail "$($s.name) NOT SET — run: fly secrets set $($s.name)=<value> --app $App" }
+      else             { Write-Warn "$($s.name) not set (optional)" }
     }
   }
-  $jwtMissing = $secrets -notmatch "JWT_SECRET"
-  if ($jwtMissing) { Write-Warn "JWT_SECRET not set — operator endpoints will use dev fallback" }
-} catch {
-  Write-Warn "Could not list secrets (app may not exist yet): $_"
-}
+} catch { Write-Warn "Could not list secrets: $_" }
 
 # ─── APP STATUS ──────────────────────────────────────────────────────────────────
-Write-Step "Checking app machines"
+Write-Step "App machine status"
 try {
   $status = fly status --app $App 2>&1
-  if ($status -match "started") { Write-OK "At least one machine is started" }
-  else { Write-Warn "No machines in started state — machines will auto-start on first request" }
-} catch {
-  Write-Warn "Could not get app status: $_"
-}
+  if ($status -match "started") { Write-OK "Machines started (auto-wake on request)" }
+  else                          { Write-Warn "No machines started — first request will cold-start" }
+} catch { Write-Warn "Could not get app status: $_" }
 
-# ─── SMOKE TEST ──────────────────────────────────────────────────────────────────
-Write-Step "Live smoke test ($BaseUrl)"
-$endpoints = @(
-  @{ path = "/health"; method = "GET"; body = $null; expect = 200; critical = $true },
-  @{ path = "/api/system/smoke"; method = "GET"; body = $null; expect = 200; critical = $false },
-  @{ path = "/api/qdrant/health"; method = "GET"; body = $null; expect = 200; critical = $false },
-  @{ path = "/api/relay/send"; method = "POST"; expect = 201; critical = $true;
-     body = '{"protocol":"UNIONAI-WIRE-v0","intent_id":"bootstrap-smoke","src_did":"did:bootstrap:op","dst_did":"did:unionai:s4:k0nsulat","intent":{"type":"bootstrap","summary":"operator bootstrap smoke"}}' }
+# ─── LIVE SMOKE ──────────────────────────────────────────────────────────────────
+Write-Step "Live smoke test"
+$criticalEps = @(
+  @{ p = "/health";           method = "GET";  e = 200; body = $null; critical = $true }
+  @{ p = "/api/relay/send";   method = "POST"; e = 201; critical = $true;
+     body = '{"protocol":"UNIONAI-WIRE-v0","intent_id":"bootstrap-v2","src_did":"did:bootstrap:ps1","dst_did":"did:unionai:s4:k0nsulat","intent":{"type":"bootstrap","summary":"bootstrap.ps1 smoke"}}' }
+  @{ p = "/api/system/smoke"; method = "GET";  e = 200; body = $null; critical = $false }
 )
-
-foreach ($ep in $endpoints) {
-  try {
-    $params = @{
-      Uri = "$BaseUrl$($ep.path)"
-      Method = $ep.method
-      TimeoutSec = 20
-      UseBasicParsing = $true
-      ErrorAction = "SilentlyContinue"
+foreach ($ep in $criticalEps) {
+  $r = Invoke-Api $ep.p $ep.method $ep.body
+  if ($r -and $r.StatusCode -eq $ep.e) {
+    $extra = ""
+    if ($ep.p -eq "/api/system/smoke" -and $r.Content) {
+      $j = $r.Content | ConvertFrom-Json -ErrorAction SilentlyContinue
+      if ($j) { $extra = " tag=$($j.tag)" }
     }
-    if ($ep.body) {
-      $params.Body = $ep.body
-      $params.ContentType = "application/json"
-    }
-    $resp = Invoke-WebRequest @params
-    if ($resp.StatusCode -eq $ep.expect) { Write-OK "$($ep.method) $($ep.path) => $($resp.StatusCode)" }
-    else {
-      $msg = "$($ep.method) $($ep.path) => $($resp.StatusCode) (expected $($ep.expect))"
-      if ($ep.critical) { Write-Fail $msg; $Errors++ } else { Write-Warn $msg }
-    }
-  } catch {
-    $msg = "$($ep.method) $($ep.path) => ERROR: $($_.Exception.Message)"
-    if ($ep.critical) { Write-Fail $msg; $Errors++ } else { Write-Warn $msg }
+    Write-OK "$($ep.method) $($ep.p) => $($r.StatusCode)$extra"
+  } else {
+    $code = if ($r) { $r.StatusCode } else { "ERR" }
+    if ($ep.critical) { Write-Fail "$($ep.method) $($ep.p) => $code" }
+    else              { Write-Warn "$($ep.method) $($ep.p) => $code" }
   }
 }
 
+# ─── PROMOTION STATUS ────────────────────────────────────────────────────────────
+Write-Step "Deployment promotion status"
+$r = Invoke-Api "/api/system/promotion"
+if ($r -and $r.StatusCode -eq 200) {
+  $p = $r.Content | ConvertFrom-Json
+  $color = if ($p.status -eq "VERIFIED") { "Green" } elseif ($p.status -eq "BLOCKED") { "Red" } else { "Yellow" }
+  Write-Host "  Status:    $($p.status)" -ForegroundColor $color
+  Write-Host "  all_ok:    $($p.all_ok)" -ForegroundColor Gray
+  Write-Host "  deploy:    $($p.deploy_hash)" -ForegroundColor Gray
+  Write-Host "  checked:   $($p.last_checked)" -ForegroundColor Gray
+  if ($p.status -eq "BLOCKED") { Write-Warn "System is BLOCKED — check /api/system/smoke for details" ; $script:Errors++ }
+} else { Write-Warn "Promotion endpoint not reachable" }
+
+# ─── SNAPSHOT STATUS ─────────────────────────────────────────────────────────────
+Write-Step "Daily runtime snapshot"
+$r = Invoke-Api "/api/system/snapshots/latest"
+if ($r -and $r.StatusCode -eq 200) {
+  $s = $r.Content | ConvertFrom-Json
+  Write-OK "Snapshot $($s.snapshot_date): tag=$($s.tag) drift=$($s.drift_ratio) relay=$($s.relay_total) incidents=$($s.incident_count)"
+  Write-Info "  Markdown: $BaseUrl/status/$($s.snapshot_date)-runtime-snapshot.md"
+} else { Write-Warn "No snapshot yet — will be created in ~10s on startup" }
+
 # ─── OPTIONAL DEPLOY ─────────────────────────────────────────────────────────────
-if ($Deploy) {
+if ($Deploy -or $Sync) {
   Write-Step "Deploying to Fly.io"
   $repoRoot = Split-Path $PSScriptRoot -Parent
   Set-Location $repoRoot
   fly deploy --app $App --remote-only 2>&1
-  if ($LASTEXITCODE -eq 0) { Write-OK "Deploy succeeded" }
-  else { Write-Fail "Deploy failed (exit $LASTEXITCODE)"; $Errors++ }
+  if ($LASTEXITCODE -eq 0) {
+    Write-OK "Deploy succeeded"
+    Write-Info "Waiting 15s for app startup..."
+    Start-Sleep -Seconds 15
+    $r2 = Invoke-Api "/api/system/smoke"
+    if ($r2 -and $r2.StatusCode -eq 200) {
+      $j2 = $r2.Content | ConvertFrom-Json
+      $color2 = if ($j2.tag -eq "VERIFIED") { "Green" } else { "Red" }
+      Write-Host "  Post-deploy smoke: $($j2.tag)" -ForegroundColor $color2
+    }
+  } else {
+    Write-Fail "Deploy failed (exit $LASTEXITCODE)"
+  }
 }
 
 # ─── SUMMARY ─────────────────────────────────────────────────────────────────────
 Write-Host ""
-if ($Errors -eq 0) {
-  Write-Host "BOOTSTRAP OK — $App is operational" -ForegroundColor Green
-  Write-Host "  Live URL:    $BaseUrl" -ForegroundColor Gray
-  Write-Host "  Smoke:       $BaseUrl/api/system/smoke" -ForegroundColor Gray
-  Write-Host "  Qdrant:      $BaseUrl/api/qdrant/health" -ForegroundColor Gray
-  Write-Host "  Metrics:     $BaseUrl/metrics" -ForegroundColor Gray
+if ($script:Errors -eq 0) {
+  Write-Host "BOOTSTRAP OK" -ForegroundColor Green
 } else {
-  Write-Host "$Errors ISSUE(S) REQUIRE ATTENTION" -ForegroundColor Red
+  Write-Host "$($script:Errors) ISSUE(S) — resolve above" -ForegroundColor Red
 }
-exit $Errors
+Write-Host ""
+Write-Host "  Live:       $BaseUrl" -ForegroundColor Gray
+Write-Host "  Smoke:      $BaseUrl/api/system/smoke" -ForegroundColor Gray
+Write-Host "  Promotion:  $BaseUrl/api/system/promotion" -ForegroundColor Gray
+Write-Host "  Qdrant:     $BaseUrl/api/qdrant/health" -ForegroundColor Gray
+Write-Host "  Metrics:    $BaseUrl/metrics" -ForegroundColor Gray
+Write-Host "  Grafana:    grafana/dashboard.json (import to Grafana Cloud)" -ForegroundColor Gray
+Write-Host "  Prometheus: grafana/prometheus.yml (scrape config)" -ForegroundColor Gray
+exit $script:Errors

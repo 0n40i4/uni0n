@@ -83,6 +83,7 @@ import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs'
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
+let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
 app.use(express.json());
 app.use(globalRateLimit);
 
@@ -244,8 +245,24 @@ app.get('/metrics', async (req, res) => {
     `operator_overrides_total ${w6.operator_overrides_total}`,
     '# HELP uptime_seconds Process uptime in seconds',
     `uptime_seconds ${process.uptime().toFixed(2)}`,
+    '# HELP smoke_last_ok Last smoke result (1=VERIFIED, 0=BLOCKED, -1=never_run)',
+    `smoke_last_ok ${smokeLastOk}`,
   ];
-  res.send(lines.join('\n') + '\n');
+  // Async gauges (incident locks, prune eligible) — appended after static metrics
+  const extraLines: string[] = [];
+  try {
+    const incR = await pool.query(
+      `SELECT COUNT(DISTINCT trace_id) FROM relay_events WHERE incident_preserve = TRUE`
+    );
+    extraLines.push('# HELP incident_locks_active Traces currently locked from pruning');
+    extraLines.push(`incident_locks_active ${+incR.rows[0].count}`);
+    const pruneR = await pool.query(
+      `SELECT COUNT(*) FROM relay_spans WHERE started_at < NOW() - INTERVAL '7 days' AND incident_preserve = FALSE`
+    );
+    extraLines.push('# HELP prune_eligible_spans Spans eligible for pruning (>7 days, not locked)');
+    extraLines.push(`prune_eligible_spans ${+pruneR.rows[0].count}`);
+  } catch (_) {}
+  res.send([...lines, ...extraLines].join('\n') + '\n');
 });
 
 app.get('/.well-known/agent.json', (req, res) => {
@@ -593,7 +610,37 @@ async function runMigrations() {
   await runStep('WAVE6', WAVE6_MIGRATIONS);
   await runStep('WAVE7', WAVE7_MIGRATIONS);
   await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
+  await runStep('STABILITY', STABILITY_MIGRATIONS);
 }
+
+// ─── Stability Pack Migrations (P2) ───────────────────────────────────────────
+const STABILITY_MIGRATIONS = `
+CREATE TABLE IF NOT EXISTS deployment_promotions (
+  id            SERIAL PRIMARY KEY,
+  tag           VARCHAR(20) NOT NULL,
+  deploy_hash   VARCHAR(64),
+  checks        JSONB DEFAULT '[]',
+  all_ok        BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_promotions_at ON deployment_promotions(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS runtime_snapshots (
+  id            SERIAL PRIMARY KEY,
+  snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  tag           VARCHAR(20) NOT NULL,
+  health_ok     BOOLEAN DEFAULT FALSE,
+  qdrant_ok     BOOLEAN DEFAULT FALSE,
+  drift_ratio   FLOAT DEFAULT 0,
+  relay_total   INT DEFAULT 0,
+  incident_count INT DEFAULT 0,
+  smoke_ok      BOOLEAN DEFAULT FALSE,
+  deploy_hash   VARCHAR(64),
+  payload       JSONB DEFAULT '{}',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_date ON runtime_snapshots(snapshot_date DESC);
+`;
 
 app.get('/', (req, res) => {
   res.json({
@@ -1092,6 +1139,44 @@ app.listen(PORT as number, async () => {
 
   console.log('✓ Compliance cron + Semantic drift cron started');
 
+  // ── P2.3 — Daily runtime snapshot cron ───────────────────────────────────────
+  const snapshotRuntime = async () => {
+    try {
+      const [relayR, incidentR] = await Promise.all([
+        pool.query('SELECT COUNT(*) FROM relay_events').catch(() => ({ rows: [{ count: 0 }] })),
+        pool.query('SELECT COUNT(DISTINCT trace_id) FROM relay_events WHERE incident_preserve = TRUE').catch(() => ({ rows: [{ count: 0 }] })),
+      ]);
+      const m = getRelayMetrics() as any;
+      const smokeResult = await runSmoke().catch(() => ({ tag: 'ERROR', all_ok: false, qdrant_ok: false, checks: [] }));
+      const date = new Date().toISOString().slice(0, 10);
+      const deploy_hash = process.env.FLY_IMAGE_REF || process.env.FLY_MACHINE_VERSION || null;
+      const payload = {
+        relay: { total: +relayR.rows[0].count, drift_ratio: m.drift_ratio || 0, semantic: m.semantic_route_total || 0, syntactic: m.syntactic_route_total || 0 },
+        qdrant: { ready: m.qdrant_ready ?? false, searches: m.qdrant_search_total || 0 },
+        smoke: smokeResult.checks,
+        failover: { total: m.provider_failover_total || 0 },
+        spans: { total: m.tracing_spans_total || 0 },
+      };
+      await pool.query(
+        `INSERT INTO runtime_snapshots (snapshot_date, tag, health_ok, qdrant_ok, drift_ratio, relay_total, incident_count, smoke_ok, deploy_hash, payload)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT (snapshot_date) DO UPDATE SET
+           tag=EXCLUDED.tag, health_ok=EXCLUDED.health_ok, qdrant_ok=EXCLUDED.qdrant_ok,
+           drift_ratio=EXCLUDED.drift_ratio, relay_total=EXCLUDED.relay_total,
+           incident_count=EXCLUDED.incident_count, smoke_ok=EXCLUDED.smoke_ok,
+           deploy_hash=EXCLUDED.deploy_hash, payload=EXCLUDED.payload, created_at=NOW()`,
+        [date, smokeResult.tag, smokeResult.all_ok, smokeResult.qdrant_ok,
+         m.drift_ratio || 0, +relayR.rows[0].count, +incidentR.rows[0].count,
+         smokeResult.all_ok, deploy_hash, JSON.stringify(payload)]
+      );
+      console.log(`[snapshot] ${date} tag=${smokeResult.tag} drift=${(m.drift_ratio||0).toFixed(3)} relay=${relayR.rows[0].count}`);
+    } catch (e) {
+      console.warn('[snapshot] daily failed:', (e as Error).message);
+    }
+  };
+  snapshotRuntime();
+  setInterval(snapshotRuntime, 24 * 60 * 60 * 1000);
+
   // ── P2.1 — Auto smoke snapshot on startup (10s delay, non-blocking) ──────────
   setTimeout(async () => {
     try {
@@ -1122,38 +1207,120 @@ app.listen(PORT as number, async () => {
   }, 10000);
 });
 
-// ── P2.1 — GET /api/system/smoke ── manual runtime evidence snapshot ───────────
-app.get('/api/system/smoke', async (_req, res) => {
+// ── P2.1/P2.2 — GET /api/system/smoke ── evidence snapshot + VERIFIED/BLOCKED promotion ──
+async function runSmoke(): Promise<{ tag: string; all_ok: boolean; checks: any[]; qdrant_ok: boolean }> {
   const base = `http://localhost:${PORT}`;
   const probes = [
-    { ep: '/health', method: 'GET', body: undefined },
-    { ep: '/api/relay/status', method: 'GET', body: undefined },
-    { ep: '/api/qdrant/health', method: 'GET', body: undefined },
-    { ep: '/api/relay/drift', method: 'GET', body: undefined },
+    { ep: '/health' }, { ep: '/api/relay/status' },
+    { ep: '/api/qdrant/health' }, { ep: '/api/relay/drift' },
   ];
   const results = await Promise.allSettled(
     probes.map(async p => {
-      const r = await fetch(`${base}${p.ep}`, { method: p.method });
-      const body = await r.json().catch(() => ({}));
-      return { ep: p.ep, status: r.status, ok: r.ok, body };
+      const r = await fetch(`${base}${p.ep}`);
+      return { ep: p.ep, status: r.status, ok: r.ok };
     })
   );
   const checks = results.map((r, i) => ({
     ep: probes[i].ep,
     ok: r.status === 'fulfilled' && (r as any).value.ok,
     status: r.status === 'fulfilled' ? (r as any).value.status : 'error',
-    error: r.status === 'rejected' ? (r as any).reason?.message : null,
   }));
   const all_ok = checks.every(c => c.ok);
+  const tag = all_ok ? 'VERIFIED' : 'BLOCKED';
+  smokeLastOk = all_ok ? 1 : 0;
+  // Record promotion
+  try {
+    const deploy_hash = process.env.FLY_IMAGE_REF || process.env.FLY_MACHINE_VERSION || null;
+    await pool.query(
+      `INSERT INTO deployment_promotions (tag, deploy_hash, checks, all_ok) VALUES ($1,$2,$3,$4)`,
+      [tag, deploy_hash, JSON.stringify(checks), all_ok]
+    );
+  } catch (_) {}
+  return { tag, all_ok, checks, qdrant_ok: results[2].status === 'fulfilled' && (results[2] as any).value.ok };
+}
+
+app.get('/api/system/smoke', async (_req, res) => {
+  const result = await runSmoke();
   res.json({
-    tag: all_ok ? 'VERIFIED' : 'DEGRADED',
-    all_ok,
-    checks,
-    qdrant_ready: (results[2].status === 'fulfilled' && (results[2] as any).value.ok),
+    ...result,
     redis_ok: true,
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '0.1.0',
   });
+});
+
+// ── P2.2 — GET /api/system/promotion ── latest VERIFIED/BLOCKED status ────────
+app.get('/api/system/promotion', async (_req, res) => {
+  try {
+    const latest = await pool.query(
+      `SELECT tag, deploy_hash, all_ok, created_at FROM deployment_promotions ORDER BY created_at DESC LIMIT 1`
+    );
+    const history = await pool.query(
+      `SELECT tag, deploy_hash, all_ok, created_at FROM deployment_promotions ORDER BY created_at DESC LIMIT 20`
+    );
+    const row = latest.rows[0] || null;
+    res.json({
+      status: row?.tag || 'UNKNOWN',
+      all_ok: row?.all_ok || false,
+      deploy_hash: row?.deploy_hash || null,
+      last_checked: row?.created_at || null,
+      smoke_gauge: smokeLastOk,
+      history: history.rows,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// ── P2.3 — GET /api/system/snapshots/latest + /status/:date ──────────────────
+app.get('/api/system/snapshots/latest', async (_req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT * FROM runtime_snapshots ORDER BY snapshot_date DESC LIMIT 1`
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'No snapshots yet' });
+    res.json(r.rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+app.get('/status/:filename', async (req, res) => {
+  const m = req.params.filename.match(/^(\d{4}-\d{2}-\d{2})-runtime-snapshot\.md$/);
+  if (!m) return res.status(400).json({ error: 'Format: YYYY-MM-DD-runtime-snapshot.md' });
+  const date = m[1];
+  try {
+    const r = await pool.query(
+      `SELECT * FROM runtime_snapshots WHERE snapshot_date = $1`, [date]
+    );
+    if (!r.rows[0]) return res.status(404).send(`# No snapshot for ${date}`);
+    const s = r.rows[0];
+    const md = `# UNIONAI Runtime Snapshot — ${date}
+
+**Tag:** ${s.tag}
+**Deploy hash:** ${s.deploy_hash || 'unknown'}
+**Created:** ${s.created_at}
+
+## Health
+- Health OK: ${s.health_ok}
+- Qdrant OK: ${s.qdrant_ok}
+- Smoke OK: ${s.smoke_ok}
+
+## Relay
+- Total events: ${s.relay_total}
+- Drift ratio: ${s.drift_ratio?.toFixed(4) ?? 'n/a'}
+- Incident locks: ${s.incident_count}
+
+## Raw
+\`\`\`json
+${JSON.stringify(s.payload, null, 2)}
+\`\`\`
+`;
+    res.type('text/markdown').send(md);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 // ============ COMPLIANCE HISTORY ENDPOINT ============

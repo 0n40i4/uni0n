@@ -1159,7 +1159,7 @@ app.listen(PORT as number, async () => {
       };
       await pool.query(
         `INSERT INTO runtime_snapshots (snapshot_date, tag, health_ok, qdrant_ok, drift_ratio, relay_total, incident_count, smoke_ok, deploy_hash, payload)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
          ON CONFLICT (snapshot_date) DO UPDATE SET
            tag=EXCLUDED.tag, health_ok=EXCLUDED.health_ok, qdrant_ok=EXCLUDED.qdrant_ok,
            drift_ratio=EXCLUDED.drift_ratio, relay_total=EXCLUDED.relay_total,
@@ -1167,7 +1167,7 @@ app.listen(PORT as number, async () => {
            deploy_hash=EXCLUDED.deploy_hash, payload=EXCLUDED.payload, created_at=NOW()`,
         [date, smokeResult.tag, smokeResult.all_ok, smokeResult.qdrant_ok,
          m.drift_ratio || 0, +relayR.rows[0].count, +incidentR.rows[0].count,
-         smokeResult.all_ok, deploy_hash, payload]
+         smokeResult.all_ok, deploy_hash, JSON.stringify(payload)]
       );
       console.log(`[snapshot] ${date} tag=${smokeResult.tag} drift=${(m.drift_ratio||0).toFixed(3)} relay=${relayR.rows[0].count}`);
     } catch (e) {
@@ -1213,10 +1213,10 @@ async function runSmoke(): Promise<{ tag: string; all_ok: boolean; checks: any[]
   try {
     const deploy_hash = process.env.FLY_IMAGE_REF || process.env.FLY_MACHINE_VERSION || null;
     await pool.query(
-      `INSERT INTO deployment_promotions (tag, deploy_hash, checks, all_ok) VALUES ($1,$2,$3,$4)`,
-      [tag, deploy_hash, checks, all_ok]
+      `INSERT INTO deployment_promotions (tag, deploy_hash, checks, all_ok) VALUES ($1,$2,$3::jsonb,$4)`,
+      [tag, deploy_hash, JSON.stringify(checks), all_ok]
     );
-  } catch (_) {}
+  } catch (e) { console.warn('[smoke] promotion insert failed:', (e as Error).message); }
   return { tag, all_ok, checks, qdrant_ok: results[2].status === 'fulfilled' && (results[2] as any).value.ok };
 }
 

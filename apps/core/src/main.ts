@@ -72,7 +72,7 @@ const operatorRateLimit = makeRateLimiter(20, 60000); // 20/min per IP
 import { createK0nsultatRouter } from './modules/k0nsulat';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
-import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS, getRelayMetrics } from './modules/wave3';
+import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS, getRelayMetrics, initQdrant } from './modules/wave3';
 import { Feed } from 'feed';
 import { createIncident, listIncidents, getIncident, freezeIncident, exportIncident, addIncidentAction } from './modules/incident';
 import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from './modules/rfc';
@@ -214,6 +214,14 @@ app.get('/metrics', async (req, res) => {
     `relay_drift_ratio ${rm.drift_ratio.toFixed(4)}`,
     '# HELP relay_latency_ms Last relay/send latency in milliseconds',
     `relay_latency_ms ${rm.last_latency_ms}`,
+    '# HELP relay_semantic_route_total Routes resolved via semantic (Qdrant or embedding)',
+    `relay_semantic_route_total ${rm.semantic_route_total}`,
+    '# HELP relay_syntactic_route_total Routes resolved via syntactic fallback',
+    `relay_syntactic_route_total ${rm.syntactic_route_total}`,
+    '# HELP relay_qdrant_upsert_total Intent vectors upserted to Qdrant',
+    `relay_qdrant_upsert_total ${rm.qdrant_upsert_total}`,
+    '# HELP relay_qdrant_search_total Qdrant search calls for routing',
+    `relay_qdrant_search_total ${rm.qdrant_search_total}`,
     '# HELP relay_provider_failover_total Provider failover events (L1 cache + L2 sentinel)',
     `relay_provider_failover_total ${rm.provider_failover_total}`,
     '# HELP relay_tracing_spans_total Distributed tracing spans recorded',
@@ -1022,9 +1030,10 @@ app.post('/api/operator/evidence/refresh', requireAuth, async (req, res) => {
 app.listen(PORT as number, async () => {
   console.log(`Starting UNIONAI Core API on port ${PORT}`);
   
-  // Initialize Redis + Migrations
+  // Initialize Redis + Migrations + Qdrant
   await initRedis();
   await runMigrations();
+  await initQdrant();
   
   // Mount routers AFTER initialization
   const k0nsultatRouter = createK0nsultatRouter(pool);
@@ -1064,9 +1073,24 @@ app.listen(PORT as number, async () => {
     }
   };
   snapshotCompliance();
-  setInterval(snapshotCompliance, 60 * 60 * 1000); // co 1h
+  setInterval(snapshotCompliance, 60 * 60 * 1000);
 
-  console.log('✓ Compliance cron started (1h interval)');
+  // ============ SEMANTIC DRIFT CRON (snapshot co 30 min) ============
+  const snapshotDrift = async () => {
+    try {
+      const m = getRelayMetrics() as any;
+      await pool.query(
+        `INSERT INTO semantic_drift_snapshots
+           (semantic_total, syntactic_total, drift_ratio, qdrant_ready, route_total)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [m.semantic_route_total || 0, m.syntactic_route_total || 0,
+         m.drift_ratio || 0, !m.relay_frozen, m.route_total || 0]
+      );
+    } catch (_) {}
+  };
+  setInterval(snapshotDrift, 30 * 60 * 1000);
+
+  console.log('✓ Compliance cron + Semantic drift cron started');
 });
 
 // ============ COMPLIANCE HISTORY ENDPOINT ============

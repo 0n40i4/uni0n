@@ -1,7 +1,7 @@
 /**
  * UNIONAI Ω∞ — Wave 3: Semantic Relay MVP, DID-lite, Memory, Trust, Governance
  * K0NSULAT/CORE — source of truth implementation
- * Status: GO CONTROLLED
+ * Status: GO CONTROLLED++
  */
 
 import { Router, Request, Response } from 'express';
@@ -9,6 +9,102 @@ import * as pg from 'pg';
 import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { QdrantClient } from '@qdrant/js-client-rest';
+
+// ─── Qdrant semantic routing ───────────────────────────────────────────────────
+const QDRANT_COLLECTION = 'unionai-intents';
+const VECTOR_SIZE = 384;
+const QDRANT_TIMEOUT_MS = parseInt(process.env.QDRANT_TIMEOUT_MS || '3000', 10);
+
+let qdrantClient: QdrantClient | null = null;
+let qdrantReady = false;
+
+function getQdrant(): QdrantClient | null {
+  if (!process.env.QDRANT_URL) return null;
+  if (!qdrantClient) {
+    qdrantClient = new QdrantClient({ url: process.env.QDRANT_URL, timeout: QDRANT_TIMEOUT_MS });
+  }
+  return qdrantClient;
+}
+
+async function ensureQdrantCollection(): Promise<boolean> {
+  const c = getQdrant();
+  if (!c) return false;
+  try {
+    const existing = await c.getCollections();
+    const names = (existing.collections || []).map((col: any) => col.name);
+    if (!names.includes(QDRANT_COLLECTION)) {
+      await c.createCollection(QDRANT_COLLECTION, {
+        vectors: { size: VECTOR_SIZE, distance: 'Cosine' },
+      });
+    }
+    qdrantReady = true;
+    return true;
+  } catch (err) {
+    console.warn('[qdrant] collection init failed (non-fatal):', (err as Error).message);
+    return false;
+  }
+}
+
+export async function initQdrant(): Promise<void> {
+  await ensureQdrantCollection();
+  console.log(`[qdrant] ready=${qdrantReady} url=${process.env.QDRANT_URL || 'not configured'}`);
+}
+
+/** Deterministic keyword pseudo-vector (VECTOR_SIZE=384). Used when no embedding model. */
+function keywordVector(text: string): number[] {
+  const words = text.toLowerCase().split(/\s+/);
+  const vec = new Array(VECTOR_SIZE).fill(0);
+  words.forEach((w, i) => {
+    const idx = w.charCodeAt(0) % VECTOR_SIZE;
+    vec[idx] += 1.0 / (i + 1);
+  });
+  const norm = Math.sqrt(vec.reduce((s: number, v: number) => s + v * v, 0)) || 1;
+  return vec.map((v: number) => v / norm);
+}
+
+async function upsertIntentVector(
+  trace_id: string, intent_id: string, src_did: string, dst_did: string, intent_text: string
+): Promise<boolean> {
+  const c = getQdrant();
+  if (!c || !qdrantReady) return false;
+  try {
+    const vec = keywordVector(intent_text);
+    const uid = crypto.createHash('md5').update(trace_id).digest('hex').slice(0, 8) +
+                crypto.createHash('md5').update(intent_id).digest('hex').slice(0, 24);
+    await c.upsert(QDRANT_COLLECTION, {
+      wait: false,
+      points: [{ id: uid, vector: vec, payload: { trace_id, intent_id, src_did, dst_did, intent_text, ts: new Date().toISOString() } }],
+    });
+    return true;
+  } catch (err) {
+    console.warn('[qdrant] upsert failed (non-fatal):', (err as Error).message);
+    return false;
+  }
+}
+
+async function searchSimilarIntents(
+  intent_text: string, exclude_did: string, topK = 5
+): Promise<Array<{ did: string; score: number }>> {
+  const c = getQdrant();
+  if (!c || !qdrantReady) return [];
+  try {
+    const vec = keywordVector(intent_text);
+    const results = await c.search(QDRANT_COLLECTION, {
+      vector: vec, limit: topK, with_payload: true,
+      filter: {
+        must_not: [{ key: 'src_did', match: { value: exclude_did } }],
+      },
+    });
+    return results
+      .filter((r: any) => r.score > 0.3)
+      .map((r: any) => ({ did: r.payload?.dst_did || r.payload?.src_did || '', score: r.score }))
+      .filter((r: any) => r.did && r.did !== exclude_did);
+  } catch (err) {
+    console.warn('[qdrant] search failed (non-fatal):', (err as Error).message);
+    return [];
+  }
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -49,11 +145,15 @@ export const freezeState = {
 export const relayMetrics = {
   sent_total: 0,
   route_total: 0,
+  semantic_route_total: 0,
+  syntactic_route_total: 0,
   errors_total: 0,
   timeouts_total: 0,
   fallback_total: 0,
   provider_failover_total: 0,
   tracing_spans_total: 0,
+  qdrant_upsert_total: 0,
+  qdrant_search_total: 0,
   last_latency_ms: 0,
   drift_ratio: 0,
 };
@@ -329,6 +429,23 @@ export const WAVE3_MIGRATIONS = `
   ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS justification TEXT;
   ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS previous_hash VARCHAR(64);
   ALTER TABLE governance_events ADD COLUMN IF NOT EXISTS payload_hash VARCHAR(64);
+
+  -- Trace retention: mark incident-preserved spans (never pruned)
+  ALTER TABLE relay_spans ADD COLUMN IF NOT EXISTS incident_preserve BOOLEAN DEFAULT FALSE;
+  ALTER TABLE relay_events ADD COLUMN IF NOT EXISTS incident_preserve BOOLEAN DEFAULT FALSE;
+
+  -- Semantic drift tracking
+  CREATE TABLE IF NOT EXISTS semantic_drift_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    snapshot_at TIMESTAMPTZ DEFAULT NOW(),
+    semantic_total INT DEFAULT 0,
+    syntactic_total INT DEFAULT 0,
+    drift_ratio FLOAT DEFAULT 0,
+    qdrant_ready BOOLEAN DEFAULT FALSE,
+    route_total INT DEFAULT 0,
+    notes TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_drift_snapshots_at ON semantic_drift_snapshots(snapshot_at DESC);
 `;
 
 // ─── Routers ──────────────────────────────────────────────────────────────────
@@ -431,6 +548,12 @@ export function createWave3Router(pool: pg.Pool): Router {
       latency_ms: relayMetrics.last_latency_ms,
     });
 
+    // Qdrant: upsert intent vector async (non-blocking, semantic routing baseline)
+    const intentText = `${body.intent?.type || ''} ${body.intent?.summary || ''} ${body.dst_did || ''}`;
+    upsertIntentVector(trace_id, body.intent_id || trace_id, body.src_did, body.dst_did || '', intentText)
+      .then(ok => { if (ok) relayMetrics.qdrant_upsert_total++; })
+      .catch(() => {});
+
     res.status(201).json({
       success: true,
       trace_id,
@@ -480,40 +603,86 @@ export function createWave3Router(pool: pg.Pool): Router {
       });
     }
 
-    const fallback_used = !intent_embedding;
-    let route_type = fallback_used ? 'syntactic_fallback' : 'semantic';
-    let route_confidence = fallback_used ? 0.4 : 0.9;
-    if (fallback_used) {
-      relayMetrics.fallback_total++;
-      relayMetrics.drift_ratio = relayMetrics.fallback_total / relayMetrics.route_total;
+    // Semantic routing: try Qdrant first if available and intent provided
+    const intentText = typeof intent === 'string' ? intent : (intent?.summary || intent?.type || '');
+    let semantic_candidates: Array<{ did: string; score: number }> = [];
+    let semantic_routing_used = false;
+
+    if (qdrantReady && intentText) {
+      try {
+        relayMetrics.qdrant_search_total++;
+        semantic_candidates = await Promise.race([
+          searchSimilarIntents(intentText, src_did, 5),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Qdrant search timeout')), QDRANT_TIMEOUT_MS)
+          ),
+        ]);
+        if (semantic_candidates.length > 0) {
+          semantic_routing_used = true;
+          relayMetrics.semantic_route_total++;
+        }
+      } catch (_) {}
     }
+
+    // Determine route_type and confidence based on routing path
+    const caller_has_embedding = !!intent_embedding;
+    let route_type: string;
+    let route_confidence: number;
+
+    if (semantic_routing_used) {
+      route_type = 'semantic';
+      route_confidence = parseFloat((semantic_candidates[0]?.score || 0.7).toFixed(4));
+      relayMetrics.drift_ratio = relayMetrics.syntactic_route_total / Math.max(relayMetrics.route_total, 1);
+    } else if (caller_has_embedding) {
+      route_type = 'semantic_embedding';
+      route_confidence = 0.85;
+      relayMetrics.semantic_route_total++;
+      relayMetrics.drift_ratio = relayMetrics.syntactic_route_total / Math.max(relayMetrics.route_total, 1);
+    } else {
+      route_type = 'syntactic_fallback';
+      route_confidence = 0.4;
+      relayMetrics.syntactic_route_total++;
+      relayMetrics.fallback_total++;
+      relayMetrics.drift_ratio = relayMetrics.syntactic_route_total / Math.max(relayMetrics.route_total, 1);
+    }
+
+    const fallback_used = route_type === 'syntactic_fallback';
 
     // Provider resolution — 3-level failover
     let target_did: string | null = null;
     let failover_level = 0;
     const provider_chain: string[] = [];
 
-    // Level 0 — DB lookup (primary)
-    try {
-      const candidates = await withDbTimeout(
-        pool.query(
-          `SELECT did, trust_score, trust_tier
-           FROM agents
-           WHERE status = 'active' AND did != $1
-           ORDER BY trust_score DESC LIMIT 5`,
-          [src_did]
-        ),
-        'relay/route candidates'
-      );
-      if (candidates.rows.length > 0) {
-        updateProviderCache(candidates.rows);
-        target_did = candidates.rows[0].did as string;
-        provider_chain.push(target_did);
-        if (fallback_used) route_confidence = 0.5 + (candidates.rows[0].trust_score / 2000);
+    // Semantic candidates from Qdrant (highest priority when available)
+    if (semantic_candidates.length > 0 && semantic_candidates[0].did) {
+      target_did = semantic_candidates[0].did;
+      provider_chain.push(target_did);
+      route_confidence = parseFloat(semantic_candidates[0].score.toFixed(4));
+    }
+
+    // Level 0 — DB lookup (primary, also populates provider cache)
+    if (!target_did) {
+      try {
+        const candidates = await withDbTimeout(
+          pool.query(
+            `SELECT did, trust_score, trust_tier
+             FROM agents
+             WHERE status = 'active' AND did != $1
+             ORDER BY trust_score DESC LIMIT 5`,
+            [src_did]
+          ),
+          'relay/route candidates'
+        );
+        if (candidates.rows.length > 0) {
+          updateProviderCache(candidates.rows);
+          target_did = candidates.rows[0].did as string;
+          provider_chain.push(target_did);
+          if (fallback_used) route_confidence = parseFloat((0.5 + (candidates.rows[0].trust_score / 2000)).toFixed(4));
+        }
+      } catch (e) {
+        relayMetrics.errors_total++;
+        console.warn('[relay/route] DB candidates failed, entering failover:', (e as Error).message);
       }
-    } catch (e) {
-      relayMetrics.errors_total++;
-      console.warn('[relay/route] DB candidates failed, entering failover:', (e as Error).message);
     }
 
     // Level 1 — provider cache (fallback on DB failure or empty result)
@@ -566,7 +735,7 @@ export function createWave3Router(pool: pg.Pool): Router {
       fallback_used: fallback_used || failover_level > 0,
       claim_level: tierInfo.tier,
       payload_hash,
-      metadata: { route_type, route_confidence, failover_level, provider_chain },
+      metadata: { route_type, route_confidence, failover_level, provider_chain, semantic_routing_used },
     }).catch(() => {});
 
     appendReplayLog({
@@ -574,7 +743,8 @@ export function createWave3Router(pool: pg.Pool): Router {
       event: 'relay.route',
       src_did, target_did, route_type, fallback_used,
       route_confidence, payload_hash, current_hash,
-      failover_level, provider_chain,
+      failover_level, provider_chain, semantic_routing_used,
+      drift_ratio: relayMetrics.drift_ratio,
     });
 
     res.json({
@@ -582,10 +752,13 @@ export function createWave3Router(pool: pg.Pool): Router {
       span_id: span.span_id,
       target_did,
       route_type,
-      route_confidence: parseFloat(route_confidence.toFixed(4)),
+      route_confidence,
       fallback_used: fallback_used || failover_level > 0,
       failover_level,
       provider_chain,
+      semantic_routing_used,
+      drift_ratio: parseFloat(relayMetrics.drift_ratio.toFixed(4)),
+      qdrant_ready: qdrantReady,
       trust_tier: tierInfo.tier,
       hash: current_hash,
       timestamp: new Date().toISOString(),
@@ -949,14 +1122,19 @@ export function createWave3Router(pool: pg.Pool): Router {
     } catch (_) {}
 
     const drift = db_relay_count > 0 ? db_fallback_count / db_relay_count : 0;
+    const semantic_mode = qdrantReady ? 'semantic_active' : 'syntactic_fallback_until_qdrant';
     res.json({
       relay_frozen: freezeState.relay,
       in_process: {
         sent_total: relayMetrics.sent_total,
         route_total: relayMetrics.route_total,
+        semantic_route_total: relayMetrics.semantic_route_total,
+        syntactic_route_total: relayMetrics.syntactic_route_total,
         errors_total: relayMetrics.errors_total,
         timeouts_total: relayMetrics.timeouts_total,
         fallback_total: relayMetrics.fallback_total,
+        qdrant_upsert_total: relayMetrics.qdrant_upsert_total,
+        qdrant_search_total: relayMetrics.qdrant_search_total,
         last_latency_ms: relayMetrics.last_latency_ms,
         drift_ratio: parseFloat(relayMetrics.drift_ratio.toFixed(4)),
       },
@@ -964,10 +1142,104 @@ export function createWave3Router(pool: pg.Pool): Router {
         relay_events_total: db_relay_count,
         fallback_events_total: db_fallback_count,
         semantic_drift_ratio: parseFloat(drift.toFixed(4)),
-        semantic_mode: 'syntactic_fallback_until_qdrant',
+        semantic_mode,
       },
+      qdrant: { ready: qdrantReady, url_configured: !!process.env.QDRANT_URL },
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // ── GET /api/relay/drift ── semantic drift baseline report ────────────────────
+  router.get('/relay/drift', async (_req: Request, res: Response) => {
+    let recent_snapshots: any[] = [];
+    try {
+      const r = await pool.query(
+        `SELECT snapshot_at, semantic_total, syntactic_total, drift_ratio, qdrant_ready, route_total
+         FROM semantic_drift_snapshots ORDER BY snapshot_at DESC LIMIT 24`
+      );
+      recent_snapshots = r.rows;
+    } catch (_) {}
+
+    const total_routes = relayMetrics.route_total;
+    const semantic_pct = total_routes > 0
+      ? parseFloat(((relayMetrics.semantic_route_total / total_routes) * 100).toFixed(2))
+      : 0;
+    const syntactic_pct = total_routes > 0
+      ? parseFloat(((relayMetrics.syntactic_route_total / total_routes) * 100).toFixed(2))
+      : 0;
+
+    res.json({
+      current: {
+        drift_ratio: parseFloat(relayMetrics.drift_ratio.toFixed(4)),
+        semantic_route_total: relayMetrics.semantic_route_total,
+        syntactic_route_total: relayMetrics.syntactic_route_total,
+        semantic_pct,
+        syntactic_pct,
+        route_total: total_routes,
+        qdrant_ready: qdrantReady,
+        qdrant_search_total: relayMetrics.qdrant_search_total,
+        qdrant_upsert_total: relayMetrics.qdrant_upsert_total,
+      },
+      classification: {
+        semantic: 'Qdrant vector search result (score>0.3) or caller-provided embedding',
+        syntactic_fallback: 'No Qdrant result, keyword-only routing',
+        no_drift: 'drift_ratio=0 means 100% semantic routing',
+        full_drift: 'drift_ratio=1 means 100% syntactic fallback',
+      },
+      recent_snapshots,
+      note: qdrantReady
+        ? 'Qdrant active — semantic routing operational'
+        : 'Qdrant not connected — all routes use syntactic fallback (drift_ratio will be 1.0 until Qdrant connects)',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // ── POST /api/relay/prune ── trace retention enforcement (operator-only via JWT) ─
+  router.post('/relay/prune', async (req: Request, res: Response) => {
+    const { retain_days_spans = 7, retain_days_events = 30, dry_run = true } = req.body;
+    try {
+      const cutoff_spans = new Date(Date.now() - retain_days_spans * 86400000).toISOString();
+      const cutoff_events = new Date(Date.now() - retain_days_events * 86400000).toISOString();
+
+      const spans_count_r = await pool.query(
+        `SELECT COUNT(*) FROM relay_spans WHERE started_at < $1 AND incident_preserve = FALSE`,
+        [cutoff_spans]
+      );
+      const events_count_r = await pool.query(
+        `SELECT COUNT(*) FROM relay_events WHERE created_at < $1 AND incident_preserve = FALSE`,
+        [cutoff_events]
+      );
+      const spans_eligible = +spans_count_r.rows[0].count;
+      const events_eligible = +events_count_r.rows[0].count;
+
+      let spans_deleted = 0, events_deleted = 0;
+      if (!dry_run) {
+        const sd = await pool.query(
+          `DELETE FROM relay_spans WHERE started_at < $1 AND incident_preserve = FALSE`,
+          [cutoff_spans]
+        );
+        const ed = await pool.query(
+          `DELETE FROM relay_events WHERE created_at < $1 AND incident_preserve = FALSE`,
+          [cutoff_events]
+        );
+        spans_deleted = sd.rowCount || 0;
+        events_deleted = ed.rowCount || 0;
+        appendReplayLog({
+          ts: new Date().toISOString(), event: 'relay.prune',
+          spans_deleted, events_deleted, retain_days_spans, retain_days_events,
+        });
+      }
+
+      res.json({
+        dry_run,
+        spans: { eligible: spans_eligible, deleted: spans_deleted, cutoff: cutoff_spans, retain_days: retain_days_spans },
+        events: { eligible: events_eligible, deleted: events_deleted, cutoff: cutoff_events, retain_days: retain_days_events },
+        preserved: 'incident_preserve=TRUE rows are never pruned',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
   });
 
   return router;

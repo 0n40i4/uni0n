@@ -14,7 +14,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 // ─── Qdrant semantic routing ───────────────────────────────────────────────────
 const QDRANT_COLLECTION = 'unionai-intents';
 const VECTOR_SIZE = 384;
-const QDRANT_TIMEOUT_MS = parseInt(process.env.QDRANT_TIMEOUT_MS || '3000', 10);
+const QDRANT_TIMEOUT_MS = parseInt(process.env.QDRANT_TIMEOUT_MS || '8000', 10);
 
 let qdrantClient: QdrantClient | null = null;
 let qdrantReady = false;
@@ -30,25 +30,37 @@ function getQdrant(): QdrantClient | null {
 async function ensureQdrantCollection(): Promise<boolean> {
   const c = getQdrant();
   if (!c) return false;
-  try {
-    const existing = await c.getCollections();
-    const names = (existing.collections || []).map((col: any) => col.name);
-    if (!names.includes(QDRANT_COLLECTION)) {
-      await c.createCollection(QDRANT_COLLECTION, {
-        vectors: { size: VECTOR_SIZE, distance: 'Cosine' },
-      });
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const existing = await c.getCollections();
+      const names = (existing.collections || []).map((col: any) => col.name);
+      if (!names.includes(QDRANT_COLLECTION)) {
+        await c.createCollection(QDRANT_COLLECTION, {
+          vectors: { size: VECTOR_SIZE, distance: 'Cosine' },
+        });
+        console.log(`[qdrant] created collection ${QDRANT_COLLECTION}`);
+      }
+      qdrantReady = true;
+      return true;
+    } catch (err) {
+      const msg = (err as Error).message;
+      console.warn(`[qdrant] collection init attempt ${attempt}/3 failed: ${msg}`);
+      if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 3000));
     }
-    qdrantReady = true;
-    return true;
-  } catch (err) {
-    console.warn('[qdrant] collection init failed (non-fatal):', (err as Error).message);
-    return false;
   }
+  return false;
 }
 
 export async function initQdrant(): Promise<void> {
   await ensureQdrantCollection();
   console.log(`[qdrant] ready=${qdrantReady} url=${process.env.QDRANT_URL || 'not configured'}`);
+}
+
+/** Re-try Qdrant connection if it failed at startup. Called lazily before each search. */
+async function maybeReconnectQdrant(): Promise<void> {
+  if (!qdrantReady && process.env.QDRANT_URL) {
+    await ensureQdrantCollection();
+  }
 }
 
 /** Deterministic keyword pseudo-vector (VECTOR_SIZE=384). Used when no embedding model. */
@@ -603,6 +615,9 @@ export function createWave3Router(pool: pg.Pool): Router {
       });
     }
 
+    // Lazy reconnect: try Qdrant if not ready yet
+    await maybeReconnectQdrant();
+
     // Semantic routing: try Qdrant first if available and intent provided
     const intentText = typeof intent === 'string' ? intent : (intent?.summary || intent?.type || '');
     let semantic_candidates: Array<{ did: string; score: number }> = [];
@@ -1147,6 +1162,39 @@ export function createWave3Router(pool: pg.Pool): Router {
       qdrant: { ready: qdrantReady, url_configured: !!process.env.QDRANT_URL },
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // ── GET /api/qdrant/health ── direct Qdrant connectivity probe ───────────────
+  router.get('/qdrant/health', async (_req: Request, res: Response) => {
+    await maybeReconnectQdrant();
+    if (!process.env.QDRANT_URL) {
+      return res.status(503).json({ status: 'not_configured', message: 'QDRANT_URL not set' });
+    }
+    const c = getQdrant();
+    if (!c) {
+      return res.status(503).json({ status: 'client_null', url: process.env.QDRANT_URL });
+    }
+    try {
+      const [collections, cluster] = await Promise.allSettled([
+        c.getCollections(),
+        (c as any).getCluster ? (c as any).getCluster() : Promise.resolve(null),
+      ]);
+      const cols = collections.status === 'fulfilled' ? collections.value.collections : [];
+      return res.json({
+        status: qdrantReady ? 'ok' : 'degraded',
+        url: process.env.QDRANT_URL,
+        ready: qdrantReady,
+        collections: cols.map((c: any) => c.name),
+        collection_exists: cols.some((c: any) => c.name === QDRANT_COLLECTION),
+        timeout_ms: QDRANT_TIMEOUT_MS,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      return res.status(503).json({
+        status: 'error', ready: false, url: process.env.QDRANT_URL,
+        error: (err as Error).message, timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // ── GET /api/relay/drift ── semantic drift baseline report ────────────────────

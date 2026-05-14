@@ -162,8 +162,14 @@ function makeAnchorId(): string {
   return 'anc-' + crypto.randomUUID();
 }
 
-function sha256(data: string): string {
+export function sha256(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
+}
+
+// Hash chain helper — used by relay_events ledger.
+// Deterministic: same inputs => same output. Order matters.
+export function hashChain(previous_hash: string, payload_hash: string, trace_id: string): string {
+  return sha256(previous_hash + payload_hash + trace_id);
 }
 
 // JSONL append-only replay log
@@ -303,7 +309,7 @@ async function endSpan(pool: pg.Pool, span: Span, attrs: {
 }
 
 // Trust tier from score
-function trustTier(score: number): { tier: string; status: string; permissions: string[] } {
+export function trustTier(score: number): { tier: string; status: string; permissions: string[] } {
   if (score >= 900) return { tier: 'T4', status: 'ORACLE',      permissions: ['route','relay','memory_write','governance','review'] };
   if (score >= 700) return { tier: 'T3', status: 'FEDERATION',  permissions: ['route','relay','memory_write','governance'] };
   if (score >= 400) return { tier: 'T2', status: 'VERIFIED',    permissions: ['route','relay','memory_write'] };
@@ -312,7 +318,7 @@ function trustTier(score: number): { tier: string; status: string; permissions: 
 }
 
 // Minimal MVSS-v0 validator
-function validateMVSS(body: any): { valid: boolean; error?: string } {
+export function validateMVSS(body: any): { valid: boolean; error?: string } {
   const required = ['protocol', 'intent_id', 'src_did', 'dst_did', 'intent'];
   for (const f of required) {
     if (!body[f]) return { valid: false, error: `Missing required field: ${f}` };
@@ -502,7 +508,6 @@ export function createWave3Router(pool: pg.Pool): Router {
   // ── POST /api/relay/send ──────────────────────────────────────────────────
   router.post('/relay/send', async (req: Request, res: Response) => {
     const t0 = Date.now();
-    relayMetrics.sent_total++;
     if (freezeState.relay) {
       return res.status(503).json({ error: 'RELAY_FROZEN', message: 'Relay is frozen by operator' });
     }
@@ -510,6 +515,7 @@ export function createWave3Router(pool: pg.Pool): Router {
     if (!validation.valid) {
       return res.status(400).json({ error: 'MVSS_INVALID', message: validation.error });
     }
+    relayMetrics.sent_total++;
     const body = req.body;
     const trace_id = body.trace_id || makeTraceId(); // honour caller trace_id for hop continuity
     const span = startSpan(trace_id, 'relay.send');
@@ -615,7 +621,6 @@ export function createWave3Router(pool: pg.Pool): Router {
 
   // ── POST /api/relay/route ─────────────────────────────────────────────────
   router.post('/relay/route', async (req: Request, res: Response) => {
-    relayMetrics.route_total++;
     if (freezeState.relay) {
       return res.status(503).json({ error: 'RELAY_FROZEN' });
     }
@@ -623,6 +628,7 @@ export function createWave3Router(pool: pg.Pool): Router {
     if (!src_did || !intent) {
       return res.status(400).json({ error: 'src_did and intent required' });
     }
+    relayMetrics.route_total++;
     const trace_id = req.body.trace_id || makeTraceId();
     const span = startSpan(trace_id, 'relay.route');
 

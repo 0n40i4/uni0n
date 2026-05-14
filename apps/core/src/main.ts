@@ -1,23 +1,30 @@
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 import * as pg from 'pg';
 import * as redis from 'redis';
 import crypto from 'crypto';
 
 // ============ SECURITY: JWT (custom HMAC-SHA256, no external deps) ============
-const JWT_SECRET = process.env.JWT_SECRET || 'unionai-dev-secret-CHANGE-IN-PROD-' + Date.now();
-if (!process.env.JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET not set, using dev fallback. SET IN PROD!');
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
+if (!JWT_SECRET_ENV) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET must be set in production');
+    process.exit(1);
+  }
+  console.warn('WARNING: JWT_SECRET not set, using ephemeral dev secret');
 }
+const JWT_SECRET = JWT_SECRET_ENV || ('unionai-dev-' + Date.now());
 const JWT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24h
 
-function signToken(payload: any): string {
+export function signToken(payload: any): string {
   const data = { ...payload, exp: Date.now() + JWT_EXPIRY_MS };
   const body = Buffer.from(JSON.stringify(data)).toString('base64url');
   const sig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
   return `${body}.${sig}`;
 }
 
-function verifyToken(token: string): any | null {
+export function verifyToken(token: string): any | null {
   try {
     const [body, sig] = token.split('.');
     if (!body || !sig) return null;
@@ -81,9 +88,19 @@ import { getComplianceMatrix, getComplianceMatrixAsHtml } from './modules/compli
 import { generateEvidenceManifest, getEvidenceManifest, saveEvidenceManifest } from './modules/evidence';
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
+
+// ============ SECURITY: hardening middleware (must run BEFORE other middleware) ============
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(globalRateLimit);
 
@@ -97,7 +114,12 @@ app.post('/api/auth/login', (req, res) => {
   if (!expectedPass) {
     return res.status(503).json({ error: 'OPERATOR_PASSWORD not configured on server' });
   }
-  if (username !== expectedUser || password !== expectedPass) {
+  if (username !== expectedUser) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  const a = Buffer.from(password || '');
+  const b = Buffer.from(expectedPass);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   const token = signToken({ sub: username, role: 'operator' });
@@ -370,42 +392,148 @@ GO_CONTROLLED
 });
 
 app.get('/openapi.json', (req, res) => {
+  const errorRef = { $ref: '#/components/schemas/Error' };
+  const errResp = (desc: string) => ({
+    description: desc,
+    content: { 'application/json': { schema: errorRef } }
+  });
+  const okResp = (desc: string) => ({
+    description: desc,
+    content: { 'application/json': { schema: { type: 'object' } } }
+  });
   res.json({
-    openapi: "3.0.0",
+    openapi: "3.1.0",
     info: {
       title: "UNIONAI Core API",
-      version: "0.1.0-testnet",
+      version: "0.3.0-dev",
       description: "Federacyjna warstwa governance dla agentów AI"
     },
     servers: [
-      { url: "https://unionai.grassrootslobbing.pl", description: "Production" },
+      { url: "https://unionai-core.fly.dev", description: "Production (Fly)" },
+      { url: "https://unionai.grassrootslobbing.pl", description: "Production (custom domain)" },
       { url: "http://localhost:3000", description: "Local" }
     ],
+    components: {
+      schemas: {
+        Error: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          },
+          required: ['error']
+        }
+      }
+    },
     paths: {
       "/health": {
-        "get": {
-          "summary": "Health check",
-          "responses": { "200": { "description": "API is healthy" } }
-        }
+        get: { tags: ['system'], summary: 'Health check (DB + Redis)', responses: { '200': okResp('Service health snapshot') } }
+      },
+      "/metrics": {
+        get: { tags: ['system'], summary: 'Prometheus metrics (text/plain)', responses: { '200': { description: 'Prometheus exposition format' } } }
+      },
+      "/api/system/smoke": {
+        get: { tags: ['system'], summary: 'Run smoke checks and return tag VERIFIED/BLOCKED', responses: { '200': okResp('Smoke result') } }
+      },
+      "/.well-known/agent.json": {
+        get: { tags: ['discovery'], summary: 'Agent identity descriptor (DID-lite)', responses: { '200': okResp('Agent descriptor') } }
       },
       "/api/agent/join": {
-        "post": {
-          "summary": "Register agent in federation",
-          "requestBody": { "required": true },
-          "responses": { "201": { "description": "Agent registered" } }
+        post: {
+          tags: ['agent'], summary: 'Register agent in federation (idempotent on did)',
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['did'], properties: { did: { type: 'string' }, provider: { type: 'string' }, capabilities: { type: 'array', items: { type: 'string' } } } } } } },
+          responses: { '200': okResp('Agent already existed'), '201': okResp('Agent created'), '400': errResp('Missing did'), '500': errResp('DB error') }
         }
       },
-      "/api/leaderboard": {
-        "get": {
-          "summary": "Get agent leaderboard",
-          "responses": { "200": { "description": "List of agents ranked by score" } }
+      "/api/agent/register": {
+        post: { tags: ['agent'], summary: 'Full agent registration (Wave3 — trust score, tier, capabilities)', responses: { '201': okResp('Agent registered'), '400': errResp('Missing did'), '500': errResp('DB error') } }
+      },
+      "/api/relay/send": {
+        post: { tags: ['relay'], summary: 'Send relay event (MVSS validated)', responses: { '201': okResp('Relay received'), '400': errResp('MVSS invalid'), '503': errResp('Relay frozen') } }
+      },
+      "/api/relay/route": {
+        post: { tags: ['relay'], summary: 'Route relay via semantic or syntactic match', responses: { '200': okResp('Route resolved'), '400': errResp('Missing src_did/intent'), '403': errResp('Trust too low'), '503': errResp('Relay frozen') } }
+      },
+      "/api/relay/status": {
+        get: { tags: ['relay'], summary: 'Relay subsystem status + metrics', responses: { '200': okResp('Status snapshot') } }
+      },
+      "/api/relay/drift": {
+        get: { tags: ['relay'], summary: 'Semantic drift ratio + Qdrant health', responses: { '200': okResp('Drift snapshot') } }
+      },
+      "/api/relay/replay/{trace_id}": {
+        get: {
+          tags: ['relay'], summary: 'Replay events for a trace_id',
+          parameters: [{ name: 'trace_id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': okResp('Replay events'), '404': errResp('Trace not found') }
+        }
+      },
+      "/api/qdrant/health": {
+        get: { tags: ['relay'], summary: 'Qdrant connectivity check', responses: { '200': okResp('Qdrant ok'), '503': errResp('Qdrant unavailable') } }
+      },
+      "/api/memory/anchor": {
+        post: { tags: ['memory'], summary: 'Anchor memory entry (hash-chained)', responses: { '201': okResp('Anchor created'), '400': errResp('Validation error'), '503': errResp('Memory frozen') } }
+      },
+      "/api/memory/query": {
+        post: { tags: ['memory'], summary: 'Query memory anchors', responses: { '200': okResp('Anchors'), '400': errResp('Validation error') } }
+      },
+      "/api/trust/verify": {
+        post: { tags: ['trust'], summary: 'Verify trust tier for did', responses: { '200': okResp('Trust info'), '400': errResp('Missing did'), '404': errResp('Agent not found') } }
+      },
+      "/api/k0nsulat/status": {
+        get: { tags: ['k0nsulat'], summary: 'K0NSULAT module status', responses: { '200': okResp('Status') } }
+      },
+      "/api/k0nsulat/audit": {
+        post: { tags: ['k0nsulat'], summary: 'Log audit event', responses: { '201': okResp('Audit logged'), '400': errResp('Validation error') } }
+      },
+      "/api/incident/open": {
+        post: { tags: ['incident'], summary: 'Open new incident', responses: { '201': okResp('Incident created'), '400': errResp('Missing title/severity'), '500': errResp('DB error') } }
+      },
+      "/api/incident/{id}": {
+        get: {
+          tags: ['incident'], summary: 'Get incident by id',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: { '200': okResp('Incident'), '404': errResp('Not found') }
         }
       }
     }
   });
 });
 
-app.post('/api/agent/join', (req, res) => res.status(201).json({ success: true, message: 'Agent registered' }));
+app.post('/api/agent/join', async (req, res) => {
+  try {
+    const { did, provider, capabilities } = req.body || {};
+    if (!did) {
+      return res.status(400).json({ error: 'did is required' });
+    }
+    const capsStr = Array.isArray(capabilities) ? capabilities.join(',') : (capabilities || '');
+    const result = await pool.query(
+      `INSERT INTO agents (did, provider, capabilities, score, status, created_at)
+       VALUES ($1, $2, $3, 0, 'pending', NOW())
+       ON CONFLICT (did) DO NOTHING
+       RETURNING id`,
+      [did, provider || null, capsStr]
+    );
+    if (result.rows.length === 0) {
+      // Existing agent — fetch id
+      const existing = await pool.query('SELECT id FROM agents WHERE did = $1', [did]);
+      return res.status(200).json({
+        success: true,
+        did,
+        status: 'pending',
+        agent_id: existing.rows[0]?.id ?? null,
+        existing: true,
+      });
+    }
+    return res.status(201).json({
+      success: true,
+      did,
+      status: 'pending',
+      agent_id: result.rows[0].id,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
+  }
+});
 
 app.get('/api/leaderboard', (req, res) => res.json({
   federation: "UNIONAI-GENESIS-0N40I4-20260512", timestamp: new Date().toISOString(),
@@ -1074,31 +1202,30 @@ app.post('/api/operator/evidence/refresh', requireAuth, async (req, res) => {
 });
 
 
+// ============ MOUNT ROUTERS (module-level so tests can use supertest without app.listen) ============
+// Routers that don't depend on Redis are mounted at module-load. Wave7 (needs redis client) is
+// mounted inside the app.listen callback after initRedis() — preserves original runtime semantics.
+const k0nsultatRouter = createK0nsultatRouter(pool);
+app.use('/api/k0nsulat', k0nsultatRouter);
+const wave3Router = createWave3Router(pool);
+app.use('/api', wave3Router);
+const operatorRouter = createOperatorRouter(pool);
+app.use('/api/operator', requireAuth, operatorRateLimit, operatorRouter);
+const wave6Router = createWave6Router(pool);
+app.use('/api', wave6Router);
+
 // ============ START SERVER ============
 // ============ START SERVER ============
-app.listen(PORT as number, async () => {
+if (require.main === module) {
+const server = app.listen(PORT as number, async () => {
   console.log(`Starting UNIONAI Core API on port ${PORT}`);
-  
+
   // Initialize Redis + Migrations + Qdrant
   await initRedis();
   await runMigrations();
   await initQdrant();
-  
-  // Mount routers AFTER initialization
-  const k0nsultatRouter = createK0nsultatRouter(pool);
-  app.use('/api/k0nsulat', k0nsultatRouter);
 
-  // Wave 3: Semantic Relay, DID-lite, Memory, Trust, Governance
-  const wave3Router = createWave3Router(pool);
-  app.use('/api', wave3Router);
-
-  // Operator override console (JWT protected)
-  const operatorRouter = createOperatorRouter(pool);
-  app.use('/api/operator', requireAuth, operatorRateLimit, operatorRouter);
-
-  const wave6Router = createWave6Router(pool);
-  app.use('/api', wave6Router);
-
+  // Wave7 needs a connected redis client — mount AFTER initRedis()
   const wave7Router = createWave7Router(pool, redisClient);
   app.use('/api', wave7Router);
 
@@ -1189,6 +1316,18 @@ app.listen(PORT as number, async () => {
     }
   }, 10000);
 });
+
+// ============ GRACEFUL SHUTDOWN (SIGTERM/SIGINT) ============
+const shutdown = async (signal: string) => {
+  console.log(`[shutdown] received ${signal}, draining...`);
+  try { server.close(() => console.log('[shutdown] http closed')); } catch (e) { console.error('[shutdown] http close err', e); }
+  try { await pool.end(); console.log('[shutdown] pg drained'); } catch (e) { console.error('[shutdown] pg drain err', e); }
+  try { if (redisClient) { await redisClient.quit(); console.log('[shutdown] redis quit'); } } catch (e) { console.error('[shutdown] redis quit err', e); }
+  setTimeout(() => process.exit(0), 2000).unref();
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+} // end if (require.main === module)
 
 // ── P2.1/P2.2 — GET /api/system/smoke ── evidence snapshot + VERIFIED/BLOCKED promotion ──
 async function runSmoke(): Promise<{ tag: string; all_ok: boolean; checks: any[]; qdrant_ok: boolean }> {

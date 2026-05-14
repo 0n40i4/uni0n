@@ -1167,7 +1167,7 @@ app.listen(PORT as number, async () => {
            deploy_hash=EXCLUDED.deploy_hash, payload=EXCLUDED.payload, created_at=NOW()`,
         [date, smokeResult.tag, smokeResult.all_ok, smokeResult.qdrant_ok,
          m.drift_ratio || 0, +relayR.rows[0].count, +incidentR.rows[0].count,
-         smokeResult.all_ok, deploy_hash, JSON.stringify(payload)]
+         smokeResult.all_ok, deploy_hash, payload]
       );
       console.log(`[snapshot] ${date} tag=${smokeResult.tag} drift=${(m.drift_ratio||0).toFixed(3)} relay=${relayR.rows[0].count}`);
     } catch (e) {
@@ -1177,32 +1177,13 @@ app.listen(PORT as number, async () => {
   snapshotRuntime();
   setInterval(snapshotRuntime, 24 * 60 * 60 * 1000);
 
-  // ── P2.1 — Auto smoke snapshot on startup (10s delay, non-blocking) ──────────
+  // ── P2.1/P2.2 — Auto smoke + VERIFIED/BLOCKED promotion on startup (10s delay) ─
   setTimeout(async () => {
     try {
-      const base = `http://localhost:${PORT}`;
-      const checks = [
-        fetch(`${base}/health`).then(r => ({ ep: '/health', ok: r.ok, code: r.status })),
-        fetch(`${base}/api/relay/status`).then(r => ({ ep: '/api/relay/status', ok: r.ok, code: r.status })),
-        fetch(`${base}/api/qdrant/health`).then(r => ({ ep: '/api/qdrant/health', ok: r.ok, code: r.status })),
-      ];
-      const results = await Promise.allSettled(checks.map(p => p));
-      const all_ok = results.every(r => r.status === 'fulfilled' && (r as any).value.ok);
-      const tag = all_ok ? 'VERIFIED' : 'DEGRADED';
-      console.log(`[smoke] startup check ${tag}: ${results.map(r => r.status === 'fulfilled' ? `${(r as any).value.ep}=${(r as any).value.code}` : 'err').join(' | ')}`);
-      try {
-        await pool.query(
-          `INSERT INTO governance_events (trace_id, src_did, event_type, action, payload, previous_hash, current_hash)
-           VALUES ($1,$2,'smoke','startup_verify',$3,'0000000000000000','0000000000000000')`,
-          [
-            'smoke-' + Date.now(),
-            process.env.CORE_DID || 'did:unionai:s4:k0nsulat',
-            JSON.stringify({ tag, checks: results.map(r => r.status === 'fulfilled' ? (r as any).value : { error: 'failed' }) }),
-          ]
-        );
-      } catch (_) {}
+      const result = await runSmoke();
+      console.log(`[smoke] startup ${result.tag}: ${result.checks.map((c: any) => `${c.ep}=${c.status}`).join(' | ')}`);
     } catch (e) {
-      console.warn('[smoke] startup check error:', (e as Error).message);
+      console.warn('[smoke] startup error:', (e as Error).message);
     }
   }, 10000);
 });
@@ -1233,7 +1214,7 @@ async function runSmoke(): Promise<{ tag: string; all_ok: boolean; checks: any[]
     const deploy_hash = process.env.FLY_IMAGE_REF || process.env.FLY_MACHINE_VERSION || null;
     await pool.query(
       `INSERT INTO deployment_promotions (tag, deploy_hash, checks, all_ok) VALUES ($1,$2,$3,$4)`,
-      [tag, deploy_hash, JSON.stringify(checks), all_ok]
+      [tag, deploy_hash, checks, all_ok]
     );
   } catch (_) {}
   return { tag, all_ok, checks, qdrant_ok: results[2].status === 'fulfilled' && (results[2] as any).value.ok };

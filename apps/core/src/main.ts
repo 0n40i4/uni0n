@@ -618,12 +618,13 @@ const STABILITY_MIGRATIONS = `
 CREATE TABLE IF NOT EXISTS deployment_promotions (
   id            SERIAL PRIMARY KEY,
   tag           VARCHAR(20) NOT NULL,
-  deploy_hash   VARCHAR(64),
+  deploy_hash   TEXT,
   checks        JSONB DEFAULT '[]',
   all_ok        BOOLEAN DEFAULT FALSE,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_promotions_at ON deployment_promotions(created_at DESC);
+ALTER TABLE deployment_promotions ALTER COLUMN deploy_hash TYPE TEXT;
 
 CREATE TABLE IF NOT EXISTS runtime_snapshots (
   id            SERIAL PRIMARY KEY,
@@ -635,11 +636,12 @@ CREATE TABLE IF NOT EXISTS runtime_snapshots (
   relay_total   INT DEFAULT 0,
   incident_count INT DEFAULT 0,
   smoke_ok      BOOLEAN DEFAULT FALSE,
-  deploy_hash   VARCHAR(64),
+  deploy_hash   TEXT,
   payload       JSONB DEFAULT '{}',
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_date ON runtime_snapshots(snapshot_date DESC);
+ALTER TABLE runtime_snapshots ALTER COLUMN deploy_hash TYPE TEXT;
 `;
 
 app.get('/', (req, res) => {

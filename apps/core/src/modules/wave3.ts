@@ -27,6 +27,8 @@ function getQdrant(): QdrantClient | null {
   return qdrantClient;
 }
 
+let _lastQdrantError = '';
+
 async function ensureQdrantCollection(): Promise<boolean> {
   const c = getQdrant();
   if (!c) return false;
@@ -41,9 +43,11 @@ async function ensureQdrantCollection(): Promise<boolean> {
         console.log(`[qdrant] created collection ${QDRANT_COLLECTION}`);
       }
       qdrantReady = true;
+      _lastQdrantError = '';
       return true;
     } catch (err) {
       const msg = (err as Error).message;
+      _lastQdrantError = msg;
       console.warn(`[qdrant] collection init attempt ${attempt}/3 failed: ${msg}`);
       if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 3000));
     }
@@ -1186,6 +1190,7 @@ export function createWave3Router(pool: pg.Pool): Router {
         ready: qdrantReady,
         collections: cols.map((c: any) => c.name),
         collection_exists: cols.some((c: any) => c.name === QDRANT_COLLECTION),
+        last_error: _lastQdrantError || null,
         timeout_ms: QDRANT_TIMEOUT_MS,
         timestamp: new Date().toISOString(),
       });

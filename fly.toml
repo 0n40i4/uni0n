@@ -3,12 +3,14 @@ primary_region = "iad"
 
 [env]
 NODE_ENV = "production"
+SERVICE_CHANNEL = "dev"
 
 [[services]]
 internal_port = 3000
 protocol = "tcp"
-auto_stop_machines = true
+auto_stop_machines = "stop"
 auto_start_machines = true
+min_machines_running = 1
 
   [[services.ports]]
   port = 80
@@ -18,6 +20,25 @@ auto_start_machines = true
   [[services.ports]]
   port = 443
   handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "get"
+    timeout = "5s"
+    path = "/healthz"
+    protocol = "http"
+
+  [[services.http_checks]]
+    grace_period = "30s"
+    interval = "60s"
+    method = "get"
+    timeout = "8s"
+    path = "/readyz"
+    protocol = "http"
+
+[deploy]
+strategy = "rolling"
 
 [build]
 dockerfile = "Dockerfile.core"

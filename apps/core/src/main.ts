@@ -4,6 +4,29 @@ import cors from 'cors';
 import * as pg from 'pg';
 import * as redis from 'redis';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+// ============ PROVENANCE: single-source version ============
+const PKG = (() => {
+  try {
+    const candidates = [
+      path.join(__dirname, '..', 'package.json'),
+      path.join(__dirname, '..', '..', 'package.json'),
+      path.join(process.cwd(), 'package.json'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
+    }
+  } catch (e) {}
+  return { version: 'unknown' };
+})();
+const SERVICE_VERSION = process.env.SERVICE_VERSION || PKG.version || 'unknown';
+const SERVICE_CHANNEL = process.env.SERVICE_CHANNEL || (SERVICE_VERSION.includes('-dev') ? 'dev' : 'stable');
+const BUILD_SHA = process.env.GIT_SHA || process.env.FLY_MACHINE_VERSION || 'unknown';
+const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
+const SERVICE_NAME = 'unionai-core';
+const FEDERATION_ID = 'UNIONAI-GENESIS-0N40I4-20260512';
 
 // ============ SECURITY: JWT (custom HMAC-SHA256, no external deps) ============
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
@@ -86,6 +109,7 @@ import { getRFCIndex, getRFC, getRFCAsHtml, createRFC, updateRFCStatus } from '.
 import { createProviderApplication, getProviderApplication, listProviderApplications, approveProviderApplication, rejectProviderApplication, regenerateProviderApiKey } from './modules/provider';
 import { getComplianceMatrix, getComplianceMatrixAsHtml } from './modules/compliance';
 import { generateEvidenceManifest, getEvidenceManifest, saveEvidenceManifest } from './modules/evidence';
+import { liveProbe, staticAnalysis, selfReport, crossCheck, makeReportProvenance } from './lib/provenance';
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
 export const app = express();
@@ -104,7 +128,107 @@ app.use(cors({
 app.use(express.json());
 app.use(globalRateLimit);
 
+// ============ PROVENANCE: response headers on every request ============
+app.use((req, res, next) => {
+  res.set('X-Service-Name', SERVICE_NAME);
+  res.set('X-Service-Version', SERVICE_VERSION);
+  res.set('X-Service-Channel', SERVICE_CHANNEL);
+  res.set('X-Build-Sha', BUILD_SHA);
+  res.set('X-Federation-Id', FEDERATION_ID);
+  next();
+});
+
 app.use(express.static('public'));
+
+// ============ PROVENANCE: lightweight liveness/readiness for Fly checks ============
+app.get('/healthz', (req, res) => {
+  res.status(200).type('text/plain').send('ok');
+});
+
+app.get('/readyz', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).type('text/plain').send('ready');
+  } catch (e) {
+    res.status(503).type('text/plain').send('not-ready');
+  }
+});
+
+app.get('/version', (req, res) => {
+  res.json({
+    service: SERVICE_NAME,
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
+    build_sha: BUILD_SHA,
+    build_time: BUILD_TIME,
+    federation: FEDERATION_ID,
+    provenance_layer: 'v1',
+    source_of_truth: 'package.json',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============ PROVENANCE: federation self-report (RFC-001 demonstration) ============
+app.get('/api/provenance/self-report', async (req, res) => {
+  const reportProv = makeReportProvenance({
+    report_id: `prov-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
+    generator: SERVICE_NAME,
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
+    federation: FEDERATION_ID,
+  });
+
+  const versionClaim = staticAnalysis(SERVICE_VERSION, {
+    source: 'package.json',
+    observer: SERVICE_NAME,
+    confidence: 'high',
+    notes: 'pulled at process boot from canonical manifest',
+  });
+
+  let dbStatus;
+  try {
+    const r = await pool.query('SELECT 1 AS ok');
+    dbStatus = liveProbe(r.rows[0]?.ok === 1 ? 'reachable' : 'unknown', {
+      source: 'pg.Pool.query(SELECT 1)',
+      observer: SERVICE_NAME,
+      confidence: 'high',
+    });
+  } catch (e: any) {
+    dbStatus = liveProbe('unreachable', {
+      source: 'pg.Pool.query(SELECT 1)',
+      observer: SERVICE_NAME,
+      confidence: 'high',
+      notes: `error: ${e?.message || String(e)}`,
+    });
+  }
+
+  const uptimeClaim = liveProbe(process.uptime(), {
+    source: 'node:process.uptime()',
+    observer: SERVICE_NAME,
+    confidence: 'high',
+  });
+
+  const buildShaClaim = BUILD_SHA === 'unknown'
+    ? selfReport(BUILD_SHA, { source: 'env(GIT_SHA|FLY_MACHINE_VERSION)', observer: SERVICE_NAME, notes: 'no SHA injected at build — provenance gap' })
+    : staticAnalysis(BUILD_SHA, { source: 'env(GIT_SHA|FLY_MACHINE_VERSION)', observer: SERVICE_NAME, confidence: 'high' });
+
+  const channelClaim = crossCheck(SERVICE_CHANNEL, {
+    sources: ['env(SERVICE_CHANNEL)', 'package.json:version suffix'],
+    observer: SERVICE_NAME,
+    notes: 'env wins if set; otherwise inferred from -dev suffix',
+  });
+
+  res.json({
+    report: reportProv,
+    claims: {
+      version: versionClaim,
+      channel: channelClaim,
+      build_sha: buildShaClaim,
+      database: dbStatus,
+      uptime_seconds: uptimeClaim,
+    },
+  });
+});
 
 // ============ AUTH: Login endpoint ============
 app.post('/api/auth/login', (req, res) => {
@@ -212,7 +336,9 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     database: result.database,
     redis: result.redis,
-    version: '0.1.0'
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
+    build_sha: BUILD_SHA
   });
 });
 
@@ -290,7 +416,8 @@ app.get('/metrics', async (req, res) => {
 app.get('/.well-known/agent.json', (req, res) => {
   res.json({
     name: "UNIONAI Core",
-    version: "0.1.0-testnet",
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
     did: "did:unionai:s4:k0nsulat",
     operator: "0n40i4",
     zone: "S4",
@@ -298,22 +425,27 @@ app.get('/.well-known/agent.json', (req, res) => {
     status: "GO_CONTROLLED",
     endpoints: {
       health: "/health",
+      liveness: "/healthz",
+      readiness: "/readyz",
+      version: "/version",
       register: "/api/agent/join",
       relay: "/api/relay/send",
       leaderboard: "/api/leaderboard",
       k0nsulat: "/api/k0nsulat/status"
     },
-    federation: "UNIONAI-GENESIS-0N40I4-20260512"
+    federation: FEDERATION_ID
   });
 });
 
 app.get('/.well-known/unionai.json', (req, res) => {
   res.json({
-    federation: "UNIONAI-GENESIS-0N40I4-20260512",
-    version: "0.1.0",
+    federation: FEDERATION_ID,
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
     governance_model: "GO_CONTROLLED",
     trust_tiers: ["T0", "T1", "T2", "T3", "T4"],
-    api_version: "0.1.0"
+    api_version: SERVICE_VERSION,
+    provenance_layer: 'v1'
   });
 });
 
@@ -387,7 +519,7 @@ did:unionai:s4:k0nsulat
 GO_CONTROLLED
 
 ## API Version
-0.1.0-testnet
+${SERVICE_VERSION} (${SERVICE_CHANNEL})
 `);
 });
 
@@ -405,8 +537,8 @@ app.get('/openapi.json', (req, res) => {
     openapi: "3.1.0",
     info: {
       title: "UNIONAI Core API",
-      version: "0.3.0-dev",
-      description: "Federacyjna warstwa governance dla agentów AI"
+      version: SERVICE_VERSION,
+      description: `Federacyjna warstwa governance dla agentów AI (channel: ${SERVICE_CHANNEL})`
     },
     servers: [
       { url: "https://unionai-core.fly.dev", description: "Production (Fly)" },
@@ -775,10 +907,16 @@ ALTER TABLE runtime_snapshots ALTER COLUMN deploy_hash TYPE TEXT;
 app.get('/', (req, res) => {
   res.json({
     name: 'UNIONAI Core API',
-    version: '0.1.0',
+    version: SERVICE_VERSION,
+    channel: SERVICE_CHANNEL,
+    build_sha: BUILD_SHA,
     status: 'GO CONTROLLED',
+    federation: FEDERATION_ID,
     docs: '/docs/',
     health: '/health',
+    liveness: '/healthz',
+    readiness: '/readyz',
+    version_endpoint: '/version',
     api_status: '/api/status',
     metrics: '/metrics/federation',
     rfc_index: '/rfc/index.json',

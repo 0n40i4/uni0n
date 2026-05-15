@@ -7,6 +7,29 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0-dev] - 2026-05-15
+
+### Added — Runtime Provenance Layer (P0 federated reporting)
+- `SERVICE_VERSION` / `SERVICE_CHANNEL` / `BUILD_SHA` / `BUILD_TIME` — single-source provenance constants pulled from `package.json` (no hardcoded version strings in runtime)
+- Provenance middleware emits on every response: `X-Service-Name`, `X-Service-Version`, `X-Service-Channel`, `X-Build-Sha`, `X-Federation-Id`
+- `GET /version` — machine-readable provenance manifest (service, version, channel, build sha/time, federation id, provenance_layer, source_of_truth, timestamp)
+- `GET /healthz` — lightweight liveness probe (no DB), suitable for Fly `http_checks` polled every 30s
+- `GET /readyz` — readiness probe with DB ping (503 if Postgres unreachable)
+- `fly.toml` — two `services.http_checks` (`/healthz` 30s, `/readyz` 60s), `auto_stop_machines = "stop"`, `min_machines_running = 1`, `[deploy] strategy = "rolling"`
+- `/.well-known/agent.json` — exposes `version`, `channel`, plus `liveness` / `readiness` / `version` endpoints in `endpoints` block
+
+### Changed — Version drift fixed
+- `apps/core/package.json` 0.1.0 → 0.3.0-dev
+- root `package.json` 0.1.0 → 0.3.0-dev
+- `codemeta.json` 0.2.0 → 0.3.0-dev (dateModified bumped to 2026-05-15)
+- `main.ts` — all 7 hardcoded version literals (`'0.1.0'`, `"0.1.0-testnet"`) replaced with `SERVICE_VERSION` / `SERVICE_CHANNEL` interpolation in `/health`, `/.well-known/agent.json`, `/.well-known/unionai.json`, `/llms.txt`, `/openapi.json`, `/` root
+- `/.well-known/unionai.json` — `provenance_layer: "v1"` declared
+
+### Notes
+- Memory P0 entry already tracked v0.3.0-dev — runtime now matches.
+- `BUILD_SHA` falls back to `FLY_MACHINE_VERSION` if `GIT_SHA` not injected. Inject at build time for full provenance.
+- Provenance design is described in `docs/rfc/RFC-001-federated-reporting-standard.md` (companion to this release).
+
 ### Planned (Wave 3 SEMANTIC CORE, kickoff 2026-05-14)
 - `/api/relay/send` — semantic message routing between agents
 - `/api/relay/route` — embedding-based routing decisions

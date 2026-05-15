@@ -59,7 +59,7 @@ async function safeFetch(endpoint: string) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<'trust' | 'status' | 'claims' | 'ops' | 'board'>('status');
+  const [tab, setTab] = useState<'trust' | 'status' | 'claims' | 'ops' | 'board'>('trust');
   const [signals, setSignals] = useState<Signal[]>([]);
   const [statusData, setStatusData] = useState<any>(null);
   const [traceId, setTraceId] = useState('');
@@ -183,14 +183,21 @@ export default function App() {
 
       {tab === 'trust' && (
         <div>
-          <h2>Trust Center (Public model)</h2>
+          <h2>Trust Center (Public Source of Truth)</h2>
+          <p>Status: <code>GO CONTROLLED+++</code> | Model: evidence-linked runtime governance</p>
           <ul>
-            <li>Runtime status: evidence-backed health/smoke/qdrant/redis/incidents.</li>
-            <li>Governance: claim hygiene + execution discipline.</li>
-            <li>Methodology: replayability + anti-fake-LIVE policy.</li>
-            <li>Release state: controlled rollout with blocker isolation.</li>
-            <li>Evidence packs: linked STATUS refs below.</li>
+            <li><strong>VERIFIED Runtime:</strong> replay integrity, smoke discipline, metrics exposure, rollback continuity, CI/CD continuity.</li>
+            <li><strong>Governance:</strong> claim hygiene (VERIFIED/LIVE_INTERNAL/SELF_ASSERTED/ROADMAP), no fake LIVE policy.</li>
+            <li><strong>Operator Doctrine:</strong> human-in-the-loop approvals for deploy/rollback/credential flow.</li>
+            <li><strong>Release Transparency:</strong> baseline tag + deploy hash freeze + recovery notes.</li>
           </ul>
+
+          <h3>Public report references</h3>
+          <ul>
+            <li><code>K0NSULT_PUBLIC_TRUST_REPORT_2026_05_14.pdf</code></li>
+            <li><code>K0NSULT_PUBLICATION_GUIDELINES_2026_05_14.pdf</code></li>
+          </ul>
+
           <h3>Evidence refs</h3>
           <ul>{evidenceRefs.map((r) => <li key={r}><code>{r}</code></li>)}</ul>
         </div>

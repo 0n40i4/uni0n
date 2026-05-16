@@ -1,0 +1,12 @@
+# UNIONAI — gotowy zestaw P0 provenance (wklej do prod env)
+# commit z brancha feat/wave3-relay-register-l001
+SERVICE_NAME=unionai-core
+SERVICE_VERSION=0.3.0-genesis
+APP_VERSION=0.3.0-genesis
+BUILD_SHA=1361844c0eae58a6eae67e7da3508bc8b71bd4ab
+GIT_SHA=1361844c0eae58a6eae67e7da3508bc8b71bd4ab
+BUILD_TIME=2026-05-16T10:11:00Z
+SERVICE_CHANNEL=stable
+RELEASE_CHANNEL=stable
+FEDERATION_ID=UNIONAI-GENESIS-0N40I4-20260512
+DEPLOYED_AT=2026-05-16T10:11:00Z

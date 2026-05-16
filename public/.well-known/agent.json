@@ -19,6 +19,6 @@
     "evidence": "/evidence/manifest.json",
     "memory_anchor": "/memory/UNIONAI-MEM-ANCHOR-001.json",
     "llms": "/llms.txt",
-    "rfcs": "/rfcs/"
+    "rfcs": "/rfc/index.json"
   }
 }

@@ -4,6 +4,8 @@
   "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
   "publication_lock": "2026-05-12",
   "status": "GO CONTROLLED",
+  "evidence_hash_policy": "claim<=proof: only locally hosted artifacts can be marked sha256_verified; external docs remain pending until raw files are attached and hashed",
+  "evidence_hash_status": "PARTIAL",
   "license_code": "Apache-2.0",
   "license_docs": "CC BY 4.0",
   "documents": [

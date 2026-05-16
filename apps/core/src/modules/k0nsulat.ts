@@ -17,6 +17,8 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
 
       const stats = result.rows[0] || {};
 
+      const SERVICE_VERSION = process.env.SERVICE_VERSION || process.env.APP_VERSION || process.env.npm_package_version || 'unknown';
+
       res.json({
         module: 'K0NSULAT',
         did: 'did:unionai:s4:k0nsulat',
@@ -27,7 +29,7 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
           completed_audits: parseInt(stats.completed_audits) || 0,
           verified_agents: parseInt(stats.verified_agents) || 0
         },
-        version: '0.1.0'
+        version: SERVICE_VERSION
       });
     } catch (error) {
       res.status(500).json({

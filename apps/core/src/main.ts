@@ -4,7 +4,6 @@ import cors from 'cors';
 import * as pg from 'pg';
 import * as redis from 'redis';
 import crypto from 'crypto';
-import fs from 'fs';
 import path from 'path';
 
 // ============ PROVENANCE: single-source version ============
@@ -926,10 +925,26 @@ async function runMigrations() {
   await runStep('WAVE6', WAVE6_MIGRATIONS);
   await runStep('WAVE7', WAVE7_MIGRATIONS);
   await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
-  await runStep('TESTNET_AGENTS', fs.readFileSync(path.join(__dirname, '../db/migrations/2026-05-16_testnet_agents.sql'), 'utf8'));
+  await runStep('TESTNET_AGENTS', TESTNET_AGENTS_MIGRATION);
   await runStep('STABILITY', STABILITY_MIGRATIONS);
   await runStep('DSR', DSR_MIGRATIONS);
 }
+
+// ─── Testnet Control Agents ───────────────────────────────────────────────────
+const TESTNET_AGENTS_MIGRATION = `
+INSERT INTO agents (did, zone, capability_manifest, trust_score, trust_tier, status, last_seen)
+VALUES
+  ('did:unionai:testnet:k0nsulat-observer', 'testnet',
+   '{"capabilities": ["audit", "verify", "governance"], "version": "0.3.0-genesis", "role": "K0NSULAT Observer"}',
+   85, 'T2', 'active', NOW()),
+  ('did:unionai:testnet:relay-node-alpha', 'testnet',
+   '{"capabilities": ["relay", "route", "semantic-routing"], "version": "0.3.0-genesis", "role": "Relay Node Alpha"}',
+   75, 'T1', 'active', NOW()),
+  ('did:unionai:testnet:compliance-monitor', 'testnet',
+   '{"capabilities": ["compliance", "audit", "dsr", "gdpr"], "version": "0.3.0-genesis", "role": "Compliance Monitor"}',
+   80, 'T2', 'active', NOW())
+ON CONFLICT (did) DO NOTHING;
+`;
 
 // ─── DSR (GDPR Data Subject Request) Migrations ──────────────────────────────
 const DSR_MIGRATIONS = `

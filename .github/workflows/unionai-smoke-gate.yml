@@ -1,0 +1,116 @@
+name: UNIONAI Smoke Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "feat/wave3-relay-register-l001"]
+  schedule:
+    - cron: "*/30 * * * *" # co 30 min
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: https://unionai.grassrootslobbing.pl
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run public smoke checks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          endpoints=(
+            /health
+            /healthz
+            /readyz
+            /version
+            /.well-known/agent.json
+            /openapi.json
+            /rfc/index.json
+            /api/k0nsulat/status
+            /api/leaderboard
+          )
+
+          pass=0
+          total=${#endpoints[@]}
+
+          echo "# UNIONAI Smoke Gate"
+          echo "BASE_URL=${BASE_URL}"
+          echo
+
+          for ep in "${endpoints[@]}"; do
+            code=$(curl -sS -o /tmp/body -w "%{http_code}" "${BASE_URL}${ep}" || true)
+            if [[ "$code" == "200" ]]; then
+              echo "[PASS] ${ep} -> ${code}"
+              pass=$((pass+1))
+            else
+              echo "[FAIL] ${ep} -> ${code}"
+              echo "--- body (${ep}) ---"
+              sed -n '1,40p' /tmp/body || true
+              exit 1
+            fi
+          done
+
+          echo
+          echo "Endpoint suite: PASS (${pass}/${total})"
+
+      - name: Check provenance headers + payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          health_headers=$(mktemp)
+          version_body=$(mktemp)
+
+          curl -sS -D "$health_headers" -o /dev/null "${BASE_URL}/health"
+          curl -sS "${BASE_URL}/version" > "$version_body"
+
+          x_build_sha=$(awk -F': ' 'tolower($1)=="x-build-sha" {gsub("\r", "", $2); print $2}' "$health_headers")
+          x_service_version=$(awk -F': ' 'tolower($1)=="x-service-version" {gsub("\r", "", $2); print $2}' "$health_headers")
+
+          if [[ -z "${x_build_sha}" || "${x_build_sha}" == "unknown" ]]; then
+            echo "[FAIL] x-build-sha missing/unknown"
+            exit 1
+          fi
+
+          if [[ -z "${x_service_version}" || "${x_service_version}" == "unknown" ]]; then
+            echo "[FAIL] x-service-version missing/unknown"
+            exit 1
+          fi
+
+          version_version=$(python3 -c "import json;print(json.load(open('$version_body')).get('version',''))")
+          version_build_sha=$(python3 -c "import json;print(json.load(open('$version_body')).get('build_sha',''))")
+          version_channel=$(python3 -c "import json;print(json.load(open('$version_body')).get('channel',''))")
+          version_build_time=$(python3 -c "import json;print(json.load(open('$version_body')).get('build_time',''))")
+
+          for v in "$version_version" "$version_build_sha" "$version_channel" "$version_build_time"; do
+            if [[ -z "$v" || "$v" == "unknown" ]]; then
+              echo "[FAIL] /version contains missing/unknown provenance field"
+              cat "$version_body"
+              exit 1
+            fi
+          done
+
+          if [[ "$x_build_sha" != "$version_build_sha" ]]; then
+            echo "[FAIL] build sha mismatch: /health header vs /version payload"
+            echo "health:  $x_build_sha"
+            echo "version: $version_build_sha"
+            exit 1
+          fi
+
+          if [[ "$x_service_version" != "$version_version" ]]; then
+            echo "[FAIL] version mismatch: /health header vs /version payload"
+            echo "health:  $x_service_version"
+            echo "version: $version_version"
+            exit 1
+          fi
+
+          echo "[PASS] Provenance consistency OK"
+
+      - name: Gate decision
+        run: |
+          echo "GO PILOT candidate / FULL LIVE gate review: PASS"

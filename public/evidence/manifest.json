@@ -6,48 +6,58 @@
   "status": "GO CONTROLLED",
   "license_code": "Apache-2.0",
   "license_docs": "CC BY 4.0",
+  "manifest_version": "1.0",
+  "last_updated": "2026-05-16",
+  "hash_algorithm": "SHA-256",
   "documents": [
     {
       "id": "DOC-001",
       "title": "UNIONAI_Wytyczne_Wdrozeniowe_Flagowce",
       "type": "deployment_guidelines",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-002",
       "title": "UNIONAI_Dokument_Wdrozeniowy_DEV",
       "type": "dev_spec",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-003",
       "title": "UNIONAI_Etap_III_Raport_Zatwierdzajacy",
       "type": "governance_report",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-004",
       "title": "UNIONAI_Raport_Calosci_Konsultacji",
       "type": "consultation_report",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-005",
       "title": "UNIONAI_AI_FEDERATION_DEV_SPEC-1",
       "type": "federation_spec",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-006",
       "title": "UNIONAI_Operator_VSCode_Guide",
       "type": "operator_guide",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-007",
       "title": "UNIONAI_Publication_Protection_Pack",
       "type": "publication_pack",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-008",
@@ -55,19 +65,22 @@
       "type": "legal_resolution",
       "date": "2026-05-12",
       "status": "ACTIVE",
-      "activated_at": "2026-05-13"
+      "activated_at": "2026-05-13",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-009",
       "title": "K0NSULT_EU_AI_ACT_IMPLEMENTATION_ROADMAP",
       "type": "compliance_roadmap",
-      "date": "2026-05-10"
+      "date": "2026-05-10",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-010",
       "title": "K0NSULT_DEV_BLUEPRINT",
       "type": "dev_blueprint",
-      "date": "2026-05-10"
+      "date": "2026-05-10",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-NOTICE-v1.1",
@@ -75,14 +88,16 @@
       "url": "/participation-notice.html",
       "type": "participation_notice",
       "date": "2026-05-12",
-      "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512"
+      "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-CONSULTATION-2026",
       "title": "UNIONAI_Raport_Calosci_Konsultacji",
       "url": "/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf",
       "type": "consultation_report",
-      "date": "2026-05-12"
+      "date": "2026-05-12",
+      "hash_status": "pending"
     },
     {
       "id": "DOC-011",
@@ -90,7 +105,8 @@
       "type": "governance_evidence_supplement",
       "date": "2026-05-13",
       "source": "Google Drive / k0nsult_memory",
-      "note": "Supplementary governance + evidence package for DEV phase"
+      "note": "Supplementary governance + evidence package for DEV phase",
+      "hash_status": "pending"
     }
   ],
   "endpoints_live": [

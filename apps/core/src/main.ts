@@ -353,9 +353,11 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     database: result.database,
     redis: result.redis,
-    version: SERVICE_VERSION,
+    version: process.env.APP_VERSION || SERVICE_VERSION,
+    build_sha: process.env.BUILD_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || BUILD_SHA,
+    release_channel: process.env.RELEASE_CHANNEL || SERVICE_CHANNEL,
+    deployed_at: process.env.RAILWAY_DEPLOYMENT_ID || new Date().toISOString(),
     channel: SERVICE_CHANNEL,
-    build_sha: BUILD_SHA
   });
 });
 
@@ -448,7 +450,8 @@ app.get('/.well-known/agent.json', (req, res) => {
       register: "/api/agent/join",
       relay: "/api/relay/send",
       leaderboard: "/api/leaderboard",
-      k0nsulat: "/api/k0nsulat/status"
+      k0nsulat: "/api/k0nsulat/status",
+      rfcs: "/rfc/index.json"
     },
     federation: FEDERATION_ID
   });

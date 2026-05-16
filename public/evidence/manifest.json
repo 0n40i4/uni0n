@@ -15,49 +15,57 @@
       "title": "UNIONAI_Wytyczne_Wdrozeniowe_Flagowce",
       "type": "deployment_guidelines",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-002",
       "title": "UNIONAI_Dokument_Wdrozeniowy_DEV",
       "type": "dev_spec",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-003",
       "title": "UNIONAI_Etap_III_Raport_Zatwierdzajacy",
       "type": "governance_report",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-004",
       "title": "UNIONAI_Raport_Calosci_Konsultacji",
       "type": "consultation_report",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash": "sha256:7e07bce5554a1a3b0dcb7c093d745bff73aa2f187c65c6cd91ade8003fc44c96",
+      "hash_status": "verified",
+      "hash_source": "public/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf"
     },
     {
       "id": "DOC-005",
       "title": "UNIONAI_AI_FEDERATION_DEV_SPEC-1",
       "type": "federation_spec",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-006",
       "title": "UNIONAI_Operator_VSCode_Guide",
       "type": "operator_guide",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-007",
       "title": "UNIONAI_Publication_Protection_Pack",
       "type": "publication_pack",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-008",
@@ -66,21 +74,25 @@
       "date": "2026-05-12",
       "status": "ACTIVE",
       "activated_at": "2026-05-13",
-      "hash_status": "pending"
+      "hash": "sha256:280436c4f7d07bd5a86c94dc558f895cb261ea6dfea5ea1b2370b8913e6c91a6",
+      "hash_status": "verified",
+      "hash_source": "public/legal/UCHWALA_001_UNIONAI_DRAFT.pdf"
     },
     {
       "id": "DOC-009",
       "title": "K0NSULT_EU_AI_ACT_IMPLEMENTATION_ROADMAP",
       "type": "compliance_roadmap",
       "date": "2026-05-10",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-010",
       "title": "K0NSULT_DEV_BLUEPRINT",
       "type": "dev_blueprint",
       "date": "2026-05-10",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     },
     {
       "id": "DOC-NOTICE-v1.1",
@@ -89,7 +101,9 @@
       "type": "participation_notice",
       "date": "2026-05-12",
       "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
-      "hash_status": "pending"
+      "hash": "sha256:577801cd0febff491664bacf2d6ae76796ba9a9cf7ec92bdfe656e88017333eb",
+      "hash_status": "verified",
+      "hash_source": "public/participation-notice.html"
     },
     {
       "id": "DOC-CONSULTATION-2026",
@@ -97,7 +111,9 @@
       "url": "/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf",
       "type": "consultation_report",
       "date": "2026-05-12",
-      "hash_status": "pending"
+      "hash": "sha256:7e07bce5554a1a3b0dcb7c093d745bff73aa2f187c65c6cd91ade8003fc44c96",
+      "hash_status": "verified",
+      "hash_source": "public/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf"
     },
     {
       "id": "DOC-011",
@@ -106,7 +122,8 @@
       "date": "2026-05-13",
       "source": "Google Drive / k0nsult_memory",
       "note": "Supplementary governance + evidence package for DEV phase",
-      "hash_status": "pending"
+      "hash_status": "pending",
+      "hash_note": "external document — hash pending operator verification"
     }
   ],
   "endpoints_live": [

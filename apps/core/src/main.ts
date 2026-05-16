@@ -926,6 +926,7 @@ async function runMigrations() {
   await runStep('WAVE6', WAVE6_MIGRATIONS);
   await runStep('WAVE7', WAVE7_MIGRATIONS);
   await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
+  await runStep('TESTNET_AGENTS', fs.readFileSync(path.join(__dirname, '../db/migrations/2026-05-16_testnet_agents.sql'), 'utf8'));
   await runStep('STABILITY', STABILITY_MIGRATIONS);
   await runStep('DSR', DSR_MIGRATIONS);
 }

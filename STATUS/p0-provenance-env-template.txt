@@ -1,0 +1,20 @@
+# UNIONAI — P0 provenance env template (production)
+# Uzupełnij realnymi wartościami i wklej do panelu Railway/Fly.
+
+SERVICE_NAME=unionai-core
+SERVICE_VERSION=0.3.0-genesis
+APP_VERSION=0.3.0-genesis
+
+# commit SHA z releasu
+BUILD_SHA=<REAL_COMMIT_SHA>
+GIT_SHA=<REAL_COMMIT_SHA>
+
+# ISO8601 UTC
+BUILD_TIME=<YYYY-MM-DDTHH:MM:SSZ>
+
+SERVICE_CHANNEL=stable
+RELEASE_CHANNEL=stable
+FEDERATION_ID=UNIONAI-GENESIS-0N40I4-20260512
+
+# opcjonalnie (jeśli platforma nie ustawia)
+DEPLOYED_AT=<YYYY-MM-DDTHH:MM:SSZ>

@@ -82,8 +82,25 @@ import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs'
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
+
+const SERVICE_NAME = process.env.SERVICE_NAME || process.env.RAILWAY_SERVICE_NAME || 'unionai-core';
+const SERVICE_VERSION = process.env.SERVICE_VERSION || process.env.APP_VERSION || process.env.npm_package_version || 'unknown';
+const RELEASE_CHANNEL = process.env.SERVICE_CHANNEL || process.env.RELEASE_CHANNEL || process.env.NODE_ENV || 'unknown';
+const BUILD_SHA = process.env.BUILD_SHA || process.env.GIT_SHA || 'unknown';
+const BUILD_TIME = process.env.BUILD_TIME || process.env.DEPLOYED_AT || new Date().toISOString();
+const FEDERATION_ID = process.env.FEDERATION_ID || 'UNIONAI-GENESIS-0N40I4-20260512';
+
 app.use(express.json());
 app.use(globalRateLimit);
+
+app.use((req, res, next) => {
+  res.set('x-service-name', SERVICE_NAME);
+  res.set('x-service-version', SERVICE_VERSION);
+  res.set('x-service-channel', RELEASE_CHANNEL);
+  res.set('x-build-sha', BUILD_SHA);
+  res.set('x-federation-id', FEDERATION_ID);
+  next();
+});
 
 app.use(express.static('public'));
 
@@ -169,7 +186,38 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     database: result.database,
     redis: result.redis,
-    version: '0.1.0'
+    version: SERVICE_VERSION,
+    build_sha: BUILD_SHA,
+    release_channel: RELEASE_CHANNEL,
+    deployed_at: BUILD_TIME,
+    channel: RELEASE_CHANNEL
+  });
+});
+
+app.get('/healthz', (_req, res) => {
+  res.status(200).send('ok');
+});
+
+app.get('/readyz', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).send('ready');
+  } catch {
+    res.status(503).send('not_ready');
+  }
+});
+
+app.get('/version', (_req, res) => {
+  res.status(200).json({
+    service: SERVICE_NAME,
+    version: SERVICE_VERSION,
+    channel: RELEASE_CHANNEL,
+    build_sha: BUILD_SHA,
+    build_time: BUILD_TIME,
+    federation: FEDERATION_ID,
+    provenance_layer: 'runtime',
+    source_of_truth: 'env',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -202,7 +250,7 @@ app.get('/metrics', async (req, res) => {
 app.get('/.well-known/agent.json', (req, res) => {
   res.json({
     name: "UNIONAI Core",
-    version: "0.1.0-testnet",
+    version: SERVICE_VERSION,
     did: "did:unionai:s4:k0nsulat",
     operator: "0n40i4",
     zone: "S4",
@@ -222,10 +270,10 @@ app.get('/.well-known/agent.json', (req, res) => {
 app.get('/.well-known/unionai.json', (req, res) => {
   res.json({
     federation: "UNIONAI-GENESIS-0N40I4-20260512",
-    version: "0.1.0",
+    version: SERVICE_VERSION,
     governance_model: "GO_CONTROLLED",
     trust_tiers: ["T0", "T1", "T2", "T3", "T4"],
-    api_version: "0.1.0"
+    api_version: SERVICE_VERSION
   });
 });
 
@@ -308,7 +356,7 @@ app.get('/openapi.json', (req, res) => {
     openapi: "3.0.0",
     info: {
       title: "UNIONAI Core API",
-      version: "0.1.0-testnet",
+      version: SERVICE_VERSION,
       description: "Federacyjna warstwa governance dla agentów AI"
     },
     servers: [
@@ -587,7 +635,7 @@ async function runMigrations() {
 app.get('/', (req, res) => {
   res.json({
     name: 'UNIONAI Core API',
-    version: '0.1.0',
+    version: SERVICE_VERSION,
     status: 'GO CONTROLLED',
     docs: '/docs/',
     health: '/health',

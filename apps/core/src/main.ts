@@ -71,6 +71,15 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+function requireOperator(req: any, res: any, next: any) {
+  requireAuth(req, res, () => {
+    if (req.auth?.role !== 'operator') {
+      return res.status(403).json({ error: 'Operator role required' });
+    }
+    next();
+  });
+}
+
 // ============ SECURITY: Rate Limiter (in-memory sliding window) ============
 const rateLimitStore = new Map<string, number[]>();
 
@@ -79,8 +88,15 @@ function makeRateLimiter(maxReq: number, windowMs: number) {
     const key = (req.ip || req.connection?.remoteAddress || 'unknown') + ':' + req.route?.path;
     const now = Date.now();
     const timestamps = (rateLimitStore.get(key) || []).filter(t => now - t < windowMs);
+    const remaining = Math.max(0, maxReq - timestamps.length);
+    const resetAt = timestamps.length > 0 ? Math.ceil((timestamps[0] + windowMs) / 1000) : Math.ceil((now + windowMs) / 1000);
+    res.set('X-RateLimit-Limit', String(maxReq));
+    res.set('X-RateLimit-Remaining', String(remaining > 0 ? remaining - 1 : 0));
+    res.set('X-RateLimit-Reset', String(resetAt));
     if (timestamps.length >= maxReq) {
-      return res.status(429).json({ error: 'Too many requests', retry_after_ms: windowMs - (now - timestamps[0]) });
+      const retryAfterMs = windowMs - (now - timestamps[0]);
+      res.set('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
+      return res.status(429).json({ error: 'Too many requests', retry_after_ms: retryAfterMs });
     }
     timestamps.push(now);
     rateLimitStore.set(key, timestamps);
@@ -120,9 +136,10 @@ let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: '*',
+  origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
 }));
 
 app.use(express.json());
@@ -633,44 +650,80 @@ app.get('/openapi.json', (req, res) => {
 
 app.post('/api/agent/join', async (req, res) => {
   try {
-    const { did, provider, capabilities } = req.body || {};
+    const { did, provider, capabilities, zone, intent_id, operator_did, runtime_type, public_key } = req.body || {};
     if (!did) {
       return res.status(400).json({ error: 'did is required' });
     }
-    const capsStr = Array.isArray(capabilities) ? capabilities.join(',') : (capabilities || '');
+    // capability_manifest stored as JSONB; accept array or object from client
+    const capManifest = capabilities !== undefined
+      ? (typeof capabilities === 'object' ? capabilities : { raw: capabilities })
+      : null;
+    const agentZone = zone || 'default';
     const result = await pool.query(
-      `INSERT INTO agents (did, provider, capabilities, score, status, created_at)
-       VALUES ($1, $2, $3, 0, 'pending', NOW())
-       ON CONFLICT (did) DO NOTHING
-       RETURNING id`,
-      [did, provider || null, capsStr]
+      `INSERT INTO agents (did, zone, provider, runtime_type, operator_did, public_key, capability_manifest, trust_score, trust_tier, status, created_at, last_seen)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'T0', 'active', NOW(), NOW())
+       ON CONFLICT (did) DO UPDATE SET
+         last_seen = NOW(),
+         provider = COALESCE(EXCLUDED.provider, agents.provider),
+         zone = COALESCE(EXCLUDED.zone, agents.zone),
+         capability_manifest = COALESCE(EXCLUDED.capability_manifest, agents.capability_manifest)
+       RETURNING id, did, zone, provider, trust_score, trust_tier, status, created_at, last_seen,
+                 (xmax = 0) AS inserted`,
+      [did, agentZone, provider || null, runtime_type || null, operator_did || null, public_key || null,
+       capManifest !== null ? JSON.stringify(capManifest) : null]
     );
-    if (result.rows.length === 0) {
-      // Existing agent — fetch id
-      const existing = await pool.query('SELECT id FROM agents WHERE did = $1', [did]);
-      return res.status(200).json({
-        success: true,
-        did,
-        status: 'pending',
-        agent_id: existing.rows[0]?.id ?? null,
-        existing: true,
-      });
-    }
-    return res.status(201).json({
+    const row = result.rows[0];
+    const wasInserted = row.inserted === true || row.inserted === 't';
+    return res.status(wasInserted ? 201 : 200).json({
       success: true,
-      did,
-      status: 'pending',
-      agent_id: result.rows[0].id,
+      did: row.did,
+      zone: row.zone,
+      provider: row.provider,
+      trust_score: row.trust_score,
+      trust_tier: row.trust_tier,
+      status: row.status,
+      agent_id: row.id,
+      created_at: row.created_at,
+      last_seen: row.last_seen,
+      existing: !wasInserted,
+      ...(intent_id ? { intent_id } : {}),
     });
   } catch (e) {
     return res.status(500).json({ error: (e as Error).message });
   }
 });
 
-app.get('/api/leaderboard', (req, res) => res.json({
-  federation: "UNIONAI-GENESIS-0N40I4-20260512", timestamp: new Date().toISOString(),
-  total_agents: 0, leaderboard: []
-}));
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, did, zone, provider, trust_score, trust_tier, status, created_at, last_seen
+       FROM agents
+       ORDER BY trust_score DESC, created_at ASC
+       LIMIT 100`
+    );
+    const countResult = await pool.query('SELECT COUNT(*) AS total FROM agents');
+    const total = parseInt(countResult.rows[0]?.total ?? '0', 10);
+    return res.json({
+      federation: "UNIONAI-GENESIS-0N40I4-20260512",
+      timestamp: new Date().toISOString(),
+      total_agents: total,
+      leaderboard: result.rows.map((r: any, idx: number) => ({
+        rank: idx + 1,
+        agent_id: r.id,
+        did: r.did,
+        zone: r.zone,
+        provider: r.provider,
+        trust_score: r.trust_score,
+        trust_tier: r.trust_tier,
+        status: r.status,
+        registered_at: r.created_at,
+        last_seen: r.last_seen,
+      })),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
+  }
+});
 
 // Wave 3 router handles: relay/send, relay/route, agent/register,
 // trust/verify, memory/anchor, memory/query, governance/event, participation/acknowledge
@@ -871,7 +924,23 @@ async function runMigrations() {
   await runStep('WAVE7', WAVE7_MIGRATIONS);
   await runStep('WAVE2_DEV_NEXT', wave2DevNextMigrations);
   await runStep('STABILITY', STABILITY_MIGRATIONS);
+  await runStep('DSR', DSR_MIGRATIONS);
 }
+
+// ─── DSR (GDPR Data Subject Request) Migrations ──────────────────────────────
+const DSR_MIGRATIONS = `
+CREATE TABLE IF NOT EXISTS dsr_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  did TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('access','delete','portability')),
+  email TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','completed','rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_dsr_requests_did ON dsr_requests(did);
+CREATE INDEX IF NOT EXISTS idx_dsr_requests_status ON dsr_requests(status);
+`;
 
 // ─── Stability Pack Migrations (P2) ───────────────────────────────────────────
 const STABILITY_MIGRATIONS = `
@@ -1592,5 +1661,104 @@ app.get('/compliance/history.json', async (req, res) => {
     res.json({ snapshots: result.rows, count: result.rows.length });
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// ============ DSR: GDPR Data Subject Request Endpoints ============
+
+// POST /api/dsr/request — submit a new DSR
+app.post('/api/dsr/request', globalRateLimit, async (req, res) => {
+  try {
+    const { did, type, email } = req.body || {};
+    if (!did || typeof did !== 'string' || !did.startsWith('did:')) {
+      return res.status(400).json({ error: 'did is required and must be a valid DID (did:...)' });
+    }
+    if (!type || !['access', 'delete', 'portability'].includes(type)) {
+      return res.status(400).json({ error: 'type must be one of: access, delete, portability' });
+    }
+    const result = await pool.query(
+      `INSERT INTO dsr_requests (did, type, email, status, created_at, updated_at)
+       VALUES ($1, $2, $3, 'pending', NOW(), NOW())
+       RETURNING id, status, type, created_at`,
+      [did, type, email || null]
+    );
+    const row = result.rows[0];
+    return res.status(201).json({
+      request_id: row.id,
+      status: row.status,
+      type: row.type,
+      created_at: row.created_at,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// GET /api/dsr/status/:request_id — check status of a DSR
+app.get('/api/dsr/status/:request_id', globalRateLimit, async (req, res) => {
+  try {
+    const { request_id } = req.params;
+    // Basic UUID format check
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request_id)) {
+      return res.status(400).json({ error: 'request_id must be a valid UUID' });
+    }
+    const result = await pool.query(
+      `SELECT id, status, type, created_at, updated_at FROM dsr_requests WHERE id = $1`,
+      [request_id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'DSR request not found' });
+    }
+    const row = result.rows[0];
+    return res.json({
+      request_id: row.id,
+      status: row.status,
+      type: row.type,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// POST /api/dsr/delete — operator-only: hard delete all data for a DID
+app.post('/api/dsr/delete', requireOperator, operatorRateLimit, async (req, res) => {
+  try {
+    const { did } = req.body || {};
+    if (!did || typeof did !== 'string' || !did.startsWith('did:')) {
+      return res.status(400).json({ error: 'did is required and must be a valid DID (did:...)' });
+    }
+    const tablesAffected: string[] = [];
+
+    // Delete from agents
+    const agentsDel = await pool.query(`DELETE FROM agents WHERE did = $1`, [did]);
+    if ((agentsDel.rowCount ?? 0) > 0) tablesAffected.push('agents');
+
+    // Delete from memory_anchors (source_did)
+    const memoryDel = await pool.query(`DELETE FROM memory_anchors WHERE source_did = $1`, [did]);
+    if ((memoryDel.rowCount ?? 0) > 0) tablesAffected.push('memory_anchors');
+
+    // Delete from relay_events (src_did or dst_did)
+    const relayDel = await pool.query(
+      `DELETE FROM relay_events WHERE src_did = $1 OR dst_did = $1`,
+      [did]
+    );
+    if ((relayDel.rowCount ?? 0) > 0) tablesAffected.push('relay_events');
+
+    // Mark any pending/processing DSR requests for this DID as completed
+    await pool.query(
+      `UPDATE dsr_requests SET status = 'completed', updated_at = NOW()
+       WHERE did = $1 AND status IN ('pending','processing')`,
+      [did]
+    );
+
+    return res.json({
+      deleted: true,
+      did,
+      tables_affected: tablesAffected,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
   }
 });

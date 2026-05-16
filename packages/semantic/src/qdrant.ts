@@ -1,7 +1,7 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 
 const COLLECTION = 'unionai-intents';
-const VECTOR_SIZE = 384;
+const VECTOR_SIZE = 1536; // text-embedding-3-small output dimension
 
 let client: QdrantClient | null = null;
 

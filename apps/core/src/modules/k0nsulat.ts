@@ -78,52 +78,89 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
         });
       }
 
-      // Check if agent exists in agents table
+      // === REAL VERIFICATION — 5-criterion scoring (20 pts each) ===
+      let security_score = 0;
+      const criteria: Record<string, boolean> = {};
+
+      // Criterion 1: DID format — must start with "did:"
+      criteria.did_format_valid = agent_did.startsWith('did:');
+      if (criteria.did_format_valid) security_score += 20;
+
+      // Criterion 2: Agent exists in agents table
       const agentCheck = await pool.query(
-        'SELECT id, did, provider, score FROM agents WHERE did = $1',
+        `SELECT id, did, trust_tier, last_seen FROM agents WHERE did = $1`,
         [agent_did]
       );
+      criteria.agent_exists = agentCheck.rows.length > 0;
+      if (criteria.agent_exists) security_score += 20;
 
-      if (agentCheck.rows.length === 0) {
-        return res.status(404).json({
-          error: 'Agent not found'
-        });
+      const agent = agentCheck.rows[0] || null;
+
+      // Criterion 3: trust_tier >= T1 (stored as integer 1, 2, 3... or string 'T1','T2'...)
+      if (agent) {
+        const tier = agent.trust_tier;
+        const tierNum = typeof tier === 'number' ? tier : parseInt(String(tier).replace(/\D/g, ''), 10);
+        criteria.trust_tier_ok = !isNaN(tierNum) && tierNum >= 1;
+      } else {
+        criteria.trust_tier_ok = false;
       }
+      if (criteria.trust_tier_ok) security_score += 20;
 
-      const agent = agentCheck.rows[0];
-      let verification_status = 'verified';
-      let security_score = 75;
+      // Criterion 4: Agent was active in last 24 hours (last_seen)
+      if (agent && agent.last_seen) {
+        const lastSeen = new Date(agent.last_seen);
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        criteria.recently_active = lastSeen >= cutoff;
+      } else {
+        criteria.recently_active = false;
+      }
+      if (criteria.recently_active) security_score += 20;
 
-      if (agent.score > 80) {
-        security_score = 90;
-        verification_status = 'verified_high';
-      } else if (agent.score < 30) {
-        security_score = 40;
-        verification_status = 'suspicious';
+      // Criterion 5: No open incidents for this DID
+      const incidentCheck = await pool.query(
+        `SELECT COUNT(*) as cnt FROM k0nsulat_audit
+         WHERE agent_did = $1 AND status = 'incident' AND event_type = 'incident'`,
+        [agent_did]
+      );
+      const openIncidents = parseInt(incidentCheck.rows[0]?.cnt ?? '0', 10);
+      criteria.no_open_incidents = openIncidents === 0;
+      if (criteria.no_open_incidents) security_score += 20;
+
+      // Derived fields
+      const audit_passed = security_score >= 60;
+      let verification_status: string;
+      if (security_score >= 80) {
+        verification_status = 'verified';
+      } else if (security_score >= 60) {
+        verification_status = 'conditional';
+      } else {
+        verification_status = 'rejected';
       }
 
       // Insert or update verification record
       const verifyResult = await pool.query(
         `INSERT INTO k0nsulat_verifications (agent_did, verification_status, security_score, audit_passed)
-         VALUES ($1, $2, $3, true)
+         VALUES ($1, $2, $3, $4)
          ON CONFLICT (agent_did) DO UPDATE SET
            verification_status = $2,
            security_score = $3,
+           audit_passed = $4,
            created_at = NOW()
-         RETURNING id, verification_status, security_score`,
-        [agent_did, verification_status, security_score]
+         RETURNING id, verification_status, security_score, audit_passed`,
+        [agent_did, verification_status, security_score, audit_passed]
       );
 
       // Log this verification to audit
+      const agentDbId = agent ? agent.id : null;
       await pool.query(
         `INSERT INTO k0nsulat_audit (event_type, agent_did, agent_id, action, status, details)
          VALUES ($1, $2, $3, $4, 'completed', $5)`,
         [
           'agent_verification',
           agent_did,
-          agent_id || agent.id,
-          `Agent verified with score ${security_score}`,
-          JSON.stringify({ security_score, status: verification_status })
+          agent_id || agentDbId,
+          `Agent verified with score ${security_score} — ${verification_status}`,
+          JSON.stringify({ security_score, verification_status, audit_passed, criteria })
         ]
       );
 
@@ -131,7 +168,8 @@ export function createK0nsultatRouter(pool: pg.Pool): Router {
         agent_did,
         verification_status: verifyResult.rows[0].verification_status,
         security_score: verifyResult.rows[0].security_score,
-        audit_passed: true,
+        audit_passed: verifyResult.rows[0].audit_passed,
+        criteria,
         verified_at: new Date().toISOString()
       });
     } catch (error) {

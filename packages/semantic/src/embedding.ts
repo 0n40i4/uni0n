@@ -1,9 +1,18 @@
+import OpenAI from 'openai';
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export async function embed(text: string): Promise<number[]> {
+  const response = await client.embeddings.create({
+    model: 'text-embedding-3-small',
+    input: text,
+  });
+  return response.data[0].embedding;
+}
+
 export class EmbeddingService {
-  generateEmbedding(text: string): number[] {
-    const hash = text.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0);
-    const embedding: number[] = [];
-    for (let i = 0; i < 384; i++) embedding.push(Math.sin(hash + i) * 0.5 + 0.5);
-    return embedding;
+  async generateEmbedding(text: string): Promise<number[]> {
+    return embed(text);
   }
   cosineSimilarity(a: number[], b: number[]): number {
     let dotProduct = 0, normA = 0, normB = 0;

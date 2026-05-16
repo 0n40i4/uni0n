@@ -5,6 +5,7 @@ import * as pg from 'pg';
 import * as redis from 'redis';
 import crypto from 'crypto';
 import path from 'path';
+import fs from 'fs';
 
 // ============ PROVENANCE: single-source version ============
 const PKG = (() => {

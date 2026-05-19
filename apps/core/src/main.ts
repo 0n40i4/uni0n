@@ -44,25 +44,28 @@ function requireAuth(req: any, res: any, next: any) {
 const RELAY_SHARED_SECRET = process.env.RELAY_SHARED_SECRET || '';
 
 function requireRelaySharedSecret(req: any, res: any, next: any) {
+  const path = req.originalUrl || req.url || 'unknown';
+  const method = req.method || 'UNKNOWN';
+  const authHeader = String(req.headers.authorization || '').trim();
+  const hasBearerPrefix = /^Bearer\s+/i.test(authHeader);
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
   if (!RELAY_SHARED_SECRET) {
+    console.warn('[relay-auth]', method, path, 'deny=503 reason=missing_server_secret');
     return res.status(503).json({ error: 'RELAY_SHARED_SECRET not configured on server' });
   }
 
-  const authHeader = String(req.headers.authorization || '').trim();
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Missing Authorization Bearer token' });
-  }
-
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  const token = match?.[1]?.trim();
-  if (!token) {
+  if (!authHeader || !hasBearerPrefix || !token) {
+    console.warn('[relay-auth]', method, path, `deny=401 auth_present=${Boolean(authHeader)} bearer=${hasBearerPrefix}`);
     return res.status(401).json({ error: 'Missing Authorization Bearer token' });
   }
 
   if (token !== RELAY_SHARED_SECRET) {
+    console.warn('[relay-auth]', method, path, `deny=403 token_len=${token.length}`);
     return res.status(403).json({ error: 'Invalid relay token' });
   }
 
+  console.info('[relay-auth]', method, path, `allow=1 token_len=${token.length}`);
   next();
 }
 

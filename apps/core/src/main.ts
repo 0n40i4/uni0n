@@ -41,6 +41,31 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+const RELAY_SHARED_SECRET = process.env.RELAY_SHARED_SECRET || '';
+
+function requireRelaySharedSecret(req: any, res: any, next: any) {
+  if (!RELAY_SHARED_SECRET) {
+    return res.status(503).json({ error: 'RELAY_SHARED_SECRET not configured on server' });
+  }
+
+  const authHeader = String(req.headers.authorization || '').trim();
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Missing Authorization Bearer token' });
+  }
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim();
+  if (!token) {
+    return res.status(401).json({ error: 'Missing Authorization Bearer token' });
+  }
+
+  if (token !== RELAY_SHARED_SECRET) {
+    return res.status(403).json({ error: 'Invalid relay token' });
+  }
+
+  next();
+}
+
 // ============ SECURITY: Rate Limiter (in-memory sliding window) ============
 const rateLimitStore = new Map<string, number[]>();
 
@@ -89,6 +114,8 @@ const RELEASE_CHANNEL = process.env.SERVICE_CHANNEL || process.env.RELEASE_CHANN
 const BUILD_SHA = process.env.BUILD_SHA || process.env.GIT_SHA || 'unknown';
 const BUILD_TIME = process.env.BUILD_TIME || process.env.DEPLOYED_AT || new Date().toISOString();
 const FEDERATION_ID = process.env.FEDERATION_ID || 'UNIONAI-GENESIS-0N40I4-20260512';
+
+app.use(['/api/relay/send', '/api/relay/route'], requireRelaySharedSecret);
 
 app.use(express.json());
 app.use(globalRateLimit);

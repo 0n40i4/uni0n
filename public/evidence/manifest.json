@@ -6,8 +6,10 @@
   "status": "GO CONTROLLED",
   "license_code": "Apache-2.0",
   "license_docs": "CC BY 4.0",
-  "manifest_version": "1.0",
-  "last_updated": "2026-05-16",
+  "manifest_version": "1.1",
+  "last_updated": "2026-05-13",
+  "drive_root_folder": "https://drive.google.com/drive/folders/10LsIrBltc3k03R1q6kf3MQS848W5SKEn",
+  "drive_root_id": "10LsIrBltc3k03R1q6kf3MQS848W5SKEn",
   "hash_algorithm": "SHA-256",
   "documents": [
     {
@@ -15,6 +17,8 @@
       "title": "UNIONAI_Wytyczne_Wdrozeniowe_Flagowce",
       "type": "deployment_guidelines",
       "date": "2026-05-12",
+      "drive_id": "1DuNHK-OMEHeVcCGIHc7rDaikormGuQfv",
+      "drive_url": "https://drive.google.com/file/d/1DuNHK-OMEHeVcCGIHc7rDaikormGuQfv/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -23,6 +27,8 @@
       "title": "UNIONAI_Dokument_Wdrozeniowy_DEV",
       "type": "dev_spec",
       "date": "2026-05-12",
+      "drive_id": "1Qoo0J6IB1ts7YtzxeA9K1_LYEUgpLW1K",
+      "drive_url": "https://drive.google.com/file/d/1Qoo0J6IB1ts7YtzxeA9K1_LYEUgpLW1K/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -31,6 +37,8 @@
       "title": "UNIONAI_Etap_III_Raport_Zatwierdzajacy",
       "type": "governance_report",
       "date": "2026-05-12",
+      "drive_id": "1qVVCyNS7qhN-snvZfoHOK3moSsgfkrz2",
+      "drive_url": "https://drive.google.com/file/d/1qVVCyNS7qhN-snvZfoHOK3moSsgfkrz2/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -48,6 +56,8 @@
       "title": "UNIONAI_AI_FEDERATION_DEV_SPEC-1",
       "type": "federation_spec",
       "date": "2026-05-12",
+      "drive_id": "1vmx-YbDPiUHmVpMo8K7q76YFsQbeGitA",
+      "drive_url": "https://drive.google.com/file/d/1vmx-YbDPiUHmVpMo8K7q76YFsQbeGitA/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -56,6 +66,8 @@
       "title": "UNIONAI_Operator_VSCode_Guide",
       "type": "operator_guide",
       "date": "2026-05-12",
+      "drive_id": "1ePyX1UPrTbZNC044aGrC91EnbPywvVq2",
+      "drive_url": "https://drive.google.com/file/d/1ePyX1UPrTbZNC044aGrC91EnbPywvVq2/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -64,6 +76,8 @@
       "title": "UNIONAI_Publication_Protection_Pack",
       "type": "publication_pack",
       "date": "2026-05-12",
+      "drive_id": "19Xx37UgblwXI3xtsnbEAdIfivbsT20Ex",
+      "drive_url": "https://drive.google.com/file/d/19Xx37UgblwXI3xtsnbEAdIfivbsT20Ex/view",
       "hash_status": "pending",
       "hash_note": "external document — hash pending operator verification"
     },
@@ -74,6 +88,10 @@
       "date": "2026-05-12",
       "status": "ACTIVE",
       "activated_at": "2026-05-13",
+      "drive_id": "1ekBO4xjyS9xNlwtz9GD3h7T4HnC82uP_",
+      "drive_url": "https://drive.google.com/file/d/1ekBO4xjyS9xNlwtz9GD3h7T4HnC82uP_/view",
+      "drive_id_signed": "18Pve8MUvFsRJ8X_9U5gFw5q4RIVmF2R3",
+      "drive_url_signed": "https://drive.google.com/file/d/18Pve8MUvFsRJ8X_9U5gFw5q4RIVmF2R3/view",
       "hash": "sha256:280436c4f7d07bd5a86c94dc558f895cb261ea6dfea5ea1b2370b8913e6c91a6",
       "hash_status": "verified",
       "hash_source": "public/legal/UCHWALA_001_UNIONAI_DRAFT.pdf"
@@ -121,9 +139,11 @@
       "type": "governance_evidence_supplement",
       "date": "2026-05-13",
       "source": "Google Drive / k0nsult_memory",
+      "drive_folder_id": "1g5SXlX0MCOkblvqp_9fZhCSUmtk67jCd",
+      "drive_url": "https://drive.google.com/drive/folders/1g5SXlX0MCOkblvqp_9fZhCSUmtk67jCd",
       "note": "Supplementary governance + evidence package for DEV phase",
       "hash_status": "pending",
-      "hash_note": "external document — hash pending operator verification"
+      "hash_note": "folder — individual file hashes pending operator verification"
     }
   ],
   "endpoints_live": [

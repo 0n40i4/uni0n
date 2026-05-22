@@ -502,8 +502,19 @@ export const WAVE3_MIGRATIONS = `
 
 // ─── Routers ──────────────────────────────────────────────────────────────────
 
-export function createWave3Router(pool: pg.Pool): Router {
+export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) => any | null): Router {
   const router = Router();
+
+  // P0#3 fix: scopes readable without auth. PRIVATE/EPHEMERAL require a valid
+  // operator Bearer JWT (verifyToken injected from main.ts to avoid circular import).
+  const PUBLIC_QUERY_SCOPES = ['PUBLIC', 'FEDERATION'];
+  function isAuthorizedForRestrictedScope(req: Request): boolean {
+    if (!verifyToken) return false;
+    const authHeader = (req.headers.authorization as string) || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token) return false;
+    return verifyToken(token) != null;
+  }
 
   // ── POST /api/relay/send ──────────────────────────────────────────────────
   router.post('/relay/send', async (req: Request, res: Response) => {
@@ -974,18 +985,25 @@ export function createWave3Router(pool: pg.Pool): Router {
     } catch (_) {}
 
     const anchor_id = makeAnchorId();
-    const s_hash = semantic_hash || sha256(JSON.stringify(payload || {}));
+    const computed_s_hash = sha256(JSON.stringify(payload || {}));
+    const s_hash = semantic_hash || computed_s_hash;
     const d_hash = delta_hash || sha256(anchor_id + s_hash);
+
+    // P0#2 fix: validation is no longer hardcoded. A caller-supplied semantic_hash
+    // is only trusted when it actually matches sha256(payload). Otherwise the anchor
+    // is stored as 'unverified' so downstream consumers do not treat it as proven.
+    const validation_status =
+      (!semantic_hash || semantic_hash === computed_s_hash) ? 'validated' : 'unverified';
 
     try {
       await pool.query(
         `INSERT INTO memory_anchors
            (anchor_id, scope, source_did, semantic_hash, delta_hash,
             trust_tier_required, validation_status, payload)
-         VALUES ($1,$2,$3,$4,$5,$6,'validated',$7)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           anchor_id, anchor_scope, source_did, s_hash, d_hash,
-          trust_tier_required || 'T1',
+          trust_tier_required || 'T1', validation_status,
           payload ? JSON.stringify(payload) : null
         ]
       );
@@ -1003,7 +1021,7 @@ export function createWave3Router(pool: pg.Pool): Router {
         scope: anchor_scope,
         semantic_hash: s_hash,
         delta_hash: d_hash,
-        validation_status: 'validated',
+        validation_status,
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
@@ -1016,6 +1034,16 @@ export function createWave3Router(pool: pg.Pool): Router {
     const { source_did, scope, limit } = req.body;
     const valid_scopes = ['PUBLIC', 'FEDERATION', 'PRIVATE', 'EPHEMERAL'];
 
+    // P0#3: restricted scopes require operator auth
+    const restrictedRequested = scope && valid_scopes.includes(scope) && !PUBLIC_QUERY_SCOPES.includes(scope);
+    if (restrictedRequested && !isAuthorizedForRestrictedScope(req)) {
+      return res.status(403).json({
+        error: 'AUTH_REQUIRED_FOR_RESTRICTED_SCOPE',
+        message: `scope=${scope} requires a valid operator Bearer token`,
+        public_scopes: PUBLIC_QUERY_SCOPES,
+      });
+    }
+
     try {
       let query = 'SELECT anchor_id, scope, source_did, semantic_hash, delta_hash, validation_status, created_at FROM memory_anchors';
       const params: any[] = [];
@@ -1024,6 +1052,12 @@ export function createWave3Router(pool: pg.Pool): Router {
       if (scope && valid_scopes.includes(scope)) {
         params.push(scope);
         conditions.push(`scope = $${params.length}`);
+      } else {
+        // No (valid) scope filter from an unauthenticated caller → never leak restricted scopes
+        if (!isAuthorizedForRestrictedScope(req)) {
+          params.push(PUBLIC_QUERY_SCOPES);
+          conditions.push(`scope = ANY($${params.length})`);
+        }
       }
       if (source_did) {
         params.push(source_did);

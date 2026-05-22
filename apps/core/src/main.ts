@@ -1434,7 +1434,7 @@ app.post('/api/operator/evidence/refresh', requireAuth, async (req, res) => {
 // mounted inside the app.listen callback after initRedis() — preserves original runtime semantics.
 const k0nsultatRouter = createK0nsultatRouter(pool);
 app.use('/api/k0nsulat', k0nsultatRouter);
-const wave3Router = createWave3Router(pool);
+const wave3Router = createWave3Router(pool, verifyToken);
 app.use('/api', wave3Router);
 const operatorRouter = createOperatorRouter(pool);
 app.use('/api/operator', requireAuth, operatorRateLimit, operatorRouter);

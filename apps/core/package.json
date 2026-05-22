@@ -9,6 +9,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@qdrant/js-client-rest": "^1.18.0",
     "@types/cors": "^2.8.19",
     "cors": "^2.8.6",
@@ -16,7 +17,8 @@
     "feed": "^4.2.2",
     "helmet": "^8.1.0",
     "pg": "^8.11.3",
-    "redis": "^4.6.12"
+    "redis": "^4.6.12",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

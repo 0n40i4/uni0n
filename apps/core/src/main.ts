@@ -324,6 +324,7 @@ setInterval(() => {
 const globalRateLimit = makeRateLimiter(100, 60000); // 100/min per IP
 const operatorRateLimit = makeRateLimiter(20, 60000); // 20/min per IP
 import { createK0nsultatRouter } from './modules/k0nsulat';
+import { runSemanticAudit, isClaudeAuditConfigured } from './modules/claude-audit';
 import { createWave6Router, WAVE6_MIGRATIONS, getWave6Metrics } from './modules/wave6';
 import { createWave7Router, WAVE7_MIGRATIONS, getWave7Metrics } from './modules/wave7';
 import { createWave3Router, createOperatorRouter, WAVE3_MIGRATIONS, getRelayMetrics, initQdrant } from './modules/wave3';
@@ -1938,6 +1939,27 @@ app.post('/api/operator/evidence/refresh', requireAuth, async (req, res) => {
 // ============ MOUNT ROUTERS (module-level so tests can use supertest without app.listen) ============
 // Routers that don't depend on Redis are mounted at module-load. Wave7 (needs redis client) is
 // mounted inside the app.listen callback after initRedis() — preserves original runtime semantics.
+// Claude-powered semantyczny audyt agenta — operator-gated + rate-limited (koszt LLM).
+// Rejestrowane PRZED montażem routera k0nsulat, by dokładna ścieżka miała pierwszeństwo.
+app.post('/api/k0nsulat/audit/semantic', requireAuth, operatorRateLimit, async (req: any, res: any) => {
+  if (!isClaudeAuditConfigured()) {
+    return res.status(503).json({ error: 'Claude audit niedostępny: brak ANTHROPIC_API_KEY' });
+  }
+  const agentDid = req.body?.agent_did;
+  if (!agentDid || typeof agentDid !== 'string') {
+    return res.status(400).json({ error: 'Missing required field: agent_did' });
+  }
+  try {
+    const result = await runSemanticAudit(pool, agentDid);
+    if (!result.found) {
+      return res.status(404).json({ error: 'Agent nie znaleziony w rejestrze', agent_did: agentDid });
+    }
+    return res.json(result);
+  } catch (error) {
+    return res.status(502).json({ error: 'Semantyczny audyt nie powiódł się', message: (error as Error).message });
+  }
+});
+
 const k0nsultatRouter = createK0nsultatRouter(pool);
 app.use('/api/k0nsulat', k0nsultatRouter);
 const wave3Router = createWave3Router(pool, verifyToken);

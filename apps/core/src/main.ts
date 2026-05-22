@@ -46,7 +46,9 @@ const JWT_SECRET = JWT_SECRET_ENV || ('unionai-dev-' + Date.now());
 const JWT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24h
 
 export function signToken(payload: any): string {
-  const data = { ...payload, exp: Date.now() + JWT_EXPIRY_MS };
+  // P1.3: every token carries a unique jti so it can be individually revoked.
+  const jti = crypto.randomBytes(16).toString('hex');
+  const data = { ...payload, jti, exp: Date.now() + JWT_EXPIRY_MS };
   const body = Buffer.from(JSON.stringify(data)).toString('base64url');
   const sig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
   return `${body}.${sig}`;
@@ -66,12 +68,40 @@ export function verifyToken(token: string): any | null {
   }
 }
 
-function requireAuth(req: any, res: any, next: any) {
+// P1.3: token revocation. Redis-backed (durable, cross-machine) with in-memory
+// fallback when Redis is unavailable. A revoked jti is stored until the token
+// would have expired anyway, so the set never grows unbounded.
+const revokedJtiMemory = new Map<string, number>(); // jti -> expiry epoch ms
+async function revokeToken(jti: string, ttlMs: number): Promise<void> {
+  if (!jti) return;
+  revokedJtiMemory.set(jti, Date.now() + ttlMs);
+  if (redisClient && redisConnected) {
+    try { await redisClient.set(`revoked:${jti}`, '1', { PX: Math.max(1000, ttlMs) }); } catch (_) {}
+  }
+}
+async function isTokenRevoked(jti: string): Promise<boolean> {
+  if (!jti) return false;
+  const memExp = revokedJtiMemory.get(jti);
+  if (memExp && memExp > Date.now()) return true;
+  if (memExp && memExp <= Date.now()) revokedJtiMemory.delete(jti);
+  if (redisClient && redisConnected) {
+    try { return (await redisClient.exists(`revoked:${jti}`)) === 1; } catch (_) {}
+  }
+  return false;
+}
+// periodic prune of expired in-memory revocations
+setInterval(() => {
+  const now = Date.now();
+  for (const [jti, exp] of revokedJtiMemory.entries()) if (exp <= now) revokedJtiMemory.delete(jti);
+}, 60000);
+
+async function requireAuth(req: any, res: any, next: any) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/, '');
   if (!token) return res.status(401).json({ error: 'Missing Authorization Bearer token' });
   const payload = verifyToken(token);
   if (!payload) return res.status(401).json({ error: 'Invalid or expired token' });
+  if (await isTokenRevoked(payload.jti)) return res.status(401).json({ error: 'Token has been revoked' });
   req.auth = payload;
   next();
 }
@@ -110,26 +140,57 @@ function requireRelaySharedSecret(req: any, res: any, next: any) {
   next();
 }
 
-// ============ SECURITY: Rate Limiter (in-memory sliding window) ============
+// ============ SECURITY: Rate Limiter (Redis-backed, in-memory fallback) ============
+// P1.2 fix: Redis fixed-window counter shared across machines and surviving
+// restarts/auto-stop. Falls back to the in-memory sliding window when Redis is
+// unavailable (Redis is optional/non-fatal in this service).
 const rateLimitStore = new Map<string, number[]>();
 
+function inMemoryRateLimit(maxReq: number, windowMs: number, key: string, res: any): { limited: boolean; remaining: number; resetSec: number; retryAfterMs: number } {
+  const now = Date.now();
+  const timestamps = (rateLimitStore.get(key) || []).filter(t => now - t < windowMs);
+  const resetSec = timestamps.length > 0 ? Math.ceil((timestamps[0] + windowMs) / 1000) : Math.ceil((now + windowMs) / 1000);
+  if (timestamps.length >= maxReq) {
+    return { limited: true, remaining: 0, resetSec, retryAfterMs: windowMs - (now - timestamps[0]) };
+  }
+  timestamps.push(now);
+  rateLimitStore.set(key, timestamps);
+  return { limited: false, remaining: Math.max(0, maxReq - timestamps.length), resetSec, retryAfterMs: 0 };
+}
+
 function makeRateLimiter(maxReq: number, windowMs: number) {
-  return (req: any, res: any, next: any) => {
+  return async (req: any, res: any, next: any) => {
     const key = (req.ip || req.connection?.remoteAddress || 'unknown') + ':' + req.route?.path;
-    const now = Date.now();
-    const timestamps = (rateLimitStore.get(key) || []).filter(t => now - t < windowMs);
-    const remaining = Math.max(0, maxReq - timestamps.length);
-    const resetAt = timestamps.length > 0 ? Math.ceil((timestamps[0] + windowMs) / 1000) : Math.ceil((now + windowMs) / 1000);
     res.set('X-RateLimit-Limit', String(maxReq));
-    res.set('X-RateLimit-Remaining', String(remaining > 0 ? remaining - 1 : 0));
-    res.set('X-RateLimit-Reset', String(resetAt));
-    if (timestamps.length >= maxReq) {
-      const retryAfterMs = windowMs - (now - timestamps[0]);
-      res.set('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
-      return res.status(429).json({ error: 'Too many requests', retry_after_ms: retryAfterMs });
+
+    // Redis fixed-window (shared, durable)
+    if (redisClient && redisConnected) {
+      try {
+        const rkey = `rl:${key}`;
+        const count = await redisClient.incr(rkey);
+        if (count === 1) await redisClient.pExpire(rkey, windowMs);
+        const ttlMs = await redisClient.pTtl(rkey);
+        const resetSec = Math.ceil((Date.now() + (ttlMs > 0 ? ttlMs : windowMs)) / 1000);
+        res.set('X-RateLimit-Remaining', String(Math.max(0, maxReq - count)));
+        res.set('X-RateLimit-Reset', String(resetSec));
+        if (count > maxReq) {
+          res.set('Retry-After', String(Math.ceil((ttlMs > 0 ? ttlMs : windowMs) / 1000)));
+          return res.status(429).json({ error: 'Too many requests', retry_after_ms: ttlMs > 0 ? ttlMs : windowMs });
+        }
+        return next();
+      } catch (_) {
+        // fall through to in-memory on any Redis error
+      }
     }
-    timestamps.push(now);
-    rateLimitStore.set(key, timestamps);
+
+    // In-memory fallback
+    const r = inMemoryRateLimit(maxReq, windowMs, key, res);
+    res.set('X-RateLimit-Remaining', String(r.remaining));
+    res.set('X-RateLimit-Reset', String(r.resetSec));
+    if (r.limited) {
+      res.set('Retry-After', String(Math.ceil(r.retryAfterMs / 1000)));
+      return res.status(429).json({ error: 'Too many requests', retry_after_ms: r.retryAfterMs });
+    }
     next();
   };
 }
@@ -165,8 +226,15 @@ let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
 // ============ SECURITY: hardening middleware (must run BEFORE other middleware) ============
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
+// P1.4: CORS_ORIGIN may be a comma-separated whitelist. Parse into an array so
+// multiple K0nsult domains match (cors treats a bare string as a single origin).
+// Unset → '*' (open) preserves backward-compatible public-API behaviour.
+const corsOriginEnv = process.env.CORS_ORIGIN;
+const corsOrigin = !corsOriginEnv || corsOriginEnv === '*'
+  ? '*'
+  : corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
@@ -302,6 +370,16 @@ app.post('/api/auth/login', (req, res) => {
   const token = signToken({ sub: username, role: 'operator' });
   res.json({ token, expires_in: JWT_EXPIRY_MS / 1000 });
 });
+
+// P1.3: revoke the calling token (logout). Revocation lasts until the token's
+// natural expiry, after which the jti entry self-prunes.
+app.post('/api/auth/logout', requireAuth, async (req: any, res) => {
+  const exp = req.auth?.exp;
+  const ttlMs = exp ? Math.max(1000, exp - Date.now()) : JWT_EXPIRY_MS;
+  await revokeToken(req.auth?.jti, ttlMs);
+  res.json({ success: true, message: 'Token revoked', jti: req.auth?.jti });
+});
+
 if (!process.env.DATABASE_URL) {
   console.warn('WARNING: DATABASE_URL is not set — database endpoints will fail');
 }

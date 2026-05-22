@@ -1443,7 +1443,12 @@ export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) =
       let seq = 0;
       const chain_steps: Array<{ seq: number; current_hash: string; previous_hash: string; valid: boolean }> = [];
       for (const ev of eventsR.rows) {
-        const step_ok = !ev.previous_hash || ev.previous_hash === prev_hash || prev_hash === '0'.repeat(64);
+        // P1.1 fix: strict chain — each event's previous_hash MUST equal the running
+        // current_hash. Genesis works because prev_hash starts at all-zeros and the
+        // first event's previous_hash must also be all-zeros. No loose OR bypass.
+        const expected_prev = prev_hash;
+        const got_prev = ev.previous_hash || '0'.repeat(64);
+        const step_ok = got_prev === expected_prev;
         if (!step_ok && chain_valid) {
           chain_valid = false;
           chain_error = `broken at ${ev.created_at}: expected_prev=${prev_hash.slice(0, 8)}, got=${(ev.previous_hash || '').slice(0, 8)}`;

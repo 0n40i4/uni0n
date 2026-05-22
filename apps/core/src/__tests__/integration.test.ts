@@ -18,6 +18,11 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../main';
 
+// Relay endpoints are gated by requireRelaySharedSecret. Must match the value
+// set in vitest.config.ts BEFORE main.ts is loaded, otherwise the gate returns
+// 401/503 before reaching the handler under test.
+const RELAY_BEARER = `Bearer ${process.env.RELAY_SHARED_SECRET || 'vitest-relay-secret'}`;
+
 describe('GET /health', () => {
   it('returns 200 with shape { status, version, database, redis }', async () => {
     const res = await request(app).get('/health');
@@ -53,7 +58,7 @@ describe('GET /llms.txt', () => {
 
 describe('POST /api/relay/send', () => {
   it('empty body returns 400 with MVSS_INVALID error code', async () => {
-    const res = await request(app).post('/api/relay/send').send({});
+    const res = await request(app).post('/api/relay/send').set('Authorization', RELAY_BEARER).send({});
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error', 'MVSS_INVALID');
   });
@@ -61,6 +66,7 @@ describe('POST /api/relay/send', () => {
   it('missing src_did returns 400 with Missing required field: src_did', async () => {
     const res = await request(app)
       .post('/api/relay/send')
+      .set('Authorization', RELAY_BEARER)
       .send({
         protocol: 'UNIONAI-WIRE-v0',
         intent_id: 'i-1',
@@ -75,8 +81,23 @@ describe('POST /api/relay/send', () => {
 
 describe('POST /api/relay/route', () => {
   it('empty body returns 400', async () => {
-    const res = await request(app).post('/api/relay/route').send({});
+    const res = await request(app).post('/api/relay/route').set('Authorization', RELAY_BEARER).send({});
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
+  });
+});
+
+describe('relay auth gate (requireRelaySharedSecret)', () => {
+  it('rejects request without Authorization header → 401', async () => {
+    const res = await request(app).post('/api/relay/send').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects request with wrong token → 403', async () => {
+    const res = await request(app)
+      .post('/api/relay/send')
+      .set('Authorization', 'Bearer wrong-token')
+      .send({});
+    expect(res.status).toBe(403);
   });
 });

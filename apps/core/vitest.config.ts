@@ -4,6 +4,9 @@ import { defineConfig } from 'vitest/config';
 // NODE_ENV=production and JWT_SECRET is unset.
 process.env.NODE_ENV = process.env.NODE_ENV === 'production' ? 'test' : (process.env.NODE_ENV || 'test');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'vitest-fixed-secret';
+// Relay endpoints are gated by requireRelaySharedSecret (read at module load),
+// so the secret must be set BEFORE main.ts is imported. Tests send this as Bearer.
+process.env.RELAY_SHARED_SECRET = process.env.RELAY_SHARED_SECRET || 'vitest-relay-secret';
 
 export default defineConfig({
   test: {
@@ -14,6 +17,7 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
       JWT_SECRET: process.env.JWT_SECRET,
+      RELAY_SHARED_SECRET: process.env.RELAY_SHARED_SECRET,
     },
     // No coverage threshold yet — baseline run only.
     // pool defaults to 'forks' which is fine for our supertest integration tests.

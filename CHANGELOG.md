@@ -7,6 +7,16 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Live changelog + release mirror (UAI-P2-006 / UAI-P2-003)
+- `GET /releases.json` — maszynowo-czytelna lista wydań sparsowana z `CHANGELOG.md`; każdy wpis zawiera `version`, `tag`, `date`, `build_sha`, `commit`, `channel`, `changes[]`, `changelog`, `github_release_url`, `zenodo_doi`; bieżący build (`SERVICE_VERSION`/`BUILD_SHA`/`BUILD_TIME`) dołączany jako najnowszy wpis, jeśli go brak
+- `GET /changelog` — ładna strona HTML (PL, inline CSS, zero CDN) generowana w handlerze z danych `/releases.json`
+- `docs/RELEASE_PROCESS.md` — procedura wydania (git tag, `gh release create`, archiwizacja Zenodo, integracja CITATION.cff/codemeta.json)
+- Czyste URL-e dla stron federacji: `/control-room`, `/join`, `/guide`, `/about` (sendFile, wzorzec jak `/status`/`/anchors`)
+- `/openapi.json` — dodane ścieżki `/releases.json`, `/changelog`
+
+### Changed
+- `CITATION.cff` — `version` 0.2.0 → 0.3.0-dev (wyrównanie do `codemeta.json` i runtime; dryf wykryty przy UAI-P2-003)
+
 ## [0.3.0-dev] - 2026-05-15
 
 ### Added — Runtime Provenance Layer (P0 federated reporting)

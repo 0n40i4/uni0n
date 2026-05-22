@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Centrum dowodzenia federacji — UNIONAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --fail: #f85149;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  nav { margin: 10px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  .testnet {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    background: rgba(210,153,34,.15);
+    color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35);
+    margin-left: 8px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+  }
+  .big { font-size: 30px; font-weight: 700; }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pill.ok { background: rgba(63,185,80,.15); color: var(--ok); }
+  .pill.warn { background: rgba(210,153,34,.15); color: var(--warn); }
+  .pill.fail { background: rgba(248,81,73,.15); color: var(--fail); }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
+  .row .k { color: var(--muted); }
+  .row .v { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; text-align: right; }
+  ul.list { padding: 0; margin: 8px 0 0; }
+  ul.list li { list-style: none; padding: 4px 0; font-size: 13px; border-top: 1px solid var(--border); }
+  ul.list li:first-child { border-top: none; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  a { color: var(--accent); }
+  .err { color: var(--fail); }
+  .updated { color: var(--muted); font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Centrum dowodzenia federacji UNIONAI <span class="testnet">TESTNET</span></h1>
+  <div class="sub">Jeden widok na żywo: agenci, audyty, dowody, relay, pamięć, incydenty i build. Odświeżanie co 30 s.</div>
+  <nav>
+    <a href="/status">Status</a>
+    <a href="/anchors">Hash-chain</a>
+    <a href="/join">Dołącz</a>
+    <a href="/about">O projekcie</a>
+    <a href="/guide">Przewodnik</a>
+  </nav>
+</header>
+<main>
+  <div class="grid">
+    <div class="card">
+      <h2>Stan ogólny</h2>
+      <div id="overall"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Agenci</h2>
+      <div id="agents"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Audyty (K0NSULAT)</h2>
+      <div id="audits"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Dowody (Evidence)</h2>
+      <div id="evidence"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Relay</h2>
+      <div id="relay"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Pamięć (hash-chain)</h2>
+      <div id="memory"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Incydenty</h2>
+      <div id="incidents"><div class="sub">Ładowanie…</div></div>
+    </div>
+    <div class="card">
+      <h2>Build / wersja</h2>
+      <div id="build"><div class="sub">Ładowanie…</div></div>
+    </div>
+  </div>
+  <div class="updated" id="ts"></div>
+</main>
+<footer>
+  Widok publiczny, bez logowania. Środowisko testowe (TESTNET) — dane mogą być resetowane.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span>.
+</footer>
+
+<script>
+function pillClass(s) {
+  s = String(s || '').toLowerCase();
+  if (s === 'ok' || s === 'zdrowy' || s === 'operational' || s === 'healthy') return 'ok';
+  if (s === 'degraded' || s === 'warn' || s === 'testnet') return 'warn';
+  return 'fail';
+}
+function esc(v) {
+  return String(v == null ? '—' : v).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+function num(v) { return (v == null || isNaN(v)) ? '—' : v; }
+async function getJSON(url) {
+  const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+async function getText(url) {
+  const r = await fetch(url, { headers: { 'Accept': 'text/plain' } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.text();
+}
+function fail(id, e) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '<div class="err">Brak danych: ' + esc(e && e.message ? e.message : e) + '</div>';
+}
+
+async function loadStatus() {
+  try {
+    const d = await getJSON('/api/status');
+    const b = d.build || {};
+    document.getElementById('overall').innerHTML =
+      '<div><span class="pill ' + pillClass(d.health || d.status) + '">' + esc(d.health || d.status) + '</span></div>'
+      + '<div class="row"><span class="k">Sieć</span><span class="v">' + esc(d.network_status) + '</span></div>'
+      + '<div class="row"><span class="k">Baza danych</span><span class="v">' + esc(d.database) + '</span></div>'
+      + '<div class="row"><span class="k">Redis</span><span class="v">' + esc(d.redis) + '</span></div>';
+    document.getElementById('build').innerHTML =
+      '<div class="row"><span class="k">Wersja</span><span class="v">' + esc(b.version) + '</span></div>'
+      + '<div class="row"><span class="k">Commit</span><span class="v">' + esc(b.build_sha) + '</span></div>'
+      + '<div class="row"><span class="k">Kanał</span><span class="v">' + esc(b.channel) + '</span></div>'
+      + '<div class="row"><span class="k">Środowisko</span><span class="v">' + esc(b.env) + '</span></div>'
+      + '<div class="row"><span class="k">Region</span><span class="v">' + esc(b.region) + '</span></div>';
+    // liczba agentów z /api/status jako fallback uzupełniany przez leaderboard
+    const a = document.getElementById('agents');
+    if (a.dataset.filled !== '1') {
+      a.innerHTML = '<div class="big">' + num(d.agents) + '</div><div class="sub">zarejestrowani (z /api/status)</div>';
+    }
+  } catch (e) { fail('overall', e); fail('build', e); }
+}
+
+async function loadLeaderboard() {
+  try {
+    const d = await getJSON('/api/leaderboard');
+    const lb = Array.isArray(d.leaderboard) ? d.leaderboard : [];
+    const top = lb.slice(0, 5).map(function (r) {
+      return '<li><span class="pill ' + (String(r.status).toLowerCase() === 'active' ? 'ok' : 'warn') + '">'
+        + esc(r.trust_tier) + '</span> <span class="mono">' + esc(r.did) + '</span> · ' + num(r.trust_score) + '</li>';
+    }).join('');
+    const el = document.getElementById('agents');
+    el.dataset.filled = '1';
+    el.innerHTML = '<div class="big">' + num(d.total_agents) + '</div>'
+      + '<div class="sub">zarejestrowani w federacji</div>'
+      + (top ? '<ul class="list">' + top + '</ul>' : '<div class="sub" style="margin-top:8px">Brak agentów do wyświetlenia.</div>');
+  } catch (e) { /* zostaw fallback z /api/status */ }
+}
+
+async function loadAudits() {
+  try {
+    const d = await getJSON('/api/k0nsulat/audits');
+    const list = Array.isArray(d.audits) ? d.audits : [];
+    const items = list.slice(0, 5).map(function (a) {
+      return '<li><span class="pill ' + pillClass(a.verdict === 'verified' || a.status === 'completed' ? 'ok' : 'warn') + '">'
+        + esc(a.verdict || a.status) + '</span> <span class="mono">' + esc(a.target) + '</span></li>';
+    }).join('');
+    document.getElementById('audits').innerHTML = '<div class="big">' + num(d.count) + '</div>'
+      + '<div class="sub">zakończone audyty w rejestrze</div>'
+      + (items ? '<ul class="list">' + items + '</ul>' : '<div class="sub" style="margin-top:8px">Rejestr pusty.</div>');
+  } catch (e) { fail('audits', e); }
+}
+
+async function loadEvidence() {
+  try {
+    const d = await getJSON('/evidence/manifest.json');
+    const docs = Array.isArray(d.documents) ? d.documents : [];
+    document.getElementById('evidence').innerHTML = '<div class="big">' + docs.length + '</div>'
+      + '<div class="sub">dokumenty w manifeście</div>'
+      + '<div class="row"><span class="k">Wersja</span><span class="v">' + esc(d.manifest_version) + '</span></div>'
+      + '<div class="row"><span class="k">Algorytm</span><span class="v">' + esc(d.hash_algorithm) + '</span></div>'
+      + '<div style="margin-top:8px"><a href="/api/evidence/verify">Zweryfikuj hashe dokumentów →</a></div>';
+  } catch (e) { fail('evidence', e); }
+}
+
+function parseMetric(text, name) {
+  const re = new RegExp('^' + name + '\\s+([0-9.eE+-]+)', 'm');
+  const m = text.match(re);
+  return m ? m[1] : null;
+}
+async function loadRelay() {
+  try {
+    const t = await getText('/metrics');
+    const ev = parseMetric(t, 'relay_events_total');
+    const sent = parseMetric(t, 'relay_sent_total');
+    const route = parseMetric(t, 'relay_route_total');
+    const drift = parseMetric(t, 'relay_drift_ratio');
+    document.getElementById('relay').innerHTML =
+      '<div class="row"><span class="k">Zdarzenia (events)</span><span class="v">' + esc(ev) + '</span></div>'
+      + '<div class="row"><span class="k">Wysłane (sent)</span><span class="v">' + esc(sent) + '</span></div>'
+      + '<div class="row"><span class="k">Routowane (route)</span><span class="v">' + esc(route) + '</span></div>'
+      + '<div class="row"><span class="k">Drift ratio</span><span class="v">' + esc(drift) + '</span></div>';
+  } catch (e) { fail('relay', e); }
+}
+
+async function loadMemory() {
+  try {
+    const d = await getJSON('/api/memory/anchors?limit=5');
+    const anchors = Array.isArray(d.anchors) ? d.anchors : [];
+    const items = anchors.slice(0, 5).map(function (a) {
+      return '<li><span class="mono">' + esc(String(a.hash || '').slice(0, 24)) + '…</span> · ' + esc(a.scope) + '</li>';
+    }).join('');
+    document.getElementById('memory').innerHTML = '<div class="big">' + num(d.count) + '</div>'
+      + '<div class="sub">kotwice PUBLIC/FEDERATION</div>'
+      + (items ? '<ul class="list">' + items + '</ul>' : '<div class="sub" style="margin-top:8px">Brak kotwic.</div>');
+  } catch (e) { fail('memory', e); }
+}
+
+async function loadIncidents() {
+  try {
+    const d = await getJSON('/api/incidents');
+    const s = d.by_severity || {};
+    document.getElementById('incidents').innerHTML =
+      '<div class="big">' + num(d.total) + '</div><div class="sub">zgłoszenia łącznie</div>'
+      + '<div class="row"><span class="k">CRITICAL</span><span class="v">' + num(s.CRITICAL) + '</span></div>'
+      + '<div class="row"><span class="k">MAJOR</span><span class="v">' + num(s.MAJOR) + '</span></div>'
+      + '<div class="row"><span class="k">LOW</span><span class="v">' + num(s.LOW) + '</span></div>';
+  } catch (e) { fail('incidents', e); }
+}
+
+function refresh() {
+  loadStatus();
+  loadLeaderboard();
+  loadAudits();
+  loadEvidence();
+  loadRelay();
+  loadMemory();
+  loadIncidents();
+  document.getElementById('ts').textContent = 'Ostatnie odświeżenie: ' + new Date().toLocaleString('pl-PL');
+}
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

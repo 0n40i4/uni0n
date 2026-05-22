@@ -33,6 +33,123 @@ const APP_ENV = process.env.APP_ENV || process.env.NODE_ENV || SERVICE_CHANNEL;
 const DEPLOYED_AT = process.env.DEPLOYED_AT || process.env.BUILD_TIME || COMMIT_TIME || 'unknown';
 const NETWORK_STATUS = process.env.NETWORK_STATUS || 'TESTNET';
 
+// ============ UAI-P2-006 / UAI-P2-003: CHANGELOG → live releases ============
+// Repozytorium GitHub (do budowy linków release / compare).
+const GITHUB_REPO = process.env.GITHUB_REPO || '0n40i4/uni0n';
+
+// Odczyt CHANGELOG.md fault-tolerant — kandydaci tak jak dla PKG (różne cwd: repo root w prod,
+// apps/core przy testach w replice). __dirname w runtime = apps/core/dist.
+function readChangelogRaw(): string | null {
+  try {
+    const candidates = [
+      path.join(process.cwd(), 'CHANGELOG.md'),
+      path.join(process.cwd(), '..', '..', 'CHANGELOG.md'),
+      path.join(__dirname, '..', '..', '..', 'CHANGELOG.md'),
+      path.join(__dirname, '..', '..', 'CHANGELOG.md'),
+      path.join(__dirname, '..', 'CHANGELOG.md'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8');
+    }
+  } catch (_e) {}
+  return null;
+}
+
+export interface ReleaseEntry {
+  version: string;
+  tag: string;
+  date: string | null;
+  build_sha: string | null;
+  commit: string | null;
+  channel: string;
+  changes: string[];
+  changelog: string;
+  github_release_url: string | null;
+  zenodo_doi: string | null;
+}
+
+// Parser Keep-a-Changelog: nagłówki `## [x.y.z] - YYYY-MM-DD` (data opcjonalna).
+// Punkty zmian = linie zaczynające się od `- ` (po ewentualnym nagłówku `### ...`).
+export function parseChangelog(raw: string | null): ReleaseEntry[] {
+  if (!raw) return [];
+  const releases: ReleaseEntry[] = [];
+  const lines = raw.split(/\r?\n/);
+  const headerRe = /^##\s+\[([^\]]+)\](?:\s*-\s*(.+?))?\s*$/;
+  let current: ReleaseEntry | null = null;
+  // Mapa wersja → DOI Zenodo (tylko jawnie wymienione w changelogu).
+  const zenodoForVersion = (changesBlob: string): string | null => {
+    const m = changesBlob.match(/zenodo\.(\d+)/i);
+    return m ? `10.5281/zenodo.${m[1]}` : null;
+  };
+  for (const line of lines) {
+    const h = headerRe.exec(line);
+    if (h) {
+      if (current) releases.push(current);
+      const version = h[1].trim();
+      const date = (h[2] || '').trim() || null;
+      const isDev = /-dev|unreleased/i.test(version);
+      const tag = /^\d/.test(version) ? `v${version}` : version;
+      current = {
+        version,
+        tag,
+        date,
+        build_sha: null,
+        commit: null,
+        channel: isDev ? 'dev' : 'stable',
+        changes: [],
+        changelog: '',
+        github_release_url: /^v?\d/.test(tag) ? `https://github.com/${GITHUB_REPO}/releases/tag/${tag}` : null,
+        zenodo_doi: null,
+      };
+      continue;
+    }
+    if (current) {
+      current.changelog += (current.changelog ? '\n' : '') + line;
+      const trimmed = line.trim();
+      if (trimmed.startsWith('- ')) {
+        current.changes.push(trimmed.slice(2).trim());
+      }
+    }
+  }
+  if (current) releases.push(current);
+  for (const r of releases) {
+    r.changelog = r.changelog.trim();
+    r.zenodo_doi = zenodoForVersion(r.changelog);
+  }
+  return releases;
+}
+
+// Pełna lista wydań: parsuje CHANGELOG i dba o to, by bieżący build był ujęty jako najnowszy wpis.
+export function buildReleases(): ReleaseEntry[] {
+  const parsed = parseChangelog(readChangelogRaw());
+  const norm = (v: string) => v.replace(/^v/, '');
+  const hasCurrent = parsed.some(r => norm(r.version) === norm(SERVICE_VERSION));
+  if (!hasCurrent && SERVICE_VERSION && SERVICE_VERSION !== 'unknown') {
+    const tag = /^\d/.test(SERVICE_VERSION) ? `v${SERVICE_VERSION}` : SERVICE_VERSION;
+    parsed.unshift({
+      version: SERVICE_VERSION,
+      tag,
+      date: (BUILD_TIME || '').slice(0, 10) || null,
+      build_sha: BUILD_SHA,
+      commit: BUILD_SHA,
+      channel: SERVICE_CHANNEL,
+      changes: ['Bieżący build runtime (wpis automatyczny — brak sekcji w CHANGELOG.md).'],
+      changelog: 'Bieżący build runtime — szczegóły pojawią się po dodaniu sekcji do CHANGELOG.md.',
+      github_release_url: /^v?\d/.test(tag) ? `https://github.com/${GITHUB_REPO}/releases/tag/${tag}` : null,
+      zenodo_doi: null,
+    });
+  } else {
+    // Dołącz build_sha/commit/channel do dopasowanego najnowszego wpisu bieżącej wersji.
+    const match = parsed.find(r => norm(r.version) === norm(SERVICE_VERSION));
+    if (match) {
+      match.build_sha = match.build_sha || BUILD_SHA;
+      match.commit = match.commit || BUILD_SHA;
+      match.channel = SERVICE_CHANNEL;
+    }
+  }
+  return parsed;
+}
+
 // ============ SECURITY: JWT (custom HMAC-SHA256, no external deps) ============
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
 if (!JWT_SECRET_ENV) {
@@ -830,6 +947,22 @@ app.get('/openapi.json', (req, res) => {
             '200_db_error': okResp('Fallback przy błędzie DB', { anchors: [], count: 0, db_error: true, generated_at: '2026-05-22T00:00:00Z' })
           }
         }
+      },
+      "/releases.json": {
+        get: {
+          tags: ['system'], summary: 'Live changelog — lista wydań sparsowana z CHANGELOG.md + bieżący build',
+          responses: {
+            '200': okResp('Lista wydań', {
+              service: 'unionai-core', current_version: '0.3.0-dev', channel: 'dev', build_sha: 'abc1234',
+              repo: 'https://github.com/0n40i4/uni0n', count: 4,
+              releases: [{ version: '0.3.0-dev', tag: 'v0.3.0-dev', date: '2026-05-15', build_sha: 'abc1234', commit: 'abc1234', channel: 'dev', changes: ['...'], github_release_url: 'https://github.com/0n40i4/uni0n/releases/tag/v0.3.0-dev', zenodo_doi: null }],
+              generated_at: '2026-05-22T00:00:00Z'
+            })
+          }
+        }
+      },
+      "/changelog": {
+        get: { tags: ['system'], summary: 'Historia wydań (strona HTML, PL) zbudowana z /releases.json', responses: { '200': { description: 'Strona HTML z historią wydań' } } }
       }
     }
   });
@@ -2018,6 +2151,128 @@ app.get('/api/system/snapshots/latest', async (_req, res) => {
 // Public status dashboard (exact path, registered before /status/:filename)
 app.get('/status', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'status.html'));
+});
+
+// ============ UAI-P2-006: Live changelog (JSON) ============
+// Lista wydań sparsowana z CHANGELOG.md + bieżący build. Fault-tolerant: nigdy nie rzuca 500.
+app.get('/releases.json', (_req, res) => {
+  try {
+    const releases = buildReleases();
+    res.json({
+      service: SERVICE_NAME,
+      current_version: SERVICE_VERSION,
+      channel: SERVICE_CHANNEL,
+      build_sha: BUILD_SHA,
+      build_time: BUILD_TIME,
+      repo: `https://github.com/${GITHUB_REPO}`,
+      count: releases.length,
+      releases,
+      generated_at: new Date().toISOString(),
+    });
+  } catch (_e) {
+    res.json({
+      service: SERVICE_NAME,
+      current_version: SERVICE_VERSION,
+      channel: SERVICE_CHANNEL,
+      build_sha: BUILD_SHA,
+      count: 0,
+      releases: [],
+      error: true,
+      generated_at: new Date().toISOString(),
+    });
+  }
+});
+
+// ============ UAI-P2-006: Live changelog (ładna strona HTML, PL, inline CSS, zero CDN) ============
+app.get('/changelog', (_req, res) => {
+  const esc = (s: string) =>
+    String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let releases: ReleaseEntry[] = [];
+  try {
+    releases = buildReleases();
+  } catch (_e) {
+    releases = [];
+  }
+  const cards = releases.length
+    ? releases.map((r) => {
+        const meta: string[] = [];
+        if (r.date) meta.push(`<span class="meta">${esc(r.date)}</span>`);
+        meta.push(`<span class="chan chan-${esc(r.channel)}">${esc(r.channel)}</span>`);
+        if (r.build_sha && r.build_sha !== 'unknown') meta.push(`<span class="sha">${esc(r.build_sha)}</span>`);
+        const links: string[] = [];
+        if (r.github_release_url) links.push(`<a href="${esc(r.github_release_url)}" rel="noopener">GitHub release</a>`);
+        if (r.zenodo_doi) links.push(`<a href="https://doi.org/${esc(r.zenodo_doi)}" rel="noopener">DOI: ${esc(r.zenodo_doi)}</a>`);
+        const items = r.changes.length
+          ? `<ul>${r.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`
+          : `<p class="empty">Brak szczegółowych pozycji w tym wydaniu.</p>`;
+        return `<article class="rel">
+      <h2>${esc(r.tag)} <small>${esc(r.version)}</small></h2>
+      <div class="badges">${meta.join(' ')}</div>
+      ${items}
+      ${links.length ? `<div class="links">${links.join(' · ')}</div>` : ''}
+    </article>`;
+      }).join('\n')
+    : `<p class="empty">Nie udało się odczytać listy wydań. Spróbuj <a href="/releases.json">/releases.json</a>.</p>`;
+  const html = `<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Historia wydań — UnionAI Ω∞</title>
+<meta name="description" content="Historia wydań i changelog federacji UnionAI Ω∞.">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0f1216; color: #e6e9ef; line-height: 1.55; }
+  header { padding: 2.5rem 1.25rem 1.5rem; border-bottom: 1px solid #232a34; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 1.25rem; }
+  h1 { margin: 0 0 .3rem; font-size: 1.7rem; }
+  .lead { margin: 0; color: #9aa4b2; font-size: .95rem; }
+  main { padding: 1.5rem 0 4rem; }
+  .rel { background: #161b22; border: 1px solid #232a34; border-radius: 12px; padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
+  .rel h2 { margin: 0 0 .5rem; font-size: 1.2rem; }
+  .rel h2 small { color: #7d8794; font-weight: 400; font-size: .85rem; }
+  .badges { margin-bottom: .6rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .meta, .chan, .sha { font-size: .75rem; padding: .15rem .5rem; border-radius: 999px; border: 1px solid #2c3440; }
+  .chan-stable { background: #102a1a; border-color: #1f5135; color: #7ee2a8; }
+  .chan-dev { background: #2a230f; border-color: #5a4a1f; color: #e2cf7e; }
+  .sha { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #9aa4b2; }
+  ul { margin: .3rem 0 .2rem; padding-left: 1.2rem; }
+  li { margin: .15rem 0; }
+  .empty { color: #7d8794; font-style: italic; }
+  .links { margin-top: .7rem; font-size: .85rem; }
+  a { color: #6ea8fe; }
+  footer { color: #7d8794; font-size: .8rem; padding: 1.5rem 0 0; border-top: 1px solid #232a34; }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Historia wydań — UnionAI Ω∞</h1>
+  <p class="lead">Bieżąca wersja: <strong>${esc(SERVICE_VERSION)}</strong> · kanał <strong>${esc(SERVICE_CHANNEL)}</strong> · build <code>${esc(BUILD_SHA)}</code>. Dane: <a href="/releases.json">/releases.json</a>.</p>
+</div></header>
+<main><div class="wrap">
+${cards}
+  <footer>Źródło prawdy: <code>CHANGELOG.md</code> w repozytorium. Procedura wydania: <code>docs/RELEASE_PROCESS.md</code>.</footer>
+</div></main>
+</body>
+</html>`;
+  res.type('html').send(html);
+});
+
+// ============ Czyste URL-e dla stron statycznych (sendFile — wzorzec jak /status, /anchors) ============
+// Pliki HTML należą do innego agenta (public/*.html); sendFile zadziała w runtime gdy pliki będą obecne.
+app.get('/control-room', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'control-room.html'));
+});
+app.get('/join', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'provider-invitation.html'));
+});
+app.get('/guide', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'federation-testnet-guide.html'));
+});
+app.get('/about', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'what-is-unionai.html'));
 });
 
 app.get('/status/:filename', async (req, res) => {

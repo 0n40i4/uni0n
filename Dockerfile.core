@@ -22,6 +22,8 @@ COPY --from=0 /app/apps/core/node_modules ./node_modules
 COPY --from=0 /app/apps/core/dist ./dist
 COPY apps/core/package.json ./package.json
 COPY public ./public
+# CHANGELOG.md potrzebny w runtime — /releases.json i /changelog parsują go z process.cwd()=/app
+COPY CHANGELOG.md ./CHANGELOG.md
 
 # Metadane buildu wstrzykiwane przez `fly deploy --build-arg GIT_SHA=... --build-arg BUILD_TIME=...`
 # (patrz scripts/deploy.sh / scripts/deploy.ps1). Bez nich /health.build_sha pokaże

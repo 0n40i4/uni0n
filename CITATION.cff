@@ -34,7 +34,7 @@ keywords:
 license: Apache-2.0
 license-url: "https://www.apache.org/licenses/LICENSE-2.0"
 date-released: "2026-05-12"
-version: "0.2.0"
+version: "0.3.0-dev"
 preferred-citation:
   type: article
   title: "UnionAI Ω∞: Declaration of Origin"

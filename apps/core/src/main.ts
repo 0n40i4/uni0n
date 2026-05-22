@@ -80,6 +80,31 @@ function requireOperator(req: any, res: any, next: any) {
   });
 }
 
+const RELAY_SHARED_SECRET = process.env.RELAY_SHARED_SECRET || '';
+
+function requireRelaySharedSecret(req: any, res: any, next: any) {
+  if (!RELAY_SHARED_SECRET) {
+    return res.status(503).json({ error: 'RELAY_SHARED_SECRET not configured on server' });
+  }
+
+  const authHeader = String(req.headers.authorization || '').trim();
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Missing Authorization Bearer token' });
+  }
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim();
+  if (!token) {
+    return res.status(401).json({ error: 'Missing Authorization Bearer token' });
+  }
+
+  if (token !== RELAY_SHARED_SECRET) {
+    return res.status(403).json({ error: 'Invalid relay token' });
+  }
+
+  next();
+}
+
 // ============ SECURITY: Rate Limiter (in-memory sliding window) ============
 const rateLimitStore = new Map<string, number[]>();
 
@@ -141,6 +166,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
 }));
+
+app.use(['/api/relay/send', '/api/relay/route'], requireRelaySharedSecret);
 
 app.use(express.json());
 app.use(globalRateLimit);

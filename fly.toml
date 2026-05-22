@@ -3,7 +3,7 @@ primary_region = "iad"
 
 [env]
 NODE_ENV = "production"
-SERVICE_CHANNEL = "dev"
+SERVICE_CHANNEL = "stable"
 
 [[services]]
 internal_port = 3000

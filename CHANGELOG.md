@@ -9,6 +9,8 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.3.0] - 2026-05-22
 
+**Zenodo DOI:** [10.5281/zenodo.20349115](https://doi.org/10.5281/zenodo.20349115) · concept (zawsze najnowsza): [10.5281/zenodo.20151383](https://doi.org/10.5281/zenodo.20151383)
+
 ### Added — Claude-powered semantic agent audit (K0NSULAT)
 - `POST /api/k0nsulat/audit/semantic` — operator-gated (`requireAuth` + `operatorRateLimit`); audyt profilu agenta przez Claude Opus 4.7 (adaptive thinking, structured output via Zod), zapis jako `agent_semantic_audit` w `k0nsulat_audit`; `usage` (input/output/cache tokens) w odpowiedzi
 - `apps/core/src/modules/claude-audit.ts` — integracja `@anthropic-ai/sdk` + `zod`, prompt caching na rubryce

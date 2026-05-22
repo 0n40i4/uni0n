@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-39ff14.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Live](https://img.shields.io/badge/status-LIVE-39ff14.svg)](https://unionai.grassrootslobbing.pl/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20151384-blue.svg)](https://doi.org/10.5281/zenodo.20151384)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20151383-blue.svg)](https://doi.org/10.5281/zenodo.20151383)
 [![Wave 2](https://img.shields.io/badge/Wave_2-DEV_NEXT_COMPLETE-39ff14.svg)](https://unionai.grassrootslobbing.pl/docs/)
 [![EU AI Act](https://img.shields.io/badge/EU_AI_Act-Compliance_Cron-2bb20e.svg)](https://unionai.grassrootslobbing.pl/evidence/manifest.json)
 

@@ -6,7 +6,7 @@
   "status": "GO CONTROLLED",
   "license_code": "Apache-2.0",
   "license_docs": "CC BY 4.0",
-  "manifest_version": "1.3",
+  "manifest_version": "1.4",
   "last_updated": "2026-05-22",
   "drive_root_folder": "https://drive.google.com/drive/folders/10LsIrBltc3k03R1q6kf3MQS848W5SKEn",
   "drive_root_id": "10LsIrBltc3k03R1q6kf3MQS848W5SKEn",
@@ -170,8 +170,8 @@
       "signed_at": "2026-05-10",
       "source": "operator",
       "date": "2026-05-10",
-      "hash_status": "pending",
-      "hash_note": "external document — hash pending operator verification"
+      "hash_status": "not_applicable",
+      "hash_note": "wskaznik do drive_root (kolekcja, nie pojedynczy plik) — sha256 null z definicji"
     },
     {
       "id": "DOC-010",
@@ -183,8 +183,8 @@
       "signed_at": "2026-05-10",
       "source": "operator",
       "date": "2026-05-10",
-      "hash_status": "pending",
-      "hash_note": "external document — hash pending operator verification"
+      "hash_status": "not_applicable",
+      "hash_note": "wskaznik do drive_root (kolekcja, nie pojedynczy plik) — sha256 null z definicji"
     },
     {
       "id": "DOC-NOTICE-v1.1",
@@ -228,8 +228,41 @@
       "drive_folder_id": "1g5SXlX0MCOkblvqp_9fZhCSUmtk67jCd",
       "drive_url": "https://drive.google.com/drive/folders/1g5SXlX0MCOkblvqp_9fZhCSUmtk67jCd",
       "note": "Supplementary governance + evidence package for DEV phase",
-      "hash_status": "pending",
-      "hash_note": "folder — individual file hashes pending operator verification"
+      "hash_status": "partial",
+      "hash_note": "folder collection: 3 pliki top-level zhashowane (files[]); 1 natywny Google Doc bez hasha; ~17 podfolderow nie rekursowane (pelny tree-manifest = osobny feature)",
+      "files": [
+        {
+          "name": "UNIONAI_P0_FEDERATED_AUDIT_20260515.md",
+          "drive_id": "1CHXMN-oEFJWB94NPn1T_vKNxnpyAkp2_",
+          "sha256": "f319ca1e2aa4f9f09386e0e0b6b3308cdbe6782c0e8bb928176932db1d4742e5",
+          "bytes": 3513,
+          "mimeType": "text/markdown"
+        },
+        {
+          "name": "provenance_v1_20260515.ts",
+          "drive_id": "1KQX5E0pVkj41bRxStHEUq0eWQmo0YfiO",
+          "sha256": "4303d3f03dfe7545f3a3d751478f9f2a46ddc0e2e15125a666f0b334ab7a4d4f",
+          "bytes": 4065,
+          "mimeType": "text/plain"
+        },
+        {
+          "name": "RFC-001_Federated_Reporting_Standard_v1_20260515.md",
+          "drive_id": "1wtt0Nzt3rHj2bWftEeRUvTMLrAyOtU8u",
+          "sha256": "721a71bbfc6366d2b60818ea0608b925447b101c24465b5c79b59442bd1c8a2b",
+          "bytes": 6963,
+          "mimeType": "text/markdown"
+        }
+      ],
+      "native_docs": [
+        {
+          "name": "UNIONAI Ω∞ — RESPONSE STANDARD v1",
+          "drive_id": "1UmZllWLjOn8t2hZthNvXJc-nXsf_44jGfaUM7EYqFts",
+          "mimeType": "application/vnd.google-apps.document",
+          "hash_note": "Google Doc — brak kanonicznego hasha bajtowego (format natywny)"
+        }
+      ],
+      "folder_top_level_files_hashed": 3,
+      "hash_verified_at": "2026-05-22T15:45:00Z"
     }
   ],
   "endpoints_live": [
@@ -249,5 +282,5 @@
     "repo": "https://github.com/0N40i4/uniOn",
     "domain": "https://unionai.grassrootslobbing.pl"
   },
-  "generated_at": "2026-05-22T15:30:00Z"
+  "generated_at": "2026-05-22T15:45:00Z"
 }

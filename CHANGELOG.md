@@ -7,6 +7,12 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-22
+
+### Added — Claude-powered semantic agent audit (K0NSULAT)
+- `POST /api/k0nsulat/audit/semantic` — operator-gated (`requireAuth` + `operatorRateLimit`); audyt profilu agenta przez Claude Opus 4.7 (adaptive thinking, structured output via Zod), zapis jako `agent_semantic_audit` w `k0nsulat_audit`; `usage` (input/output/cache tokens) w odpowiedzi
+- `apps/core/src/modules/claude-audit.ts` — integracja `@anthropic-ai/sdk` + `zod`, prompt caching na rubryce
+
 ### Added — Live changelog + release mirror (UAI-P2-006 / UAI-P2-003)
 - `GET /releases.json` — maszynowo-czytelna lista wydań sparsowana z `CHANGELOG.md`; każdy wpis zawiera `version`, `tag`, `date`, `build_sha`, `commit`, `channel`, `changes[]`, `changelog`, `github_release_url`, `zenodo_doi`; bieżący build (`SERVICE_VERSION`/`BUILD_SHA`/`BUILD_TIME`) dołączany jako najnowszy wpis, jeśli go brak
 - `GET /changelog` — ładna strona HTML (PL, inline CSS, zero CDN) generowana w handlerze z danych `/releases.json`
@@ -99,7 +105,8 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/0n40i4/uni0n/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/0n40i4/uni0n/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/0n40i4/uni0n/compare/v0.2.0...v0.3.0
 [0.2.1]: https://github.com/0n40i4/uni0n/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/0n40i4/uni0n/compare/v0.1.0...v0.2.0
 [0.1.x]: https://github.com/0n40i4/uni0n/releases/tag/v0.1.0

@@ -79,8 +79,17 @@ export function isClaudeAuditConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
-/** Pojedyncze wywołanie Claude: profil agenta -> strukturalny werdykt. */
-export async function auditAgentWithClaude(agent: AgentProfile): Promise<AuditVerdict> {
+export interface AuditUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+}
+
+/** Pojedyncze wywołanie Claude: profil agenta -> strukturalny werdykt + zużycie tokenów (dowód cache). */
+export async function auditAgentWithClaude(
+  agent: AgentProfile,
+): Promise<{ verdict: AuditVerdict; usage: AuditUsage }> {
   const client = getClient();
 
   const response = await client.messages.parse({
@@ -107,7 +116,16 @@ export async function auditAgentWithClaude(agent: AgentProfile): Promise<AuditVe
       `Audyt Claude nie zwrócił poprawnego werdyktu (stop_reason: ${response.stop_reason})`,
     );
   }
-  return response.parsed_output;
+  const u = response.usage;
+  return {
+    verdict: response.parsed_output,
+    usage: {
+      input_tokens: u.input_tokens ?? 0,
+      output_tokens: u.output_tokens ?? 0,
+      cache_creation_input_tokens: u.cache_creation_input_tokens ?? 0,
+      cache_read_input_tokens: u.cache_read_input_tokens ?? 0,
+    },
+  };
 }
 
 export interface SemanticAuditResult {
@@ -115,6 +133,7 @@ export interface SemanticAuditResult {
   agent_did: string;
   audit_id?: string;
   verdict?: AuditVerdict;
+  usage?: AuditUsage;
   verification_hash?: string;
   model?: string;
   audited_at?: string;
@@ -138,7 +157,7 @@ export async function runSemanticAudit(
   }
 
   const agent = r.rows[0] as AgentProfile;
-  const verdict = await auditAgentWithClaude(agent);
+  const { verdict, usage } = await auditAgentWithClaude(agent);
 
   const verification_hash = crypto
     .createHash('sha256')
@@ -162,6 +181,7 @@ export async function runSemanticAudit(
     agent_did: agentDid,
     audit_id: ins.rows[0].id,
     verdict,
+    usage,
     verification_hash,
     model: MODEL,
     audited_at: ins.rows[0].timestamp,

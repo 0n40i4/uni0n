@@ -29,6 +29,7 @@ jobs:
         run: |
           RESP=$(curl -sS -X POST $BASE_URL/api/relay/send \
             -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${{ secrets.RELAY_SHARED_SECRET }}" \
             -d '{"protocol":"UNIONAI-WIRE-v0","intent_id":"ci-smoke-${{ github.sha }}","src_did":"did:ci:github","dst_did":"did:unionai:s4:k0nsulat","intent":{"type":"ci_smoke","summary":"GitHub Actions smoke test"}}')
           echo "$RESP"
           TRACE_ID=$(echo "$RESP" | jq -r '.trace_id // "none"')
@@ -39,6 +40,7 @@ jobs:
         run: |
           RESP=$(curl -sS -X POST $BASE_URL/api/relay/route \
             -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${{ secrets.RELAY_SHARED_SECRET }}" \
             -d '{"src_did":"did:ci:github","trust_score":150,"intent":{"type":"ci_smoke","summary":"semantic routing verification"}}')
           echo "$RESP"
           ROUTE=$(echo "$RESP" | jq -r '.route_type // "none"')

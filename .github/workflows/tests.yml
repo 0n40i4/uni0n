@@ -1,0 +1,33 @@
+name: UNIONAI Unit Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    name: apps/core vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Relay endpoints are gated; vitest.config sets the same default, this keeps parity.
+      RELAY_SHARED_SECRET: vitest-relay-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install apps/core in isolation (--no-workspaces) to avoid the root
+      # workspace:* protocol that classic npm/yarn can't resolve.
+      - name: Install (apps/core, isolated)
+        working-directory: apps/core
+        run: npm install --no-workspaces --no-audit --no-fund
+
+      - name: Run tests
+        working-directory: apps/core
+        run: npx vitest run

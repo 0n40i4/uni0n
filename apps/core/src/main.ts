@@ -584,13 +584,25 @@ ${SERVICE_VERSION} (${SERVICE_CHANNEL})
 
 app.get('/openapi.json', (req, res) => {
   const errorRef = { $ref: '#/components/schemas/Error' };
-  const errResp = (desc: string) => ({
+  // errResp: backward-compatible (desc[, code]) — zawsze dołącza schemat błędu + przykład.
+  const errResp = (desc: string, code?: string) => ({
     description: desc,
-    content: { 'application/json': { schema: errorRef } }
+    content: {
+      'application/json': {
+        schema: errorRef,
+        example: { error: desc, ...(code ? { code } : {}) }
+      }
+    }
   });
-  const okResp = (desc: string) => ({
+  // okResp: backward-compatible (desc[, example]) — dołącza schemat obiektu + przykład.
+  const okResp = (desc: string, example?: any) => ({
     description: desc,
-    content: { 'application/json': { schema: { type: 'object' } } }
+    content: {
+      'application/json': {
+        schema: { type: 'object' },
+        example: example !== undefined ? example : { ok: true, description: desc }
+      }
+    }
   });
   res.json({
     openapi: "3.1.0",
@@ -683,7 +695,62 @@ app.get('/openapi.json', (req, res) => {
         get: {
           tags: ['incident'], summary: 'Get incident by id',
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-          responses: { '200': okResp('Incident'), '404': errResp('Not found') }
+          responses: { '200': okResp('Incident'), '404': errResp('Not found', 'NOT_FOUND') }
+        }
+      },
+      "/api/incidents": {
+        get: {
+          tags: ['incident'], summary: 'Publiczny rejestr incydentów (zagregowany, bez danych wrażliwych)',
+          responses: {
+            '200': okResp('Lista incydentów + agregaty', {
+              incidents: [{ id: 1, title: 'Przykładowy incydent', severity: 'MAJOR', status: 'OPEN', incident_type: 'security', created_at: '2026-05-22T00:00:00Z' }],
+              by_severity: { LOW: 0, MAJOR: 1, CRITICAL: 0 },
+              by_status: { OPEN: 1, FROZEN: 0, RESOLVED: 0, EXPORTED: 0 },
+              total: 1,
+              generated_at: '2026-05-22T00:00:00Z'
+            }),
+            '200_db_error': okResp('Fallback przy błędzie DB', { incidents: [], by_severity: { LOW: 0, MAJOR: 0, CRITICAL: 0 }, by_status: {}, total: 0, db_error: true, generated_at: '2026-05-22T00:00:00Z' })
+          }
+        }
+      },
+      "/api/rfc/status": {
+        get: {
+          tags: ['rfc'], summary: 'Zliczenie RFC wg statusu',
+          responses: {
+            '200': okResp('Liczby RFC wg statusu', {
+              active: 3, draft: 2, deprecated: 1, frozen: 0, total: 6,
+              by_status: { ACTIVE: 3, DRAFT: 2, FROZEN: 0, SUPERSEDED: 1 },
+              generated_at: '2026-05-22T00:00:00Z'
+            })
+          }
+        }
+      },
+      "/api/evidence/verify": {
+        get: {
+          tags: ['evidence'], summary: 'Weryfikacja zgodności hashy dokumentów z manifestem',
+          parameters: [{ name: 'id', in: 'query', required: false, schema: { type: 'string' }, description: 'Opcjonalny identyfikator dokumentu, np. DOC-004' }],
+          responses: {
+            '200': okResp('Wynik weryfikacji', {
+              checked: 4, matched: 4, mismatched: 0, skipped: 9,
+              results: [{ id: 'DOC-004', file: '/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf', expected: '7e07bce5...', actual: '7e07bce5...', match: true }],
+              verified_at: '2026-05-22T00:00:00Z'
+            }),
+            '404': errResp('Dokument o podanym id nie istnieje', 'NOT_FOUND')
+          }
+        }
+      },
+      "/api/memory/anchors": {
+        get: {
+          tags: ['memory'], summary: 'Publiczny podgląd hash-chain anchorów (bez payloadu/danych wrażliwych)',
+          parameters: [{ name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 100, maximum: 500 } }],
+          responses: {
+            '200': okResp('Lista anchorów (tylko bezpieczne kolumny)', {
+              anchors: [{ id: 'anchor-001', hash: 'ab12...', prev_hash: 'cd34...', scope: 'PUBLIC', validation_status: 'validated', created_at: '2026-05-22T00:00:00Z' }],
+              count: 1,
+              generated_at: '2026-05-22T00:00:00Z'
+            }),
+            '200_db_error': okResp('Fallback przy błędzie DB', { anchors: [], count: 0, db_error: true, generated_at: '2026-05-22T00:00:00Z' })
+          }
         }
       }
     }
@@ -1134,6 +1201,148 @@ app.post('/api/incident/export', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
+});
+
+// ============ UAI-P1-005: Publiczny rejestr incydentów (zagregowany, bez danych wrażliwych) ============
+app.get('/api/incidents', async (_req, res) => {
+  const generated_at = new Date().toISOString();
+  try {
+    const all = await listIncidents(pool);
+    const by_severity: Record<string, number> = { LOW: 0, MAJOR: 0, CRITICAL: 0 };
+    const by_status: Record<string, number> = { OPEN: 0, FROZEN: 0, RESOLVED: 0, EXPORTED: 0 };
+    // Mapowanie bezpieczne: bez pola description (może zawierać dane wrażliwe).
+    const incidents = all.map((i) => {
+      if (i.severity && by_severity[i.severity] !== undefined) by_severity[i.severity]++;
+      else if (i.severity) by_severity[i.severity] = 1;
+      if (i.status && by_status[i.status] !== undefined) by_status[i.status]++;
+      else if (i.status) by_status[i.status] = 1;
+      return {
+        id: i.id,
+        title: i.title,
+        severity: i.severity,
+        status: i.status,
+        incident_type: i.incident_type,
+        created_at: i.created_at
+      };
+    });
+    res.json({ incidents, by_severity, by_status, total: incidents.length, generated_at });
+  } catch (_error) {
+    res.json({
+      incidents: [],
+      by_severity: { LOW: 0, MAJOR: 0, CRITICAL: 0 },
+      by_status: {},
+      total: 0,
+      db_error: true,
+      generated_at
+    });
+  }
+});
+
+// ============ UAI-P1-003: Zliczenie RFC wg statusu ============
+app.get('/api/rfc/status', async (_req, res) => {
+  const generated_at = new Date().toISOString();
+  try {
+    const index = await getRFCIndex(pool);
+    const by_status: Record<string, number> = {};
+    let active = 0, draft = 0, deprecated = 0, frozen = 0;
+    for (const entry of index) {
+      const s = (entry.status || '').toUpperCase();
+      by_status[s] = (by_status[s] || 0) + 1;
+      if (s === 'ACTIVE') active++;
+      else if (s === 'DRAFT') draft++;
+      else if (s === 'FROZEN') frozen++;
+      else if (s === 'SUPERSEDED') deprecated++;
+    }
+    res.json({ active, draft, deprecated, frozen, total: index.length, by_status, generated_at });
+  } catch (_error) {
+    res.json({ active: 0, draft: 0, deprecated: 0, frozen: 0, total: 0, by_status: {}, db_error: true, generated_at });
+  }
+});
+
+// ============ UAI-P1-004: Weryfikacja hashy dokumentów z manifestem ============
+app.get('/api/evidence/verify', (req, res) => {
+  const verified_at = new Date().toISOString();
+  const publicRoot = path.join(process.cwd(), 'public');
+  try {
+    const manifestPath = path.join(publicRoot, 'evidence', 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    const docs: any[] = Array.isArray(manifest.documents) ? manifest.documents : [];
+    const filterId = typeof req.query.id === 'string' ? req.query.id : null;
+
+    if (filterId && !docs.some((d) => d.id === filterId)) {
+      return res.status(404).json({ error: `Dokument ${filterId} nie istnieje w manifeście`, code: 'NOT_FOUND' });
+    }
+
+    const targets = filterId ? docs.filter((d) => d.id === filterId) : docs;
+    const results: Array<{ id: string; file: string | null; expected: string | null; actual: string | null; match: boolean }> = [];
+    let checked = 0, matched = 0, mismatched = 0, skipped = 0;
+
+    for (const d of targets) {
+      const expected: string | null = d.sha256 || null;
+      const url: string = typeof d.url === 'string' ? d.url : '';
+      // Plik lokalny tylko gdy url wskazuje na ścieżkę względną w public/ (nie http/drive).
+      const isLocal = url.startsWith('/') && !url.startsWith('//');
+      if (!expected || !isLocal) {
+        skipped++;
+        results.push({ id: d.id, file: isLocal ? url : null, expected, actual: null, match: false });
+        continue;
+      }
+      // Zabezpieczenie przed path traversal — normalizuj i upewnij się że pozostaje w public/.
+      const rel = url.replace(/^\/+/, '');
+      const filePath = path.normalize(path.join(publicRoot, rel));
+      if (!filePath.startsWith(publicRoot) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+        skipped++;
+        results.push({ id: d.id, file: url, expected, actual: null, match: false });
+        continue;
+      }
+      const buf = fs.readFileSync(filePath);
+      const actual = crypto.createHash('sha256').update(buf).digest('hex');
+      const match = actual.toLowerCase() === expected.toLowerCase();
+      checked++;
+      if (match) matched++; else mismatched++;
+      results.push({ id: d.id, file: url, expected, actual, match });
+    }
+
+    res.json({ checked, matched, mismatched, skipped, results, verified_at });
+  } catch (_error) {
+    res.json({ checked: 0, matched: 0, mismatched: 0, skipped: 0, results: [], db_error: true, verified_at });
+  }
+});
+
+// ============ UAI-P1-006: Publiczny podgląd hash-chain anchorów (bez payloadu) ============
+app.get('/api/memory/anchors', async (req, res) => {
+  const generated_at = new Date().toISOString();
+  // Whitelist tylko bezpiecznych kolumn (bez payload / source_did / danych wrażliwych).
+  // Publicznie ujawniamy wyłącznie scope PUBLIC/FEDERATION.
+  let limit = parseInt(String(req.query.limit ?? '100'), 10);
+  if (!Number.isFinite(limit) || limit <= 0) limit = 100;
+  if (limit > 500) limit = 500;
+  try {
+    const r = await pool.query(
+      `SELECT anchor_id, semantic_hash, delta_hash, scope, validation_status, created_at
+       FROM memory_anchors
+       WHERE scope = ANY($1)
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [['PUBLIC', 'FEDERATION'], limit]
+    );
+    const anchors = r.rows.map((row: any) => ({
+      id: row.anchor_id,
+      hash: row.semantic_hash,
+      prev_hash: row.delta_hash,
+      scope: row.scope,
+      validation_status: row.validation_status,
+      created_at: row.created_at
+    }));
+    res.json({ anchors, count: anchors.length, generated_at });
+  } catch (_error) {
+    res.json({ anchors: [], count: 0, db_error: true, generated_at });
+  }
+});
+
+// ============ UAI-P1-006: Strona podglądu hash-chain (PL, bez CDN) ============
+app.get('/anchors', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'anchors.html'));
 });
 
 // ============ MISSING OPERATOR ENDPOINTS ============

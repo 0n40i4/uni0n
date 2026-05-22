@@ -8,7 +8,11 @@ export interface EvidenceEntry {
   url: string;
   type: string;
   date: string;
-  sha256?: string;
+  // UAI-P0-004: every evidence entry must carry these 5 fields.
+  sha256: string | null;
+  status: string;
+  signed_at: string | null;
+  source: string;
 }
 
 export interface EvidenceManifest {
@@ -41,17 +45,24 @@ export function generateEvidenceManifest(): EvidenceManifest {
         
         if (stat.isFile()) {
           const sha256 = calculateFileSha256(filePath);
-          const docId = 'GOV-' + String(index + 1).padStart(3, '0') + '-' + file.split('.')[1].toUpperCase();
-          
+          const parts = file.split('.');
+          const ext = parts.length > 1 ? parts[parts.length - 1].toUpperCase() : 'FILE';
+          const docId = 'GOV-' + String(index + 1).padStart(3, '0') + '-' + ext;
+          const signedAt = stat.mtime.toISOString();
+
           documents.push({
             id: docId,
             title: file.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
             url: '/docs/governance/' + file,
             type: 'governance_document',
-            date: new Date().toISOString().split('T')[0],
-            sha256: sha256
+            date: signedAt.split('T')[0],
+            // UAI-P0-004: real sha256 from disk + status/signed_at/source.
+            sha256: sha256 || null,
+            status: sha256 ? 'verified' : 'pending',
+            signed_at: signedAt,
+            source: 'unionai-core'
           });
-          
+
           sha256Index[file] = sha256;
         }
       });

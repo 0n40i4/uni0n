@@ -42,3 +42,11 @@ strategy = "rolling"
 
 [build]
 dockerfile = "Dockerfile.core"
+
+  # GIT_SHA i BUILD_TIME są przekazywane przy deployu przez
+  # `fly deploy --build-arg GIT_SHA=$(git rev-parse --short HEAD) --build-arg BUILD_TIME=...`
+  # (patrz scripts/deploy.sh / scripts/deploy.ps1). Placeholdery poniżej to wartość
+  # domyślna gdy build-arg nie zostanie podany — wtedy app raportuje provenance gap.
+  [build.args]
+    GIT_SHA = "unknown"
+    BUILD_TIME = "unknown"

@@ -23,5 +23,16 @@ COPY --from=0 /app/apps/core/dist ./dist
 COPY apps/core/package.json ./package.json
 COPY public ./public
 
+# Metadane buildu wstrzykiwane przez `fly deploy --build-arg GIT_SHA=... --build-arg BUILD_TIME=...`
+# (patrz scripts/deploy.sh / scripts/deploy.ps1). Bez nich /health.build_sha pokaże
+# FLY_MACHINE_VERSION (ULID) zamiast git sha.
+ARG GIT_SHA
+ARG BUILD_TIME
+ENV GIT_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
+ENV COMMIT_TIME=$BUILD_TIME
+ENV DEPLOYED_AT=$BUILD_TIME
+ENV APP_ENV=production
+
 EXPOSE 3000
 CMD ["node", "/app/dist/main.js"]

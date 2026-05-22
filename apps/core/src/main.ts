@@ -27,6 +27,11 @@ const BUILD_SHA = process.env.GIT_SHA || process.env.FLY_MACHINE_VERSION || 'unk
 const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
 const SERVICE_NAME = 'unionai-core';
 const FEDERATION_ID = 'UNIONAI-GENESIS-0N40I4-20260512';
+const COMMIT_TIME = process.env.COMMIT_TIME || process.env.BUILD_TIME || 'unknown';
+const FLY_REGION = process.env.FLY_REGION || process.env.PRIMARY_REGION || 'unknown';
+const APP_ENV = process.env.APP_ENV || process.env.NODE_ENV || SERVICE_CHANNEL;
+const DEPLOYED_AT = process.env.DEPLOYED_AT || process.env.BUILD_TIME || COMMIT_TIME || 'unknown';
+const NETWORK_STATUS = process.env.NETWORK_STATUS || 'TESTNET';
 
 // ============ SECURITY: JWT (custom HMAC-SHA256, no external deps) ============
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
@@ -205,7 +210,11 @@ app.get('/version', (req, res) => {
     channel: SERVICE_CHANNEL,
     build_sha: BUILD_SHA,
     build_time: BUILD_TIME,
+    commit_time: COMMIT_TIME,
+    env: APP_ENV,
+    region: FLY_REGION,
     federation: FEDERATION_ID,
+    network_status: NETWORK_STATUS,
     provenance_layer: 'v1',
     source_of_truth: 'package.json',
     timestamp: new Date().toISOString()
@@ -383,7 +392,10 @@ app.get('/health', async (req, res) => {
     version: process.env.APP_VERSION || SERVICE_VERSION,
     build_sha: process.env.BUILD_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || BUILD_SHA,
     release_channel: process.env.RELEASE_CHANNEL || SERVICE_CHANNEL,
-    deployed_at: process.env.RAILWAY_DEPLOYMENT_ID || new Date().toISOString(),
+    deployed_at: DEPLOYED_AT,
+    commit_time: COMMIT_TIME,
+    env: APP_ENV,
+    region: FLY_REGION,
     channel: SERVICE_CHANNEL,
   });
 });
@@ -735,6 +747,7 @@ app.get('/api/leaderboard', async (req, res) => {
     const total = parseInt(countResult.rows[0]?.total ?? '0', 10);
     return res.json({
       federation: "UNIONAI-GENESIS-0N40I4-20260512",
+      network_status: NETWORK_STATUS,
       timestamp: new Date().toISOString(),
       total_agents: total,
       leaderboard: result.rows.map((r: any, idx: number) => ({
@@ -1150,12 +1163,54 @@ app.get('/api/operator/status', requireAuth, operatorRateLimit, async (req, res)
 });
 
 app.get('/api/status', async (req, res) => {
+  // Public aggregate status (no auth). Each probe is fault-tolerant.
+  let database = 'ok';
   try {
-    const dbResult = await pool.query('SELECT NOW()');
-    res.json({ status: 'ok', timestamp: new Date().toISOString(), database: 'ok' });
+    await pool.query('SELECT NOW()');
   } catch (error) {
-    res.status(503).json({ status: 'error', error: (error as Error).message });
+    database = `failed: ${(error as Error).message}`;
   }
+
+  let redisStatus = 'not connected (optional)';
+  if (redisConnected && redisClient) {
+    try {
+      const ping = await redisClient.ping();
+      redisStatus = `ok (${ping})`;
+    } catch (e) {
+      redisStatus = `unavailable: ${(e as Error).message}`;
+    }
+  }
+
+  const agents = await pool.query('SELECT COUNT(*) AS total FROM agents')
+    .then(r => +r.rows[0].total).catch(() => 0);
+  const audits = await pool.query('SELECT COUNT(*) AS total FROM k0nsulat_audit')
+    .then(r => +r.rows[0].total).catch(() => 0);
+  const incidents = await pool.query('SELECT COUNT(*) AS total FROM incident_reports WHERE status = $1', ['OPEN'])
+    .then(r => +r.rows[0].total).catch(() => 0);
+
+  const dbOk = database === 'ok';
+  const health = dbOk ? 'ok' : 'degraded';
+
+  res.status(dbOk ? 200 : 503).json({
+    status: dbOk ? 'ok' : 'error',
+    health,
+    timestamp: new Date().toISOString(),
+    database,
+    redis: redisStatus,
+    agents,
+    audits,
+    incidents,
+    federation: FEDERATION_ID,
+    network_status: NETWORK_STATUS,
+    build: {
+      version: process.env.APP_VERSION || SERVICE_VERSION,
+      build_sha: process.env.BUILD_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || BUILD_SHA,
+      commit_time: COMMIT_TIME,
+      channel: SERVICE_CHANNEL,
+      env: APP_ENV,
+      region: FLY_REGION,
+    },
+  });
 });
 
 app.post('/api/operator/unfreeze-relay', requireAuth, operatorRateLimit, async (req, res) => {
@@ -1194,11 +1249,15 @@ app.get('/metrics/federation', async (req, res) => {
     const memoryCount = await pool.query('SELECT COUNT(*) FROM memory_anchors').then(r => +r.rows[0].count).catch(() => 0);
     const failureCount = await pool.query('SELECT COUNT(*) FROM relay_events WHERE route_status = ' + "'failed'").then(r => +r.rows[0].count).catch(() => 0);
     
+    const agentCount = await pool.query('SELECT COUNT(*) AS total FROM agents').then(r => +r.rows[0].total).catch(() => 0);
     const metrics = {
       relay_latency_avg: relayLatency,
       relay_events_total: relayCount,
       memory_anchors_total: memoryCount,
       relay_failures_total: failureCount,
+      total_agents: agentCount,
+      federation: FEDERATION_ID,
+      network_status: NETWORK_STATUS,
       timestamp: new Date().toISOString()
     };
     
@@ -1617,10 +1676,17 @@ async function runSmoke(): Promise<{ tag: string; all_ok: boolean; checks: any[]
 
 app.get('/api/system/smoke', async (_req, res) => {
   const result = await runSmoke();
+  const now = new Date().toISOString();
+  const passed = result.checks.filter((c: any) => c.ok).length;
+  const total = result.checks.length;
+  const status = result.all_ok ? 'ok' : (passed > 0 ? 'degraded' : 'fail');
   res.json({
     ...result,
+    status,
+    summary: `${passed}/${total} checks passed (${result.tag})`,
+    last_run: now,
     redis_ok: true,
-    timestamp: new Date().toISOString(),
+    timestamp: now,
     version: process.env.npm_package_version || '0.1.0',
   });
 });
@@ -1660,6 +1726,11 @@ app.get('/api/system/snapshots/latest', async (_req, res) => {
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
   }
+});
+
+// Public status dashboard (exact path, registered before /status/:filename)
+app.get('/status', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'status.html'));
 });
 
 app.get('/status/:filename', async (req, res) => {

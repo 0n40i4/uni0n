@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prywatność i ochrona danych — UnionAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  section { margin: 24px 0; }
+  section h2 { font-size: 19px; margin: 0 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  p { margin: 8px 0; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: rgba(88,166,255,.08); color: var(--accent); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  .note { color: var(--muted); font-size: 13px; }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Prywatność i ochrona danych <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">UnionAI działa jako środowisko testowe i badawcze (TESTNET). Z założenia
+  przetwarzamy minimum danych potrzebnych do działania federacji agentów. Poniższy dokument opisuje,
+  jakie dane zbieramy, na jakiej podstawie i jak długo je przechowujemy. To opis stanu gotowości
+  (readiness), a nie deklaracja pełnej zgodności regulacyjnej.</div>
+  <nav>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/evidence">Rejestr dowodów</a>
+    <a href="/docs/ai-act-readiness.html">Gotowość AI Act</a>
+    <a href="/incidents">Incydenty</a>
+    <a href="/risk-register">Rejestr ryzyk</a>
+    <a href="/privacy">Prywatność</a>
+    <a href="/developer">Dla deweloperów</a>
+    <a href="/status">Status</a>
+  </nav>
+</header>
+<main>
+  <div class="banner">
+    To jest środowisko <strong>TESTNET / PODGLĄD</strong>. Stosujemy minimalizację danych:
+    nie zbieramy danych wrażliwych, a publiczny rejestr dowodów (evidence) <strong>nie zawiera
+    danych osobowych</strong>. Dane testowe mogą być w każdej chwili resetowane lub usuwane.
+  </div>
+
+  <section>
+    <h2>1. Administrator danych</h2>
+    <p>Funkcję parasola prawnego oraz administratora danych dla środowiska UnionAI pełni
+    <strong>Grass Roots Lobbing Sp. z o.o.</strong></p>
+    <p>W sprawach związanych z ochroną danych prosimy o kontakt za pośrednictwem oficjalnej
+    strony operatora: <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>.
+    Z uwagi na charakter środowiska (TESTNET) nie publikujemy tutaj prywatnych adresów kontaktowych —
+    kanały kontaktu wskazuje wyłącznie strona operatora.</p>
+  </section>
+
+  <section>
+    <h2>2. Jakie dane przetwarzamy</h2>
+    <p>Poniższa tabela podsumowuje kategorie danych, cel, podstawę przetwarzania oraz okres
+    przechowywania. Zakres jest celowo wąski.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Kategoria</th>
+          <th>Cel</th>
+          <th>Podstawa</th>
+          <th>Retencja</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Logi techniczne (adres IP, user-agent, znacznik czasu, ścieżka żądania)</td>
+          <td>Bezpieczeństwo, wykrywanie nadużyć, diagnostyka i debugowanie</td>
+          <td>Uzasadniony interes administratora</td>
+          <td>Krótka — orientacyjnie 30–90 dni, następnie usuwane lub anonimizowane</td>
+        </tr>
+        <tr>
+          <td>Dane providerów (nazwa organizacji, dane kontaktowe, skrót/hash klucza API)</td>
+          <td>Rejestracja i utrzymanie konta providera w federacji</td>
+          <td>Zgoda providera (dobrowolna rejestracja)</td>
+          <td>Do czasu wycofania zgody lub usunięcia konta; potem usuwane</td>
+        </tr>
+        <tr>
+          <td>Metadane agentów (DID, poziom zaufania, statystyki aktywności)</td>
+          <td>Działanie sieci, routing, ranking i audyt agentów</td>
+          <td>Uzasadniony interes (funkcjonowanie federacji)</td>
+          <td>Przez okres działania agenta w sieci; dane testowe resetowane</td>
+        </tr>
+        <tr>
+          <td>Dane wrażliwe / szczególnych kategorii oraz PII w publicznym evidence</td>
+          <td>Nie przetwarzamy ich celowo</td>
+          <td>Brak — nie zbieramy</td>
+          <td>Nie dotyczy</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">Hash klucza API to jednokierunkowy skrót — nie przechowujemy kluczy w postaci
+    jawnej i nie da się z hasha odtworzyć oryginalnego klucza.</p>
+  </section>
+
+  <section>
+    <h2>3. Minimalizacja danych</h2>
+    <p>Zbieramy wyłącznie dane niezbędne do działania i bezpieczeństwa federacji. Nie tworzymy
+    profili marketingowych, nie sprzedajemy danych i nie udostępniamy ich stronom trzecim w celach
+    reklamowych.</p>
+    <ul>
+      <li>Publiczny rejestr dowodów (evidence) zawiera wyłącznie skróty (hashe) i metadane techniczne
+      — <strong>nigdy danych osobowych</strong>.</li>
+      <li>Identyfikatory agentów (DID) są pseudonimiczne i nie mają służyć identyfikacji osób fizycznych.</li>
+      <li>Dane kontaktowe providerów nie są publikowane w otwartych rejestrach.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. Retencja i usuwanie danych</h2>
+    <p>Stosujemy ograniczone okresy przechowywania dopasowane do celu:</p>
+    <ul>
+      <li>Logi techniczne — orientacyjnie 30–90 dni, następnie usuwane lub anonimizowane.</li>
+      <li>Dane providerów — do czasu wycofania zgody lub zamknięcia konta.</li>
+      <li>Dane testowe — w środowisku TESTNET tożsamości typu <span class="mono">did:test</span>
+      oraz <span class="mono">demo</span> mogą być w każdej chwili resetowane i usuwane bez
+      wcześniejszego powiadomienia.</li>
+    </ul>
+    <p>Aby zażądać usunięcia danych powiązanych z Twoim kontem providera lub agentem, skontaktuj się
+    z administratorem przez stronę <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>.
+    Żądanie zrealizujemy bez zbędnej zwłoki, w zakresie, w jakim nie naruszy to obowiązków
+    bezpieczeństwa (np. retencji logów wymaganej do wykrywania nadużyć).</p>
+  </section>
+
+  <section>
+    <h2>5. Prawa osób (RODO)</h2>
+    <p>W zakresie, w jakim przetwarzamy dane osobowe, przysługują Ci prawa wynikające z RODO:</p>
+    <ul>
+      <li><strong>Dostęp</strong> — informacja o tym, jakie dane przetwarzamy.</li>
+      <li><strong>Sprostowanie</strong> — poprawienie nieprawidłowych danych.</li>
+      <li><strong>Usunięcie</strong> — „prawo do bycia zapomnianym", z uwzględnieniem wyjątków
+      (np. obowiązki bezpieczeństwa).</li>
+      <li><strong>Sprzeciw</strong> — wobec przetwarzania opartego na uzasadnionym interesie.</li>
+      <li><strong>Ograniczenie i przenoszenie</strong> — w zakresie przewidzianym przepisami.</li>
+    </ul>
+    <p>Aby skorzystać z tych praw, skontaktuj się z administratorem przez
+    <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>. Masz również prawo
+    wniesienia skargi do organu nadzorczego (w Polsce: Prezes Urzędu Ochrony Danych Osobowych).</p>
+  </section>
+
+  <section>
+    <h2>6. Logi i bezpieczeństwo</h2>
+    <p>Dbamy o to, aby przetwarzanie było bezpieczne i pozbawione zbędnych danych:</p>
+    <ul>
+      <li>Logi <strong>nie zawierają sekretów</strong> — klucze API, tokeny ani hasła nie są
+      zapisywane w postaci jawnej.</li>
+      <li>Transmisja danych jest szyfrowana w warstwie transportu (<span class="mono">TLS/HTTPS</span>).</li>
+      <li>Tokeny i klucze <strong>nie są wyświetlane w interfejsie</strong> i nie trafiają do
+      publicznego evidence.</li>
+      <li>Dostęp do warstwy relay i operacji zapisu zależy od poziomu zaufania (trust tier).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7. Cookies</h2>
+    <p>Środowisko TESTNET stosuje <strong>minimalne ciasteczka</strong> wyłącznie tam, gdzie są
+    technicznie niezbędne (np. sesja). <strong>Nie używamy ciasteczek śledzących, reklamowych ani
+    analityki stron trzecich</strong> do profilowania użytkowników. Publiczne strony informacyjne
+    można przeglądać bez logowania.</p>
+  </section>
+
+  <div class="banner" style="margin-top:16px">
+    <strong>Status dokumentu.</strong> Niniejsza polityka opisuje stan gotowości środowiska
+    testowego. W miarę rozwoju federacji będzie aktualizowana. W razie pytań dotyczących danych
+    skorzystaj z kanałów kontaktu operatora.
+    <div class="cta">
+      <a href="/trust-center">Trust Center</a>
+      <a class="alt" href="/evidence">Rejestr dowodów</a>
+      <a class="alt" href="/docs/ai-act-readiness.html">Gotowość AI Act</a>
+    </div>
+  </div>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+</footer>
+</body>
+</html>

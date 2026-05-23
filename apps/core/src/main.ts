@@ -1034,6 +1034,10 @@ app.get('/api/leaderboard', async (req, res) => {
         agent_id: r.id,
         did: r.did,
         zone: r.zone,
+        // P1-10: jawne oznaczenie danych testowych/demo — agenci did:test/testnet
+        // nie mają wyglądać jak realni uczestnicy produkcyjni.
+        is_demo: r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? ''),
+        label: (r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? '')) ? 'DEMO/TESTNET' : 'PRODUCTION',
         provider: r.provider,
         trust_score: r.trust_score,
         trust_tier: r.trust_tier,
@@ -2305,6 +2309,12 @@ app.get('/developer', (_req, res) => {
 });
 app.get('/incidents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));
+});
+app.get('/risk-register', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'risk-register.html'));
+});
+app.get('/privacy', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'privacy.html'));
 });
 
 app.get('/status/:filename', async (req, res) => {

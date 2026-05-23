@@ -2,7 +2,7 @@ Contact: mailto:kontakt@grassrootslobbing.pl
 Contact: https://github.com/0n40i4/uni0n/security/advisories/new
 Expires: 2027-05-13T00:00:00.000Z
 Preferred-Languages: pl, en
-Canonical: https://unionai.grassrootslobbing.pl/.well-known/security.txt
+Canonical: https://uni0nai.k0nsult.cloud/.well-known/security.txt
 Policy: https://github.com/0n40i4/uni0n/blob/main/SECURITY.md
 Acknowledgments: https://github.com/0n40i4/uni0n/blob/main/SECURITY.md#hall-of-fame
 Hiring: https://grassrootslobbing.pl/oferta

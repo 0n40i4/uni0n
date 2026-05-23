@@ -67,19 +67,19 @@ Zmiany w protokole federacji wymagają RFC (Request for Comments):
 3. Discussion → consensus → PR z dodaniem RFC do [docs/rfc/](docs/rfc/) jako `RFC-XXX-name.md`
 4. Status: `DRAFT` → `REVIEW` → `ACTIVE` (ratifikacja przez K0NSULAT)
 
-Patrz istniejące RFC: <https://unionai.grassrootslobbing.pl/rfc/index.json>
+Patrz istniejące RFC: <https://uni0nai.k0nsult.cloud/rfc/index.json>
 
 ## Governance
 
 UnionAI ma **konstytucję** ratyfikowaną przez sygnatariuszy Grass Roots Lobbing Sp. z o.o. Wkład zakłada zgodność z:
 - [Konstytucja UnionAI](https://k0nsult.cloud/downloads/UNIONAI_CONSTITUTION.md)
-- [Declaration of Origin](https://unionai.grassrootslobbing.pl/declaration-of-origin.html)
+- [Declaration of Origin](https://uni0nai.k0nsult.cloud/declaration-of-origin.html)
 - Apache License 2.0 dla kodu, CC BY 4.0 dla dokumentów
 
 ## Recognition
 
 Contributors są wymienieni w:
-- [humans.txt](https://unionai.grassrootslobbing.pl/humans.txt)
+- [humans.txt](https://uni0nai.k0nsult.cloud/humans.txt)
 - GitHub Contributors page
 - Release notes
 

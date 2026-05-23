@@ -7,6 +7,13 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed — domena kanoniczna → `uni0nai.k0nsult.cloud` (alias: `unionai.grassrootslobbing.pl`)
+- Decyzja operatora (2026-05-24): `uni0nai.k0nsult.cloud` jest domeną kanoniczną; `unionai.grassrootslobbing.pl` pozostaje jako alias. Oba CNAME na `unionai-core.fly.dev` — bez zmian DNS.
+- Podmieniono literał `unionai.grassrootslobbing.pl` → `uni0nai.k0nsult.cloud` w żywych powierzchniach: `public/sitemap.xml` (36), `public/index.html` (16), `public/ai-plugin.json` (3), `public/ai-feed.xml` (2), `public/robots.txt`, `public/.well-known/security.txt`, `README.md` (12), `CONTRIBUTING.md` (3), `SECURITY.md`, `.github/ISSUE_TEMPLATE/bug.md`.
+- `apps/core/src/main.ts`: OpenAPI `servers` (kanon pierwszy + alias zachowany + Fly), `terms`/`privacy`, `link` feedów RSS/Atom. **Zachowano `id`/`guid` feedów** (stabilność deduplikacji u czytników) oraz alias w `servers`.
+- `docs/NAMING.md`: zapis decyzji (opcja 2).
+- **NIE zmieniono** (świadomie): strona firmy `grassrootslobbing.pl`, maile `@grassrootslobbing.pl`, dokumenty historyczne (reports/sessions/memory), oraz pliki wrażliwe `evidence/manifest.json` (SHA256), `CITATION.cff`/`codemeta.json` (DOI) — czekają na osobną decyzję operatora.
+
 ### Added — FULL LIVE gate pages (dokument „Wytyczne FULL LIVE", P0+P1+P2)
 - **P0** (`636f674`, 2026-05-24): `/trust-center` (claim&le;proof), `/docs/ai-act-readiness.html` (matryca ról), `/developer` (quickstart), `/incidents` (rejestr); badge GO CONTROLLED/PUBLIC TESTNET w hero; ujednolicenie wersji v0.2.0&rarr;v0.3.0; obniżenie nadclaimów w meta
 - **P1** (`94d8900`, 2026-05-24): `/risk-register`, `/privacy`; `scripts/smoke.sh` (22 checki) jako post-deploy gate w `scripts/deploy.sh`; `is_demo`/`label` w `/api/leaderboard` (P1-10); `scripts/uptime-check.sh` (probe + `ALERT_WEBHOOK`)

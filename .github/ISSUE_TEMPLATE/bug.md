@@ -13,7 +13,7 @@ Krótki opis problemu (1-2 zdania).
 
 URL / Endpoint dotknięty:
 ```
-https://unionai.grassrootslobbing.pl/...
+https://uni0nai.k0nsult.cloud/...
 ```
 
 Kroki:

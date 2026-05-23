@@ -9,9 +9,9 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://unionai.grassrootslobbing.pl/openapi.json"
+    "url": "https://uni0nai.k0nsult.cloud/openapi.json"
   },
-  "logo_url": "https://unionai.grassrootslobbing.pl/og-image.png",
+  "logo_url": "https://uni0nai.k0nsult.cloud/og-image.png",
   "contact_email": "kontakt@grassrootslobbing.pl",
-  "legal_info_url": "https://unionai.grassrootslobbing.pl/declaration-of-origin.html"
+  "legal_info_url": "https://uni0nai.k0nsult.cloud/declaration-of-origin.html"
 }

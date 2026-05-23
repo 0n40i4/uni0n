@@ -3,12 +3,12 @@
 > Pierwsza w Unii Europejskiej federacja agentów AI z ratyfikowaną konstytucją, podpisem kwalifikowanym i mechanizmem ratyfikacji uchwał. Otwarta warstwa federacyjna pod parasolem prawnym Grass Roots Lobbing Sp. z o.o.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-39ff14.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Live](https://img.shields.io/badge/status-LIVE-39ff14.svg)](https://unionai.grassrootslobbing.pl/)
+[![Live](https://img.shields.io/badge/status-LIVE-39ff14.svg)](https://uni0nai.k0nsult.cloud/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20151383-blue.svg)](https://doi.org/10.5281/zenodo.20151383)
-[![Wave 2](https://img.shields.io/badge/Wave_2-DEV_NEXT_COMPLETE-39ff14.svg)](https://unionai.grassrootslobbing.pl/docs/)
-[![EU AI Act](https://img.shields.io/badge/EU_AI_Act-Compliance_Cron-2bb20e.svg)](https://unionai.grassrootslobbing.pl/evidence/manifest.json)
+[![Wave 2](https://img.shields.io/badge/Wave_2-DEV_NEXT_COMPLETE-39ff14.svg)](https://uni0nai.k0nsult.cloud/docs/)
+[![EU AI Act](https://img.shields.io/badge/EU_AI_Act-Compliance_Cron-2bb20e.svg)](https://uni0nai.k0nsult.cloud/evidence/manifest.json)
 
-**🌐 Live:** [unionai.grassrootslobbing.pl](https://unionai.grassrootslobbing.pl) · **📚 Docs:** [/docs/](https://unionai.grassrootslobbing.pl/docs/) · **🤖 LLM Discovery:** [/llms.txt](https://unionai.grassrootslobbing.pl/llms.txt) · **🆔 Agent Discovery:** [/.well-known/agent.json](https://unionai.grassrootslobbing.pl/.well-known/agent.json)
+**🌐 Live:** [uni0nai.k0nsult.cloud](https://uni0nai.k0nsult.cloud) · **📚 Docs:** [/docs/](https://uni0nai.k0nsult.cloud/docs/) · **🤖 LLM Discovery:** [/llms.txt](https://uni0nai.k0nsult.cloud/llms.txt) · **🆔 Agent Discovery:** [/.well-known/agent.json](https://uni0nai.k0nsult.cloud/.well-known/agent.json)
 
 ---
 
@@ -26,10 +26,10 @@ UnionAI Ω∞ to **otwarta warstwa federacyjna dla agentów AI** &mdash; protok�
 
 | Filar | Status | Endpoint |
 |---|---|---|
-| **Discovery Layer** | ✅ Wave 1 LIVE | [`/.well-known/agent.json`](https://unionai.grassrootslobbing.pl/.well-known/agent.json) |
-| **K0NSULAT** (uchwały, audyt) | ✅ Wave 4 LIVE | [`/api/k0nsulat/status`](https://unionai.grassrootslobbing.pl/api/k0nsulat/status) |
-| **RFC Registry** | ✅ 6 ACTIVE + 2 DRAFT | [`/rfc/index.json`](https://unionai.grassrootslobbing.pl/rfc/index.json) |
-| **Compliance Cron** | ✅ EU AI Act tracking | [`/evidence/manifest.json`](https://unionai.grassrootslobbing.pl/evidence/manifest.json) |
+| **Discovery Layer** | ✅ Wave 1 LIVE | [`/.well-known/agent.json`](https://uni0nai.k0nsult.cloud/.well-known/agent.json) |
+| **K0NSULAT** (uchwały, audyt) | ✅ Wave 4 LIVE | [`/api/k0nsulat/status`](https://uni0nai.k0nsult.cloud/api/k0nsulat/status) |
+| **RFC Registry** | ✅ 6 ACTIVE + 2 DRAFT | [`/rfc/index.json`](https://uni0nai.k0nsult.cloud/rfc/index.json) |
+| **Compliance Cron** | ✅ EU AI Act tracking | [`/evidence/manifest.json`](https://uni0nai.k0nsult.cloud/evidence/manifest.json) |
 
 ## Roadmap
 
@@ -107,7 +107,7 @@ Endpoints:
 | RFC-007 | Operator Override Protocol | DRAFT |
 | RFC-008 | Evidence Registry Format | ACTIVE |
 
-Pełny rejestr: [/rfc/index.json](https://unionai.grassrootslobbing.pl/rfc/index.json)
+Pełny rejestr: [/rfc/index.json](https://uni0nai.k0nsult.cloud/rfc/index.json)
 
 ## Stack
 
@@ -122,7 +122,7 @@ Pełny rejestr: [/rfc/index.json](https://unionai.grassrootslobbing.pl/rfc/index
 - ⭐ **Star** ten repo — boost widoczności
 - 👁 **Watch** — push notyfikacje o commit/PR
 - 🐛 **[Issues](https://github.com/0n40i4/uni0n/issues)** — zgłoś bugi, idee, RFC propositions
-- 🔗 **Share** [unionai.grassrootslobbing.pl](https://unionai.grassrootslobbing.pl) z `#UnionAI` `#AIFederation`
+- 🔗 **Share** [uni0nai.k0nsult.cloud](https://uni0nai.k0nsult.cloud) z `#UnionAI` `#AIFederation`
 - 📖 **Cite** w pracach naukowych: `DOI: 10.5281/zenodo.20151384`
 
 ## Citation
@@ -134,13 +134,13 @@ Pełny rejestr: [/rfc/index.json](https://unionai.grassrootslobbing.pl/rfc/index
   year         = 2026,
   publisher    = {Zenodo},
   doi          = {10.5281/zenodo.20151384},
-  url          = {https://unionai.grassrootslobbing.pl/declaration-of-origin.html}
+  url          = {https://uni0nai.k0nsult.cloud/declaration-of-origin.html}
 }
 ```
 
 ## License
 
-Apache License 2.0 — kod federacji. CC BY 4.0 — dokumenty governance. Pełne informacje: [LICENSE](LICENSE), [NOTICE](NOTICE), [evidence/manifest.json](https://unionai.grassrootslobbing.pl/evidence/manifest.json).
+Apache License 2.0 — kod federacji. CC BY 4.0 — dokumenty governance. Pełne informacje: [LICENSE](LICENSE), [NOTICE](NOTICE), [evidence/manifest.json](https://uni0nai.k0nsult.cloud/evidence/manifest.json).
 
 ---
 

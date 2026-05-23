@@ -19,7 +19,7 @@ każde nowe odwołanie powinno używać formy kanonicznej z poniższej tabeli.
 |-----------------------|---------------------------------------------------|
 | Brand (marketing)     | `UnionAI` (stylizowane: `UNIONAI Ω∞`)             |
 | Repo (GitHub)         | `github.com/0n40i4/uni0n`                          |
-| Domena                | `unionai.grassrootslobbing.pl` (kanoniczna w kodzie) |
+| Domena                | `uni0nai.k0nsult.cloud` (kanoniczna) · alias: `unionai.grassrootslobbing.pl` |
 | App Fly               | `unionai-core` (`unionai-core.fly.dev`)            |
 | Endpoint / service name | `unionai-core` (`x-service-name`, `SERVICE_NAME`) |
 | Federation ID         | `UNIONAI-GENESIS-0N40I4-20260512`                  |
@@ -49,14 +49,18 @@ x-federation-id: UNIONAI-GENESIS-0N40I4-20260512
 **Wniosek:** domena `uni0nai.k0nsult.cloud` jest LIVE i poprawnie zCNAME-owana na
 `unionai-core.fly.dev` (zwraca tę samą aplikację co domena kanoniczna). NIE wymaga zmian DNS.
 
-**Niespójność do rozstrzygnięcia (decyzja brandowa, NIE w tym zadaniu):** w repo (README,
-`apps/core/src/main.ts` — terms/privacy/feeds/OpenAPI servers) jako custom domain figuruje
-WYŁĄCZNIE `unionai.grassrootslobbing.pl`. Domena `uni0nai.k0nsult.cloud` nie pojawia się nigdzie
-w kodzie ani docs — istnieje tylko jako żywy CNAME i w komunikacji operatora. Do wyboru:
-1. **Przyjąć `unionai.grassrootslobbing.pl` jako jedyną kanoniczną** (zgodne z kodem) i usunąć
-   `uni0nai.k0nsult.cloud` z komunikacji, albo
-2. **Promować `uni0nai.k0nsult.cloud`** — wtedy dodać ją do OpenAPI `servers`, terms/privacy
-   i README jako równorzędny alias. (CNAME już istnieje, więc krok DNS jest zbędny.)
+**DECYZJA (2026-05-24, operator): przyjęto opcję 2 — `uni0nai.k0nsult.cloud` jest domeną
+kanoniczną; `unionai.grassrootslobbing.pl` pozostaje jako alias (drugorzędny).** Zrealizowano
+podmianę literału w żywych powierzchniach (sitemap, index.html, ai-plugin.json, ai-feed.xml,
+robots.txt, security.txt, README, CONTRIBUTING, SECURITY, bug.md) oraz w `apps/core/src/main.ts`
+(OpenAPI `servers` — kanon pierwszy, alias zachowany; terms/privacy; `link` feedów). Zachowano
+świadomie: `id`/`guid` feedów (stabilność dedup RSS) oraz alias w `servers`. Zmiany DNS zbędne
+(oba adresy już CNAME na `unionai-core.fly.dev`). NIE ruszono: strony firmy `grassrootslobbing.pl`,
+maili `@grassrootslobbing.pl`, dokumentów historycznych (reports/sessions/memory).
+
+**Otwarte do decyzji operatora (3B — NIE ruszone):** `public/evidence/manifest.json` (zawiera
+SHA256 — podmiana URL wymaga przeliczenia hashy, inaczej `/api/evidence/verify` zgłosi naruszenie),
+`CITATION.cff` i `codemeta.json` (metadane powiązane z DOI Zenodo — rozjazd z opublikowaną wersją).
 
 Forma `uni0nai` w tej domenie używa zera + małej litery — niezgodna z konwencją brandu
 (`UnionAI` przez `o`). Jeśli domena ma zostać, warto rozważyć rejestrację `unionai.k0nsult.cloud`.

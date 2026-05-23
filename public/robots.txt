@@ -30,7 +30,7 @@ Disallow: /api/agent/join
 Disallow: /api/agent/register
 Disallow: /debug/
 
-Sitemap: https://unionai.grassrootslobbing.pl/sitemap.xml
+Sitemap: https://uni0nai.k0nsult.cloud/sitemap.xml
 
 # AI/LLM crawlers — see /.well-known/robots-ai.txt for detailed rules
 User-agent: ClaudeBot

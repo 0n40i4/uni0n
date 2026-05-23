@@ -38,7 +38,7 @@ What to include:
 ## Scope
 
 ### In-scope
-- Backend API: `https://unionai.grassrootslobbing.pl/`
+- Backend API: `https://uni0nai.k0nsult.cloud/`
 - All endpoints under `/api/*`, `/.well-known/*`, `/feed/*`, `/rfc/*`, `/evidence/*`
 - Authentication & authorization (JWT, rate limiting, provider API keys)
 - Data exposure / injection / SSRF / IDOR / RCE

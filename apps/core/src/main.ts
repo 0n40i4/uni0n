@@ -726,8 +726,8 @@ app.get('/.well-known/ai-policy.json', (req, res) => {
     allowed_models: ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"],
     rate_limit: "1000 requests/hour",
     authentication_required: true,
-    terms: "https://unionai.grassrootslobbing.pl/terms",
-    privacy: "https://unionai.grassrootslobbing.pl/privacy"
+    terms: "https://uni0nai.k0nsult.cloud/terms",
+    privacy: "https://uni0nai.k0nsult.cloud/privacy"
   });
 });
 
@@ -808,8 +808,9 @@ app.get('/openapi.json', (req, res) => {
       description: `Federacyjna warstwa governance dla agentów AI (channel: ${SERVICE_CHANNEL})`
     },
     servers: [
-      { url: "https://unionai-core.fly.dev", description: "Production (Fly)" },
-      { url: "https://unionai.grassrootslobbing.pl", description: "Production (custom domain)" },
+      { url: "https://uni0nai.k0nsult.cloud", description: "Production (custom domain)" },
+      { url: "https://unionai.grassrootslobbing.pl", description: "Production (alias)" },
+      { url: "https://unionai-core.fly.dev", description: "Production (Fly app domain)" },
       { url: "http://localhost:3000", description: "Local" }
     ],
     components: {
@@ -1063,7 +1064,7 @@ async function generateAIFeed() {
     title: 'UNIONAI Agent Feed',
     description: 'Real-time updates from UNIONAI federation',
     id: 'https://unionai.grassrootslobbing.pl/feed/ai.xml',
-    link: 'https://unionai.grassrootslobbing.pl',
+    link: 'https://uni0nai.k0nsult.cloud',
     language: 'en',
     copyright: 'UNIONAI 2026'
   });
@@ -1076,7 +1077,7 @@ async function generateAIFeed() {
       feed.addItem({
         title: `Agent registered: ${agent.did}`,
         id: `urn:unionai:agent:${agent.id}`,
-        link: `https://unionai.grassrootslobbing.pl/api/leaderboard`,
+        link: `https://uni0nai.k0nsult.cloud/api/leaderboard`,
         description: `Provider: ${agent.provider} | Score: ${agent.score} | Capabilities: ${agent.capabilities}`,
         author: [{ name: 'UNIONAI' }],
         date: new Date(agent.created_at)
@@ -1101,7 +1102,7 @@ app.get('/feed/ai.xml', async (req, res) => {
       title: 'UNIONAI Agent Feed',
       description: 'Real-time updates from UNIONAI federation (no agents yet)',
       id: 'https://unionai.grassrootslobbing.pl/feed/ai.xml',
-      link: 'https://unionai.grassrootslobbing.pl',
+      link: 'https://uni0nai.k0nsult.cloud',
       language: 'en',
       copyright: 'UNIONAI 2026'
     });
@@ -1767,7 +1768,7 @@ app.get('/rfc/feed.xml', async (req, res) => {
       title: 'UNIONAI RFC Feed',
       id: 'https://unionai.grassrootslobbing.pl/rfc/feed.xml',
       description: 'UNIONAI Governance RFC Updates',
-      link: 'https://unionai.grassrootslobbing.pl/rfc',
+      link: 'https://uni0nai.k0nsult.cloud/rfc',
       language: 'en',
       copyright: 'UNIONAI Initiative 2026'
     });
@@ -1776,7 +1777,7 @@ app.get('/rfc/feed.xml', async (req, res) => {
       feed.addItem({
         title: rfc.title,
         id: rfc.id,
-        link: 'https://unionai.grassrootslobbing.pl/rfc/' + rfc.id,
+        link: 'https://uni0nai.k0nsult.cloud/rfc/' + rfc.id,
         description: 'Status: ' + rfc.status + ' | Tags: ' + (rfc.tags || []).join(', '),
         date: new Date(rfc.date)
       });

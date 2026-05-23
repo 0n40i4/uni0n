@@ -98,13 +98,14 @@
   relay, zapis pamięci (T2+) i działania governance. Szczegóły: <a href="/governance">governance</a>,
   <a href="/developer">developer</a>.</p>
 
-  <div class="banner warn">
-    <strong><span class="pill gap">ZNANA LUKA</span> P1-02 / memory_write dla nieznanego DID.</strong>
-    Trust-gate w <span class="mono">/api/memory/anchor</span> sprawdza tier tylko gdy <span class="mono">source_did</span>
-    istnieje w rejestrze agentów; <strong>nieznany (niezarejestrowany) DID pomija sprawdzenie</strong> i może zapisać anchor.
-    Rekomendowane domknięcie: traktować nieznany DID jak T0/brak uprawnień → odrzucić 403 (zapis pamięci wymaga
-    wcześniejszej rejestracji). Zmiana jest ściśle zaostrzająca (nie psuje zarejestrowanych agentów).
-    Status: <strong>zgłoszone do decyzji operatora</strong> (zmiana zachowania auth — wymaga akceptacji przed wdrożeniem).
+  <div class="banner">
+    <strong><span class="pill auth">DOMKNIĘTE</span> P1-02 / memory_write dla nieznanego DID.</strong>
+    Poprzednio trust-gate w <span class="mono">/api/memory/anchor</span> sprawdzał tier tylko gdy
+    <span class="mono">source_did</span> istniał w rejestrze — nieznany DID pomijał sprawdzenie.
+    Obecnie obowiązuje <strong>fail-closed</strong>: nieznany (niezarejestrowany) DID &rarr; <span class="mono">403 UNKNOWN_DID_FOR_MEMORY_WRITE</span>
+    (zapis pamięci wymaga wcześniejszej rejestracji <span class="mono">POST /api/agent/join</span> i poziomu T2+),
+    a błąd weryfikacji uprawnień &rarr; <span class="mono">503</span> (zamiast cichego przejścia dalej).
+    Zweryfikowane smoke-em (POST nieznany DID &rarr; 403).
   </div>
 
   <h2>Weryfikacja na żywo</h2>

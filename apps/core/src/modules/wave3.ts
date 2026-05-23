@@ -969,20 +969,34 @@ export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) =
     const valid_scopes = ['PUBLIC', 'FEDERATION', 'PRIVATE', 'EPHEMERAL'];
     const anchor_scope = (scope && valid_scopes.includes(scope)) ? scope : 'PRIVATE';
 
-    // Trust check for memory write
+    // Trust check for memory write — FAIL-CLOSED (P1-02 hardening).
+    // Wcześniej: nieznany source_did POMIJAŁ trust-gate (anonimowy zapis anchora),
+    // a błąd DB był cicho połykany. Teraz: nieznany DID → 403, błąd weryfikacji → 503.
+    let agentRows: any[];
     try {
       const agent = await pool.query('SELECT trust_score, trust_tier FROM agents WHERE did = $1', [source_did]);
-      if (agent.rows.length > 0) {
-        const tierInfo = trustTier(agent.rows[0].trust_score);
-        if (!tierInfo.permissions.includes('memory_write')) {
-          return res.status(403).json({
-            error: 'TRUST_TOO_LOW_FOR_MEMORY_WRITE',
-            tier: tierInfo.tier,
-            required: 'T2+',
-          });
-        }
-      }
-    } catch (_) {}
+      agentRows = agent.rows;
+    } catch (_) {
+      return res.status(503).json({
+        error: 'TRUST_CHECK_UNAVAILABLE',
+        message: 'Nie można zweryfikować uprawnień agenta (warstwa danych niedostępna).',
+      });
+    }
+    if (agentRows.length === 0) {
+      return res.status(403).json({
+        error: 'UNKNOWN_DID_FOR_MEMORY_WRITE',
+        message: 'Zapis pamięci wymaga wcześniejszej rejestracji agenta (POST /api/agent/join) i poziomu T2+.',
+        required: 'T2+',
+      });
+    }
+    const tierInfo = trustTier(agentRows[0].trust_score);
+    if (!tierInfo.permissions.includes('memory_write')) {
+      return res.status(403).json({
+        error: 'TRUST_TOO_LOW_FOR_MEMORY_WRITE',
+        tier: tierInfo.tier,
+        required: 'T2+',
+      });
+    }
 
     const anchor_id = makeAnchorId();
     const computed_s_hash = sha256(JSON.stringify(payload || {}));

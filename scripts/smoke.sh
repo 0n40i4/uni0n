@@ -131,6 +131,19 @@ check_http "/governance"                    200
 check_http "/regulatory-packet"             200
 check_http "/production-gate"               200
 
+# --- Auth boundary (P1-02): write z nieznanym DID musi być odrzucony ---
+echo "--- Auth boundary ---"
+CHECKS=$((CHECKS + 1))
+AB_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"source_did":"did:unionai:smoke:unregistered-xyz","scope":"PUBLIC","payload":{"t":1}}' \
+  --max-time 15 "${BASE}/api/memory/anchor" || echo "000")"
+if [ "${AB_CODE}" = "403" ]; then
+  printf 'OK    %s  POST /api/memory/anchor (nieznany DID odrzucony)\n' "${AB_CODE}"
+else
+  printf 'FAIL  %s  POST /api/memory/anchor  (oczekiwano 403 dla nieznanego DID)\n' "${AB_CODE}"
+  FAILED=$((FAILED + 1))
+fi
+
 # --- API / JSON ---
 echo "--- API / JSON ---"
 # /health: build_sha nie może być null (regresja UAI-P0-001).

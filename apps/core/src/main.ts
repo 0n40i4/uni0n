@@ -2316,6 +2316,31 @@ app.get('/risk-register', (_req, res) => {
 app.get('/privacy', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'privacy.html'));
 });
+// FULL LIVE P1/P2 docs
+app.get('/auth-boundary', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'auth-boundary.html'));
+});
+app.get('/human-oversight', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'human-oversight.html'));
+});
+app.get('/pilot', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'pilot.html'));
+});
+app.get('/external-review', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'external-review.html'));
+});
+app.get('/sla', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'sla-slo.html'));
+});
+app.get('/governance', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'governance.html'));
+});
+app.get('/regulatory-packet', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'regulatory-packet.html'));
+});
+app.get('/production-gate', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'production-gate.html'));
+});
 
 app.get('/status/:filename', async (req, res) => {
   const m = req.params.filename.match(/^(\d{4}-\d{2}-\d{2})-runtime-snapshot\.md$/);

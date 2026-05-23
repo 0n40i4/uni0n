@@ -122,6 +122,14 @@ check_http "/privacy"                       200
 check_http "/docs/"                         200
 check_http "/docs/ai-act-readiness.html"    200
 check_http "/changelog"                     200
+check_http "/auth-boundary"                 200
+check_http "/human-oversight"               200
+check_http "/pilot"                         200
+check_http "/external-review"               200
+check_http "/sla"                           200
+check_http "/governance"                    200
+check_http "/regulatory-packet"             200
+check_http "/production-gate"               200
 
 # --- API / JSON ---
 echo "--- API / JSON ---"

@@ -7,6 +7,20 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — FULL LIVE gate pages (dokument „Wytyczne FULL LIVE", P0+P1+P2)
+- **P0** (`636f674`, 2026-05-24): `/trust-center` (claim&le;proof), `/docs/ai-act-readiness.html` (matryca ról), `/developer` (quickstart), `/incidents` (rejestr); badge GO CONTROLLED/PUBLIC TESTNET w hero; ujednolicenie wersji v0.2.0&rarr;v0.3.0; obniżenie nadclaimów w meta
+- **P1** (`94d8900`, 2026-05-24): `/risk-register`, `/privacy`; `scripts/smoke.sh` (22 checki) jako post-deploy gate w `scripts/deploy.sh`; `is_demo`/`label` w `/api/leaderboard` (P1-10); `scripts/uptime-check.sh` (probe + `ALERT_WEBHOOK`)
+- **P1/P2 docs**: `/auth-boundary` (P1-02, hybrydowy model auth + znana luka memory_write), `/human-oversight` (P1-05), `/pilot` (P2-01), `/external-review` (P2-03), `/sla` (P2-04), `/governance` (P2-05), `/regulatory-packet` (P2-06), `/production-gate` (P2-07)
+
+### Migrations
+- Brak migracji DB w tej fali (zmiany czysto aplikacyjne: strony statyczne + routy sendFile + pole wyliczane `is_demo` w odpowiedzi `/api/leaderboard`).
+
+### Rollback path
+- **Build SHA bieżący:** sprawdź `GET /health` → `build_sha`. Każdy deploy taguje obraz `registry.fly.io/unionai-core:deployment-*`.
+- **Szybki rollback (bez gita):** `flyctl releases -a unionai-core` → wybierz poprzedni → `flyctl deploy -a unionai-core --image <poprzedni-image>` (lub `flyctl machine update <id> --image <poprzedni-image>`).
+- **Rollback przez git:** `git revert <sha>` na `main` + `bash scripts/deploy.sh` (wstrzykuje nowy `GIT_SHA`, uruchamia smoke gate). Stany przejściowe: `e7e0337` (przed P0) → `636f674` (P0) → `94d8900` (P1).
+- **Weryfikacja po rollbacku:** `bash scripts/smoke.sh` musi zakończyć się `SMOKE OK`.
+
 ## [0.3.0] - 2026-05-22
 
 **Zenodo DOI:** [10.5281/zenodo.20349115](https://doi.org/10.5281/zenodo.20349115) · concept (zawsze najnowsza): [10.5281/zenodo.20151383](https://doi.org/10.5281/zenodo.20151383)

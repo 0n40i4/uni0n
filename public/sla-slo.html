@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SLA / SLO — UnionAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  table.slo { width: 100%; border-collapse: collapse; margin: 8px 0 0; font-size: 14px; }
+  table.slo th, table.slo td { text-align: left; padding: 10px 12px; border: 1px solid var(--border); vertical-align: top; }
+  table.slo th { background: rgba(88,166,255,.08); color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  table.slo td.target { color: var(--ok); font-weight: 600; }
+  table.slo tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  h2.section { font-size: 19px; margin: 28px 0 6px; }
+  .sev { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; margin-right: 6px; }
+  .sev.s1 { background: rgba(248,81,73,.15); color: #f85149; border: 1px solid rgba(248,81,73,.4); }
+  .sev.s2 { background: rgba(210,153,34,.15); color: var(--warn); border: 1px solid rgba(210,153,34,.4); }
+  .sev.s3 { background: rgba(63,185,80,.12); color: var(--ok); border: 1px solid rgba(63,185,80,.4); }
+</style>
+</head>
+<body>
+<header>
+  <h1>SLA / SLO <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">Cele poziomu usługi (Service Level Objectives) federacji UnionAI — dostępność,
+  opóźnienia, poziom błędów, kopie zapasowe oraz cele odtworzenia po awarii (RTO/RPO).</div>
+  <nav>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/status">Status</a>
+    <a href="/incidents">Incydenty</a>
+    <a href="/pilot">Pilotaż</a>
+    <a href="/production-gate">Bramka produkcyjna</a>
+    <a href="/developer">Dla deweloperów</a>
+  </nav>
+</header>
+<main>
+  <div class="banner">
+    <strong>Ważne — to środowisko TESTNET.</strong> Wszystkie wartości w tabeli poniżej są
+    <strong>celami orientacyjnymi (best-effort)</strong>. Na testnecie nie obowiązuje wiążące SLA,
+    dane mogą być resetowane, a usługa może być wstrzymywana w celach utrzymaniowych.
+    <strong>Twarde, egzekwowalne SLA przysługuje dopiero po przejściu do PRODUCTION</strong> —
+    zob. <a href="/production-gate">bramka produkcyjna</a>. Dla wglądu na żywo zob.
+    <a href="/status">stronę statusu</a> oraz <a href="/incidents">historię incydentów</a>.
+  </div>
+
+  <h2 class="section">Cele poziomu usługi (SLO)</h2>
+  <table class="slo">
+    <thead>
+      <tr>
+        <th>Wskaźnik</th>
+        <th>Cel (testnet)</th>
+        <th>Cel (docelowy production)</th>
+        <th>Pomiar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Uptime (dostępność)</td>
+        <td class="target">best-effort</td>
+        <td class="target">99,5%</td>
+        <td>Sonda <span class="mono">/health</span> (uptime-check), agregacja na <a href="/status">/status</a></td>
+      </tr>
+      <tr>
+        <td>Latency (p95)</td>
+        <td class="target">orientacyjnie &lt;500 ms</td>
+        <td class="target">&lt;300 ms</td>
+        <td><span class="mono">/metrics</span> (Prometheus, m.in. <span class="mono">relay_latency_ms</span>)</td>
+      </tr>
+      <tr>
+        <td>Error rate (odpowiedzi 5xx)</td>
+        <td class="target">&lt;1%</td>
+        <td class="target">&lt;0,5%</td>
+        <td><span class="mono">/metrics</span> (Prometheus, liczniki błędów)</td>
+      </tr>
+      <tr>
+        <td>Backup (kopie zapasowe)</td>
+        <td class="target">snapshoty DB</td>
+        <td class="target">dzienne + offsite</td>
+        <td>Snapshoty wolumenów Fly / Postgres</td>
+      </tr>
+      <tr>
+        <td>RTO (czas odtworzenia)</td>
+        <td class="target">best-effort</td>
+        <td class="target">&lt;1 h</td>
+        <td>Procedura odtworzeniowa + raport po incydencie</td>
+      </tr>
+      <tr>
+        <td>RPO (punkt odtworzenia)</td>
+        <td class="target">best-effort</td>
+        <td class="target">&lt;24 h</td>
+        <td>Częstotliwość snapshotów DB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">Architektura niezawodności</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="who">Compute</div>
+      <h2>Fly.io HA</h2>
+      <p>Aplikacja <span class="mono">unionai-core</span> działa w trybie wysokiej dostępności na
+      <strong>2 maszynach</strong> w regionie <strong class="mono">iad</strong> (Ashburn, USA).
+      Ruch jest rozkładany przez proxy Fly, a rolling deploy minimalizuje przerwy przy aktualizacjach.</p>
+    </div>
+    <div class="card">
+      <div class="who">Trwałość danych</div>
+      <h2>Postgres</h2>
+      <p>Stan federacji (rejestr agentów, kotwice pamięci, audyty, zdarzenia governance) trzymany jest
+      w Postgresie. Snapshoty wolumenu stanowią podstawę kopii zapasowych oraz celów RTO/RPO.</p>
+    </div>
+    <div class="card">
+      <div class="who">Warstwa szybka</div>
+      <h2>Redis + fallback in-memory</h2>
+      <p>Redis obsługuje rate-limiting, cache i koordynację. W razie niedostępności Redis system
+      automatycznie przełącza się na <strong>fallback in-memory</strong> (degradacja per-maszyna),
+      co podtrzymuje działanie usługi kosztem części współdzielonego stanu.</p>
+    </div>
+  </div>
+
+  <h2 class="section">Pomiar i raportowanie</h2>
+  <div class="banner">
+    <ul>
+      <li><span class="mono">/health</span> — sonda zdrowia: status, region (<span class="mono">iad</span>),
+      <span class="mono">build_sha</span>, stan DB i Redis, kanał wydania.</li>
+      <li><span class="mono">/metrics</span> — eksport w formacie <strong>Prometheus</strong>: metryki latency,
+      liczniki requestów/zdarzeń relay, błędy i timeouty, drift routingu.</li>
+      <li><a href="/status">/status</a> — strona statusu agregująca SLO i bieżący stan usługi.</li>
+      <li><a href="/incidents">/incidents</a> — historia incydentów i raporty po awarii.</li>
+    </ul>
+    <p>Wartości SLO są weryfikowalne na żywo: sonda <span class="mono">/health</span> i eksport
+    <span class="mono">/metrics</span> stanowią źródło prawdy dla strony <a href="/status">/status</a>.</p>
+  </div>
+
+  <h2 class="section">Eskalacja przy naruszeniu SLO</h2>
+  <div class="banner">
+    <p>Przekroczenie progów (spadek dostępności, latency p95 ponad cel, error rate 5xx ponad cel,
+    utrata danych ponad RPO) uruchamia rejestrację incydentu i eskalację. Każdy incydent trafia do
+    <a href="/incidents">historii incydentów</a> wraz z klasą severity, statusem i raportem po zamknięciu.</p>
+    <ul>
+      <li><span class="sev s1">SEV-1</span> Krytyczny — usługa niedostępna lub utrata danych; natychmiastowa reakcja, priorytet odtworzenia (RTO).</li>
+      <li><span class="sev s2">SEV-2</span> Poważny — istotna degradacja (latency/error rate poza SLO) bez pełnej niedostępności.</li>
+      <li><span class="sev s3">SEV-3</span> Drobny — ograniczony wpływ, obejście dostępne; obsługa w trybie planowym.</li>
+    </ul>
+    <div class="cta">
+      <a href="/status">Zobacz status na żywo</a>
+      <a class="alt" href="/incidents">Historia incydentów</a>
+      <a class="alt" href="/production-gate">Bramka produkcyjna</a>
+    </div>
+  </div>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+</footer>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Przegląd zewnętrzny (External review)</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .banner.warn { border-color: rgba(210,153,34,.45); background: rgba(210,153,34,.08); }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  h2.section { font-size: 19px; margin: 28px 0 10px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border: 1px solid var(--border); vertical-align: top; }
+  th { background: rgba(88,166,255,.08); color: var(--text); font-weight: 700; }
+  td.chk { width: 34px; text-align: center; font-size: 17px; color: var(--muted); }
+  td.crit { color: var(--muted); }
+  tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+  .status-pill {
+    display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px;
+    font-weight: 700; letter-spacing: .04em; border: 1px solid rgba(210,153,34,.45);
+    background: rgba(210,153,34,.12); color: var(--warn);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Przegląd zewnętrzny (External review) <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">Lista kontrolna do niezależnego audytu claimów i dokumentów (prawny / techniczny /
+  compliance) przed przejściem z TESTNET do FULL LIVE. To checklist gotowości — nie zastępuje raportu
+  zewnętrznego audytora.</div>
+  <nav>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/docs/ai-act-readiness.html">AI Act — readiness</a>
+    <a href="/risk-register">Rejestr ryzyk</a>
+    <a href="/governance">Governance</a>
+    <a href="/production-gate">Brama produkcyjna</a>
+    <a href="/status">Status</a>
+  </nav>
+</header>
+<main>
+  <div class="banner warn">
+    <span class="status-pill">STATUS: REVIEW NIE WYKONANY</span>
+    <p style="margin:10px 0 0">Niezależny przegląd zewnętrzny <strong>nie został jeszcze przeprowadzony</strong>.
+    Bramka oczekuje na zewnętrznego audytora / partnera (prawnego, technicznego i compliance). Poniższa
+    lista kontrolna definiuje zakres gotowości do takiego audytu. Wszystkie pozycje oznaczone
+    <span class="mono">☐</span> pozostają do potwierdzenia przez stronę trzecią; samodzielna ocena
+    operatora nie spełnia kryterium „przegląd zewnętrzny”.</p>
+  </div>
+
+  <h2 class="section">1. Obszar PRAWNY</h2>
+  <table>
+    <thead>
+      <tr><th class="chk">☐/☑</th><th>Pozycja kontrolna</th><th>Kryterium akceptacji</th><th>Dowód</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Claimy bez sugestii certyfikacji/notyfikacji</td>
+        <td class="crit">Brak sformułowań sugerujących certyfikat, akredytację lub status jednostki notyfikowanej; usługi opisane jako advisory/readiness.</td>
+        <td><a href="/trust-center">/trust-center</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Pozycjonowanie audit-only / readiness</td>
+        <td class="crit">Materiały publiczne konsekwentnie pozycjonują ofertę jako audytową/gotowościową, nie wykonawczą ani gwarantującą zgodność.</td>
+        <td><a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Parasol prawny GRL</td>
+        <td class="crit">Podmiot odpowiedzialny i parasol prawny (GRL) jednoznacznie wskazane; relacja UnionAI ↔ podmiot prawny udokumentowana.</td>
+        <td><a href="/governance">/governance</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>RODO / ochrona danych</td>
+        <td class="crit">Polityka prywatności opublikowana, podstawy przetwarzania i prawa podmiotów danych opisane; wskazany kontakt DPO.</td>
+        <td><a href="/privacy">/privacy</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Brak nadclaimów AI Act</td>
+        <td class="crit">Żadne stwierdzenie nie deklaruje „pełnej zgodności z AI Act”; claimy ograniczone do mapowania/gotowości i readiness.</td>
+        <td><a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">2. Obszar TECHNICZNY</h2>
+  <table>
+    <thead>
+      <tr><th class="chk">☐/☑</th><th>Pozycja kontrolna</th><th>Kryterium akceptacji</th><th>Dowód</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Granica uwierzytelnienia (auth boundary)</td>
+        <td class="crit">Zasoby prywatne wymagają tokenu; anonimowy dostęp do danych o zakresie PRIVATE zwraca 401/403 (brak wycieku payloadu i metadanych).</td>
+        <td><span class="mono">/api/auth/*</span></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Rate limiting</td>
+        <td class="crit">Limit zapytań aktywny na wrażliwych endpointach; mechanizm z fallbackiem (Redis → in-memory), zweryfikowany pod obciążeniem.</td>
+        <td class="crit">smoke / CI</td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Hash-chain evidence</td>
+        <td class="crit">Łańcuch dowodów weryfikowalny end-to-end; brak bypassu walidacji; integralność lokalnych artefaktów potwierdzona.</td>
+        <td><a href="/api/evidence/verify">/api/evidence/verify</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>HA / backup</td>
+        <td class="crit">Wdrożenie wielomaszynowe (HA) i polityka kopii zapasowych; persystencja stanu przeżywa restart.</td>
+        <td><a href="/status">/status</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Smoke CI</td>
+        <td class="crit">Pipeline CI (Unit + Smoke) zielony na ostatnim deployu; testy regresyjne dla auth i evidence.</td>
+        <td class="crit">CI (Unit + Smoke)</td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Brak sekretów w repo/UI</td>
+        <td class="crit">Klucze i tokeny wyłącznie w sekretach środowiska; brak wartości wrażliwych w kodzie, repozytorium i warstwie UI.</td>
+        <td class="crit">audyt repo + skan sekretów</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">3. Obszar COMPLIANCE</h2>
+  <table>
+    <thead>
+      <tr><th class="chk">☐/☑</th><th>Pozycja kontrolna</th><th>Kryterium akceptacji</th><th>Dowód</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Macierz gotowości AI Act</td>
+        <td class="crit">Matryca readiness mapuje wymogi na status implementacji; luki oznaczone i przypisane.</td>
+        <td><a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Rejestr ryzyk</td>
+        <td class="crit">Ryzyka skatalogowane z oceną, właścicielem i statusem mitigacji; aktualny.</td>
+        <td><a href="/risk-register">/risk-register</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Polityka incydentów</td>
+        <td class="crit">Proces zgłaszania, klasyfikacji i komunikacji incydentów udokumentowany i dostępny publicznie.</td>
+        <td><a href="/incidents">/incidents</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Nadzór ludzki (human oversight)</td>
+        <td class="crit">Mechanizmy nadzoru człowieka nad działaniami agentów opisane; punkty interwencji i eskalacji zdefiniowane.</td>
+        <td><a href="/human-oversight">/human-oversight</a></td>
+      </tr>
+      <tr>
+        <td class="chk">☐</td>
+        <td>Manifest dowodów</td>
+        <td class="crit">Manifest evidence kompletny; artefakty z hashami sha256; brak nierozliczonych wpisów null bez wyjaśnienia.</td>
+        <td><a href="/evidence/manifest.json">/evidence/manifest.json</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid" style="margin-top:24px">
+    <div class="card">
+      <div class="who">Procedura</div>
+      <h2>Jak zlecić review</h2>
+      <p>Przegląd zewnętrzny powinien być wykonany przez niezależne strony trzecie — samoocena nie spełnia
+      kryterium tej bramki. Rekomendowany skład:</p>
+      <ul>
+        <li><strong>Niezależny audytor prawny</strong> — weryfikacja claimów, pozycjonowania audit-only, parasola GRL i zgodności RODO.</li>
+        <li><strong>Pentest / audyt bezpieczeństwa</strong> — niezależna firma (np. wcześniejsza rekomendacja: Securitum) potwierdzająca auth boundary, rate limiting i brak sekretów.</li>
+        <li><strong>Przegląd compliance</strong> — niezależna weryfikacja macierzy AI Act readiness, rejestru ryzyk i polityk (incydenty, nadzór ludzki).</li>
+      </ul>
+      <p><strong>Wynik:</strong> raport zewnętrzny z datą, zakresem, ustaleniami i statusem każdej pozycji
+      checklisty. Pozycje ☐ przechodzą w ☑ wyłącznie na podstawie potwierdzenia audytora.</p>
+    </div>
+
+    <div class="card">
+      <div class="who">Rezultat</div>
+      <h2>Wynik przeglądu</h2>
+      <p>Po wykonaniu audytu link do raportu zostanie umieszczony poniżej.</p>
+      <ul>
+        <li>Raport prawny: <span class="mono">— oczekuje (placeholder) —</span></li>
+        <li>Raport pentest / bezpieczeństwo: <span class="mono">— oczekuje (placeholder) —</span></li>
+        <li>Raport compliance: <span class="mono">— oczekuje (placeholder) —</span></li>
+      </ul>
+      <p class="mono" style="color:var(--muted)">Status zbiorczy: REVIEW NIE WYKONANY — bramka P2-03 otwarta do czasu dostarczenia raportu zewnętrznego.</p>
+      <div class="cta">
+        <a class="alt" href="/production-gate">Brama produkcyjna</a>
+        <a class="alt" href="/trust-center">Trust Center</a>
+      </div>
+    </div>
+  </div>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+</footer>
+</body>
+</html>

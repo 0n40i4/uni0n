@@ -12,7 +12,8 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Podmieniono literał `unionai.grassrootslobbing.pl` → `uni0nai.k0nsult.cloud` w żywych powierzchniach: `public/sitemap.xml` (36), `public/index.html` (16), `public/ai-plugin.json` (3), `public/ai-feed.xml` (2), `public/robots.txt`, `public/.well-known/security.txt`, `README.md` (12), `CONTRIBUTING.md` (3), `SECURITY.md`, `.github/ISSUE_TEMPLATE/bug.md`.
 - `apps/core/src/main.ts`: OpenAPI `servers` (kanon pierwszy + alias zachowany + Fly), `terms`/`privacy`, `link` feedów RSS/Atom. **Zachowano `id`/`guid` feedów** (stabilność deduplikacji u czytników) oraz alias w `servers`.
 - `docs/NAMING.md`: zapis decyzji (opcja 2).
-- **NIE zmieniono** (świadomie): strona firmy `grassrootslobbing.pl`, maile `@grassrootslobbing.pl`, dokumenty historyczne (reports/sessions/memory), oraz pliki wrażliwe `evidence/manifest.json` (SHA256), `CITATION.cff`/`codemeta.json` (DOI) — czekają na osobną decyzję operatora.
+- **3B (pliki wrażliwe) — zrealizowane:** `public/evidence/manifest.json` (pole `domain` = metadane, NIE hashowane — `/api/evidence/verify` hashuje tylko pliki dokumentów, więc bez wpływu na hashe), `CITATION.cff`, `codemeta.json` (pola `url` aplikacji). **DOI `10.5281/zenodo.20151384` nietknięte**; firma `grassrootslobbing.pl` w codemeta zachowana.
+- **NIE zmieniono** (świadomie): strona firmy `grassrootslobbing.pl`, maile `@grassrootslobbing.pl`, dokumenty historyczne (reports/sessions/memory).
 
 ### Added — FULL LIVE gate pages (dokument „Wytyczne FULL LIVE", P0+P1+P2)
 - **P0** (`636f674`, 2026-05-24): `/trust-center` (claim&le;proof), `/docs/ai-act-readiness.html` (matryca ról), `/developer` (quickstart), `/incidents` (rejestr); badge GO CONTROLLED/PUBLIC TESTNET w hero; ujednolicenie wersji v0.2.0&rarr;v0.3.0; obniżenie nadclaimów w meta

@@ -58,9 +58,13 @@ robots.txt, security.txt, README, CONTRIBUTING, SECURITY, bug.md) oraz w `apps/c
 (oba adresy już CNAME na `unionai-core.fly.dev`). NIE ruszono: strony firmy `grassrootslobbing.pl`,
 maili `@grassrootslobbing.pl`, dokumentów historycznych (reports/sessions/memory).
 
-**Otwarte do decyzji operatora (3B — NIE ruszone):** `public/evidence/manifest.json` (zawiera
-SHA256 — podmiana URL wymaga przeliczenia hashy, inaczej `/api/evidence/verify` zgłosi naruszenie),
-`CITATION.cff` i `codemeta.json` (metadane powiązane z DOI Zenodo — rozjazd z opublikowaną wersją).
+**3B — zrealizowane (2026-05-24, decyzja operatora „trzeba to zrobić, bo będzie wracać"):**
+podmieniono również `public/evidence/manifest.json` (pole `domain` = METADANE, NIE hashowane;
+`/api/evidence/verify` hashuje wyłącznie pliki dokumentów o `url` w `public/` — sprawdzone w `main.ts`,
+więc zmiana `domain` jest bez wpływu na hashe), `CITATION.cff` i `codemeta.json` (pola `url` aplikacji).
+**DOI `10.5281/zenodo.20151384` nietknięte** (nie zawierają domeny); firma `grassrootslobbing.pl`
+w codemeta (37/44) zachowana. Opublikowany rekord Zenodo to snapshot — metadane repo od teraz
+wskazują domenę kanoniczną, DOI bez zmian. Weryfikacja: `/api/evidence/verify` po deployu nadal `matched`.
 
 Forma `uni0nai` w tej domenie używa zera + małej litery — niezgodna z konwencją brandu
 (`UnionAI` przez `o`). Jeśli domena ma zostać, warto rozważyć rejestrację `unionai.k0nsult.cloud`.

@@ -10,10 +10,10 @@ identifiers:
     value: 10.5281/zenodo.20151384
     description: "UnionAI Ω∞ Declaration of Origin"
   - type: url
-    value: "https://unionai.grassrootslobbing.pl/"
+    value: "https://uni0nai.k0nsult.cloud/"
     description: "Live production deployment"
 repository-code: "https://github.com/0n40i4/uni0n"
-url: "https://unionai.grassrootslobbing.pl/"
+url: "https://uni0nai.k0nsult.cloud/"
 abstract: >-
   UnionAI Ω∞ is the first European Union AI agent federation
   with a ratified constitution, qualified signature, and
@@ -44,6 +44,6 @@ preferred-citation:
   year: 2026
   month: 5
   doi: "10.5281/zenodo.20151384"
-  url: "https://unionai.grassrootslobbing.pl/declaration-of-origin.html"
+  url: "https://uni0nai.k0nsult.cloud/declaration-of-origin.html"
   publisher:
     name: "Zenodo"

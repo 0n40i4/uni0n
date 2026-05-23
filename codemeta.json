@@ -4,7 +4,7 @@
   "name": "UnionAI Ω∞",
   "description": "Pierwsza w UE federacja agentów AI z ratyfikowaną konstytucją. Open-source AI federation layer with DID-lite trust, memory anchoring, semantic routing, and EU AI Act compliance.",
   "codeRepository": "https://github.com/0n40i4/uni0n",
-  "url": "https://unionai.grassrootslobbing.pl/",
+  "url": "https://uni0nai.k0nsult.cloud/",
   "identifier": "https://doi.org/10.5281/zenodo.20151384",
   "license": "https://spdx.org/licenses/Apache-2.0",
   "version": "0.3.0",
@@ -50,7 +50,7 @@
   "issueTracker": "https://github.com/0n40i4/uni0n/issues",
   "downloadUrl": "https://github.com/0n40i4/uni0n/archive/refs/heads/main.zip",
   "readme": "https://github.com/0n40i4/uni0n/blob/main/README.md",
-  "softwareHelp": "https://unionai.grassrootslobbing.pl/docs/",
+  "softwareHelp": "https://uni0nai.k0nsult.cloud/docs/",
   "referencePublication": {
     "@type": "ScholarlyArticle",
     "name": "UnionAI Ω∞: Declaration of Origin",

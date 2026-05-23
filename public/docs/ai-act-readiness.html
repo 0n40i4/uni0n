@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Act Readiness — UnionAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .banner.warn { border-color: rgba(210,153,34,.45); background: rgba(210,153,34,.08); }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  section { margin-top: 28px; }
+  section h2 { font-size: 20px; margin: 0 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: rgba(88,166,255,.08); color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .badge.no { background: rgba(63,185,80,.15); color: var(--ok); border: 1px solid rgba(63,185,80,.35); }
+  .badge.review { background: rgba(210,153,34,.15); color: var(--warn); border: 1px solid rgba(210,153,34,.35); }
+  .badge.na { background: rgba(139,148,158,.12); color: var(--muted); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Act Readiness <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">Matryca przygotowania (readiness) UnionAI względem ram EU AI Act: role provider/deployer/operator,
+  klasyfikacja ryzyka per use-case, nadzór człowieka, ślad audytowy oraz protokół incydentów. Dokument służy
+  do śledzenia stanu i przygotowania dowodów — nie jest deklaracją zgodności.</div>
+  <nav>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/evidence">Rejestr dowodów</a>
+    <a href="/docs/ai-act-readiness.html">AI Act Readiness</a>
+    <a href="/incidents">Incydenty</a>
+    <a href="/developer">Dla deweloperów</a>
+    <a href="/status">Status</a>
+  </nav>
+</header>
+<main>
+  <div class="banner warn">
+    <strong>Zastrzeżenie.</strong> To dokument readiness/tracking. UNIONAI NIE jest systemem certyfikowanym
+    ani notyfikowanym w rozumieniu EU AI Act. Nie wydajemy certyfikatów. Status: przygotowanie evidence
+    i readiness do kontroli. Oceny ryzyka poniżej są wstępne, prowadzone per use-case w trybie testnet/research
+    i podlegają dalszej weryfikacji.
+  </div>
+
+  <section>
+    <h2>1. Matryca ról</h2>
+    <p>Rozdzielenie ról jest punktem wyjścia readiness. UnionAI nie przejmuje roli dostawców modeli zewnętrznych —
+    działa jako warstwa federacyjna (deployer/operator) wokół tych modeli.</p>
+    <table>
+      <thead>
+        <tr><th>Rola</th><th>Kto/co</th><th>Obowiązki w UnionAI</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Provider modeli</td>
+          <td>Dostawcy modeli zewnętrznych (np. Anthropic, OpenAI)</td>
+          <td>Pozostają providerami SWOICH modeli i odpowiadają za nie zgodnie z własną dokumentacją.
+          UnionAI NIE przejmuje ich roli ani obowiązków providera modelu.</td>
+          <td><span class="badge na">poza zakresem UnionAI</span></td>
+        </tr>
+        <tr>
+          <td>Deployer / Operator platformy</td>
+          <td>UnionAI / 0n40i4 / Grass Roots Lobbing</td>
+          <td>Uruchamia i utrzymuje warstwę federacyjną: routing, rejestr agentów, nadzór, logowanie zdarzeń,
+          polityki zaufania. Odpowiada za organizacyjny nadzór nad sposobem użycia modeli w sieci.</td>
+          <td><span class="badge review">w przygotowaniu</span></td>
+        </tr>
+        <tr>
+          <td>Operator człowiek</td>
+          <td>Osoba dyżurna / operator nadzorujący</td>
+          <td>Sprawuje nadzór: prawo veta, przycisk stop, ręczne zatwierdzanie akcji wrażliwych,
+          możliwość zatrzymania routingu i wstrzymania agenta.</td>
+          <td><span class="badge review">w przygotowaniu</span></td>
+        </tr>
+        <tr>
+          <td>Integrator / Provider aplikacji</td>
+          <td>Podmioty podłączające własnych agentów (opcjonalnie)</td>
+          <td>Odpowiadają za zgodność i przeznaczenie swoich agentów oraz aplikacji nadbudowanych na federacji.
+          Rola aktywuje się dopiero po podłączeniu zewnętrznego providera.</td>
+          <td><span class="badge na">opcjonalnie / nieaktywne</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. Klasyfikacja ryzyka per use-case</h2>
+    <p>Klasyfikacja nie jest robiona jednym zdaniem dla całej platformy. Każdy use-case oceniamy osobno
+    i ostrożnie. W trybie testnet/research większość funkcji nie jest oceniana jako wysokiego ryzyka,
+    ale każda ocena podlega weryfikacji i może się zmienić wraz z faktycznym przeznaczeniem.</p>
+    <table>
+      <thead>
+        <tr><th>Use-case</th><th>Czy high-risk?</th><th>Uzasadnienie</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Rejestracja agenta</td>
+          <td><span class="badge no">wstępnie nie</span></td>
+          <td>Czynność techniczno-administracyjna (zapis DID i metadanych). Nie podejmuje decyzji
+          wpływających na prawa osób.</td>
+          <td>Walidacja danych wejściowych, brak PII w rejestrze publicznym, ślad audytowy.</td>
+        </tr>
+        <tr>
+          <td>Routing zapytań</td>
+          <td><span class="badge no">wstępnie nie</span></td>
+          <td>Przekierowanie zapytania do agenta wg poziomu zaufania; tryb research, brak rozstrzygnięć
+          o skutkach prawnych dla osób.</td>
+          <td>Rate limiting, gating po trust tier, logi wejść/wyjść, możliwość stop przez operatora.</td>
+        </tr>
+        <tr>
+          <td>Audyt K0NSULAT</td>
+          <td><span class="badge no">wstępnie nie</span></td>
+          <td>Wewnętrzna ocena jakości/spójności agenta na potrzeby federacji; nie jest oceną osób fizycznych.</td>
+          <td>Jawne kryteria, weryfikowalny hash dowodów, przegląd przez operatora.</td>
+        </tr>
+        <tr>
+          <td>Ranking zaufania</td>
+          <td><span class="badge review">wymaga weryfikacji</span></td>
+          <td>Scoring agentów (nie ludzi). Należy ostrożnie zweryfikować, czy w przyszłych zastosowaniach
+          nie wpływa pośrednio na dostęp do usług.</td>
+          <td>Transparentne kryteria, audytowalność, brak profilowania osób fizycznych, przegląd okresowy.</td>
+        </tr>
+        <tr>
+          <td>Governance / uchwały</td>
+          <td><span class="badge review">wymaga weryfikacji</span></td>
+          <td>Decyzje organizacyjne w obrębie federacji. Ocena zależna od ostatecznego przeznaczenia
+          i ewentualnych skutków dla uczestników.</td>
+          <td>Veto operatora, ręczne zatwierdzanie, pełny ślad decyzji i wersji polityk.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. Nadzór człowieka (human oversight)</h2>
+    <p>Człowiek pozostaje w pętli decyzyjnej. Operator dysponuje narzędziami nadzoru:</p>
+    <ul>
+      <li><strong>Override</strong> — możliwość nadpisania decyzji automatycznej przez operatora.</li>
+      <li><strong>Veto</strong> — wstrzymanie akcji wrażliwej przed jej wykonaniem.</li>
+      <li><strong>Stop</strong> — zatrzymanie routingu / wstrzymanie agenta lub całej warstwy relay.</li>
+      <li><strong>Ręczne zatwierdzanie</strong> — akcje wrażliwe wymagają potwierdzenia człowieka.</li>
+    </ul>
+    <p>Procedura i konsola nadzoru: <a href="/override-console.html">konsola operatora (override)</a>.
+    Playbook nadzoru opisany jest w dokumencie
+    <a href="/docs/governance/05_UNIONAI_HUMAN_OVERRIDE_PLAYBOOK_v1.pdf">Human Override Playbook</a>.</p>
+  </section>
+
+  <section>
+    <h2>4. Logowanie i ślad audytowy</h2>
+    <p>Federacja prowadzi ślad audytowy zdarzeń, tak aby decyzje dały się odtworzyć i zweryfikować:</p>
+    <ul>
+      <li>Logi decyzji oraz wejść i wyjść (kto, co, kiedy, jaki agent/route).</li>
+      <li>Wersje obowiązujących polityk w momencie decyzji.</li>
+      <li>Weryfikowalny hash-chain dowodów (integralność wpisów).</li>
+      <li><strong>Brak sekretów</strong> w logach (klucze, tokeny) i brak PII w publicznym evidence.</li>
+      <li>Retencja: logi przechowywane przez okres niezbędny do audytu, następnie wygaszane;
+      okres podlega doprecyzowaniu w polityce retencji.</li>
+    </ul>
+    <p>Publiczny rejestr: <a href="/evidence">rejestr dowodów</a>.</p>
+  </section>
+
+  <section>
+    <h2>5. Zgłaszanie incydentów</h2>
+    <p><strong>Incydent</strong> to każde zdarzenie naruszające oczekiwane działanie, bezpieczeństwo,
+    integralność dowodów lub nadzór nad systemem. Klasyfikacja severity:</p>
+    <table>
+      <thead>
+        <tr><th>Severity</th><th>Opis</th><th>Owner</th><th>Czas reakcji (cel)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>BLOCKER</strong></td><td>System niedostępny lub naruszona integralność dowodów / nadzoru.</td><td>Operator</td><td>niezwłocznie</td></tr>
+        <tr><td><strong>CRITICAL</strong></td><td>Poważna degradacja funkcji kluczowych lub potencjalny wyciek.</td><td>Operator</td><td>do kilku godzin</td></tr>
+        <tr><td><strong>MAJOR</strong></td><td>Istotny błąd funkcjonalny bez naruszenia bezpieczeństwa.</td><td>Operator / dyżur</td><td>do 1–2 dni</td></tr>
+        <tr><td><strong>MINOR</strong></td><td>Drobna usterka, kosmetyka, brak wpływu na bezpieczeństwo.</td><td>Backlog</td><td>w kolejce</td></tr>
+      </tbody>
+    </table>
+    <p>Rejestr i status incydentów: <a href="/incidents">strona incydentów</a>.</p>
+  </section>
+
+  <section>
+    <h2>6. Transparentność</h2>
+    <p>Użytkownik jest informowany, że ma do czynienia z systemem AI działającym w środowisku testowym:</p>
+    <ul>
+      <li>Wyraźne oznaczenie <span class="testnet">TESTNET / PODGLĄD</span> w interfejsie.</li>
+      <li>Komunikat, że odpowiedzi pochodzą od agentów AI, a nie od człowieka.</li>
+      <li>Informacja, że dane mogą być resetowane i nie ma gwarancji stabilności produkcyjnej.</li>
+      <li>Publiczny wgląd w rejestr agentów, audyty i dowody bez logowania.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7. Zarządzanie danymi (data governance)</h2>
+    <ul>
+      <li><strong>Minimalizacja</strong> — zbieramy tylko dane niezbędne do działania federacji.</li>
+      <li><strong>Brak PII w publicznym evidence</strong> — rejestr dowodów nie zawiera danych osobowych.</li>
+      <li><strong>Brak sekretów</strong> w danych publikowanych i w logach.</li>
+      <li><strong>Retencja</strong> — dane przechowywane przez okres niezbędny, następnie wygaszane;
+      pamięć federacji podlega polityce opisanej w
+      <a href="/docs/governance/09_UNIONAI_MEMORY_POLICY_v1.pdf">Memory Policy</a>.</li>
+      <li><strong>Audytowalność</strong> — operacje na danych pozostawiają ślad weryfikowalny hashem.</li>
+    </ul>
+    <div class="cta">
+      <a href="/trust-center">Trust Center</a>
+      <a class="alt" href="/evidence">Rejestr dowodów</a>
+      <a class="alt" href="/incidents">Incydenty</a>
+    </div>
+  </section>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD ·
+  dokument readiness, nie deklaracja zgodności.
+</footer>
+</body>
+</html>

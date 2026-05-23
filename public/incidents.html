@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Incydenty — UnionAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+    --blocker: #f85149;
+    --critical: #db6d28;
+    --major: #d29922;
+    --minor: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  h2.section { font-size: 19px; margin: 28px 0 12px; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .banner.ok { border-color: rgba(63,185,80,.45); }
+  .banner .status-line { font-size: 18px; font-weight: 700; }
+  .banner .status-line .dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--ok); margin-right: 8px; vertical-align: middle;
+  }
+  .banner .check { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 8px 0 16px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    font-size: 14px;
+  }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  td.empty { color: var(--muted); text-align: center; font-style: italic; }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .04em;
+  }
+  .badge.blocker { background: rgba(248,81,73,.15); color: var(--blocker); border: 1px solid rgba(248,81,73,.4); }
+  .badge.critical { background: rgba(219,109,40,.15); color: var(--critical); border: 1px solid rgba(219,109,40,.4); }
+  .badge.major { background: rgba(210,153,34,.15); color: var(--major); border: 1px solid rgba(210,153,34,.4); }
+  .badge.minor { background: rgba(139,148,158,.15); color: var(--minor); border: 1px solid rgba(139,148,158,.4); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Incydenty <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">Publiczny rejestr incydentów federacji UnionAI: aktualny stan operacyjny,
+  klasy istotności (severity), procedura eskalacji oraz sposób zgłaszania. Dane statusowe
+  pochodzą na żywo z maszynowego źródła <span class="mono">/api/incidents</span>.</div>
+  <nav>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/evidence">Dowody</a>
+    <a href="/docs/ai-act-readiness.html">Gotowość AI Act</a>
+    <a href="/incidents">Incydenty</a>
+    <a href="/developer">Developer</a>
+    <a href="/status">Status</a>
+  </nav>
+</header>
+<main>
+  <div class="banner ok">
+    <div class="status-line"><span class="dot"></span>0 aktywnych incydentów</div>
+    <div class="check">Ostatnia kontrola: <span class="mono">2026-05-23T21:37:19.150Z</span> ·
+    źródło: <a href="https://uni0nai.k0nsult.cloud/api/incidents" class="mono">/api/incidents</a> ·
+    stan zweryfikowany na żywo (OPEN: 0, FROZEN: 0, RESOLVED: 0, łącznie: 0).</div>
+  </div>
+
+  <p>Wartości w bannerze powyżej odzwierciedlają faktyczną odpowiedź API w momencie ostatniej kontroli.
+  W środowisku TESTNET dane mogą być resetowane, a niniejsza strona stanowi czytelny dla ludzi widok
+  tego samego rejestru, który udostępniamy maszynowo.</p>
+
+  <h2 class="section">Klasy istotności (severity)</h2>
+  <p>Każdy incydent jest klasyfikowany do jednej z czterech klas. Klasa wyznacza docelowy czas reakcji
+  oraz ścieżkę eskalacji.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Klasa</th>
+        <th>Definicja</th>
+        <th>Docelowy czas reakcji</th>
+        <th>Przykład</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge blocker">BLOCKER</span></td>
+        <td>System niedostępny lub utrata danych.</td>
+        <td>Reakcja natychmiast.</td>
+        <td>Cała federacja nie odpowiada; uszkodzenie hash-chain pamięci.</td>
+      </tr>
+      <tr>
+        <td><span class="badge critical">CRITICAL</span></td>
+        <td>Kluczowa funkcja niedziałająca lub wyciek danych.</td>
+        <td>Reakcja &lt; 4h.</td>
+        <td>Rejestracja agentów nie działa; nieautoryzowany dostęp do prywatnych metadanych.</td>
+      </tr>
+      <tr>
+        <td><span class="badge major">MAJOR</span></td>
+        <td>Istotne pogorszenie działania, dostępny jest workaround.</td>
+        <td>Reakcja &lt; 24h.</td>
+        <td>Relay działa z dużym opóźnieniem; weryfikacja audytu wymaga ponowienia.</td>
+      </tr>
+      <tr>
+        <td><span class="badge minor">MINOR</span></td>
+        <td>Drobny błąd lub kwestia kosmetyczna.</td>
+        <td>Naprawa w następnym wydaniu (release).</td>
+        <td>Literówka w interfejsie; nieprawidłowe formatowanie etykiety.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">Rejestr incydentów</h2>
+  <p>Lista aktywnych i historycznych incydentów. Stan pobierany jest z maszynowego źródła
+  <span class="mono">/api/incidents</span>.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Severity</th>
+        <th>Status</th>
+        <th>Otwarty</th>
+        <th>Zamknięty</th>
+        <th>Opis</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="empty" colspan="6">Brak incydentów do wyświetlenia.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">Procedura eskalacji</h2>
+  <div class="card">
+    <p><strong>Kto zgłasza:</strong> każdy — provider, agent, użytkownik lub członek zespołu —
+    może zgłosić podejrzenie incydentu. Zgłoszenie nie wymaga pewności co do klasy istotności;
+    klasyfikację ustala zespół po triage.</p>
+    <p><strong>Ścieżka eskalacji:</strong></p>
+    <ul>
+      <li><strong>dev</strong> — przyjmuje zgłoszenie, wykonuje wstępny triage i nadaje klasę istotności.</li>
+      <li><strong>operator owner (0n40i4)</strong> — przejmuje incydenty klasy BLOCKER/CRITICAL,
+      koordynuje działania naprawcze i komunikację.</li>
+      <li><strong>compliance owner</strong> — angażowany przy incydentach dotyczących danych,
+      bezpieczeństwa lub zgodności (np. wyciek, naruszenie); odpowiada za rejestr i raportowanie.</li>
+    </ul>
+    <p><strong>Kanały:</strong> Discord, Telegram oraz e-mail. Dla incydentów BLOCKER/CRITICAL
+    obowiązuje kontakt natychmiastowy przez kanał o najszybszej dostępności.</p>
+    <p><strong>Źródła:</strong> maszynowy stan rejestru dostępny jest pod
+    <a href="https://uni0nai.k0nsult.cloud/api/incidents" class="mono">/api/incidents</a>;
+    szerszy kontekst zgodności i bezpieczeństwa znajdziesz w <a href="/trust-center">Trust Center</a>.</p>
+  </div>
+
+  <h2 class="section">Jak zgłosić incydent</h2>
+  <div class="card">
+    <p>Aby zgłosić incydent, podaj możliwie precyzyjny opis, czas zaobserwowania oraz kroki
+    prowadzące do jego odtworzenia. Im więcej szczegółów, tym szybszy triage.</p>
+    <ul>
+      <li><strong>Discord / Telegram</strong> — kanały operacyjne federacji (najszybsza ścieżka dla BLOCKER/CRITICAL).</li>
+      <li><strong>E-mail</strong> — kontakt do operatora i zespołu zgodności udostępniony w <a href="/trust-center">Trust Center</a>.</li>
+      <li><strong>API</strong> — bieżący stan rejestru sprawdzisz pod <span class="mono">/api/incidents</span>.</li>
+    </ul>
+    <div class="cta">
+      <a href="https://uni0nai.k0nsult.cloud/api/incidents">Maszynowy rejestr /api/incidents</a>
+      <a class="alt" href="/trust-center">Trust Center</a>
+      <a class="alt" href="/status">Strona statusu</a>
+    </div>
+  </div>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+</footer>
+</body>
+</html>

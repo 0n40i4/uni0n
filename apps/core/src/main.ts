@@ -2296,6 +2296,16 @@ app.get('/guide', (_req, res) => {
 app.get('/about', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'what-is-unionai.html'));
 });
+// FULL LIVE P0/P1 gate pages (claim<=proof) — pliki public/*.html
+app.get('/trust-center', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'trust-center.html'));
+});
+app.get('/developer', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'developer.html'));
+});
+app.get('/incidents', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));
+});
 
 app.get('/status/:filename', async (req, res) => {
   const m = req.params.filename.match(/^(\d{4}-\d{2}-\d{2})-runtime-snapshot\.md$/);

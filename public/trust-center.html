@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trust Center — UnionAI</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  h2.section { font-size: 19px; margin: 28px 0 12px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 13.5px;
+    background: var(--card);
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top;
+  }
+  th {
+    background: #1c2230; color: var(--text); font-weight: 700;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .04em;
+  }
+  tbody tr:nth-child(odd) { background: rgba(255,255,255,.015); }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,.04); }
+  .pill {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; white-space: nowrap;
+  }
+  .pill.verified { background: rgba(63,185,80,.15); color: var(--ok); border: 1px solid rgba(63,185,80,.35); }
+  .pill.controlled { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.35); }
+  .pill.self { background: rgba(210,153,34,.15); color: var(--warn); border: 1px solid rgba(210,153,34,.35); }
+  .pill.roadmap { background: rgba(139,148,158,.15); color: var(--muted); border: 1px solid rgba(139,148,158,.4); }
+  .stats { display: flex; flex-wrap: wrap; gap: 16px; margin: 4px 0 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+  .stat .num { font-size: 22px; font-weight: 700; }
+  .stat .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Trust Center <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <div class="lead">Centrum zaufania UnionAI działa według jednej zasady: <strong>claim ≤ proof</strong> —
+  żaden publiczny komunikat nie może być silniejszy niż dowód widoczny w systemie. Każdy claim na tej
+  stronie ma przypisany dowód (endpoint, URL lub hash) albo jawny status SELF-ASSERTED / ROADMAP.</div>
+  <nav>
+    <a href="/control-room">Centrum dowodzenia</a>
+    <a href="/join">Dołącz jako provider</a>
+    <a href="/guide">Przewodnik testnet</a>
+    <a href="/status">Status</a>
+    <a href="/evidence">Dowody</a>
+    <a href="/trust-center">Trust Center</a>
+    <a href="/docs/ai-act-readiness.html">AI Act readiness</a>
+    <a href="/incidents">Incydenty</a>
+    <a href="/developer">Developer</a>
+  </nav>
+</header>
+<main>
+  <div class="banner">
+    <strong>Nie komunikujemy statusu wyższego niż dowody widoczne w systemie.</strong>
+    Tryb: <span class="mono">GO CONTROLLED</span> / <span class="mono">PUBLIC TESTNET</span>.
+    Network status sieci: <span class="mono">TESTNET</span> (nie produkcja). Dane mogą być resetowane,
+    a manifest dowodów podlega weryfikacji operatora.
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">3</div><div class="lbl">Agenci w sieci</div></div>
+    <div class="stat"><div class="num">7</div><div class="lbl">Audyty (5 zakończonych)</div></div>
+    <div class="stat"><div class="num">1</div><div class="lbl">Agent zweryfikowany</div></div>
+    <div class="stat"><div class="num">SHA-256</div><div class="lbl">Algorytm hashy dowodów</div></div>
+    <div class="stat"><div class="num">v1.4</div><div class="lbl">Manifest (2026-05-22)</div></div>
+  </div>
+
+  <h2 class="section">Tabela claim ≤ proof</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Claim</th>
+        <th>Dowód (URL / endpoint / hash)</th>
+        <th>Proof level</th>
+        <th>Status</th>
+        <th>Owner</th>
+        <th>Data aktualizacji</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Federacyjna warstwa governance dla agentów AI działa publicznie</td>
+        <td><span class="mono"><a href="/api/leaderboard">/api/leaderboard</a></span>,
+            <span class="mono"><a href="/api/k0nsulat/status">/api/k0nsulat/status</a></span><br />
+            (3 agenci, 7 audytów)</td>
+        <td><span class="pill verified">VERIFIED</span></td>
+        <td>ACTIVE</td>
+        <td>0n40i4 / K0NSULT</td>
+        <td>2026-05-23</td>
+      </tr>
+      <tr>
+        <td>Evidence-by-design: dokumenty mają hash SHA-256</td>
+        <td><span class="mono"><a href="/evidence/manifest.json">/evidence/manifest.json</a></span><br />
+            (manifest v1.4, algorytm SHA-256)</td>
+        <td><span class="pill controlled">CONTROLLED_VERIFICATION</span></td>
+        <td>ACTIVE</td>
+        <td>0n40i4 / K0NSULT</td>
+        <td>2026-05-22</td>
+      </tr>
+      <tr>
+        <td>Hash-chain pamięci jest weryfikowalny</td>
+        <td><span class="mono"><a href="/api/evidence/verify">/api/evidence/verify</a></span></td>
+        <td><span class="pill controlled">CONTROLLED_VERIFICATION</span></td>
+        <td>ACTIVE</td>
+        <td>0n40i4 / K0NSULT</td>
+        <td>2026-05-22</td>
+      </tr>
+      <tr>
+        <td>Gotowość pod EU AI Act (readiness — <strong>NIE certyfikacja</strong>)</td>
+        <td><span class="mono"><a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a></span></td>
+        <td><span class="pill self">SELF-ASSERTED</span></td>
+        <td>IN PROGRESS</td>
+        <td>Grass Roots Lobbing</td>
+        <td>2026-05-16</td>
+      </tr>
+      <tr>
+        <td>Federacja agentów uruchomiona publicznie</td>
+        <td><span class="mono"><a href="/api/leaderboard">/api/leaderboard</a></span><br />
+            <span class="mono">network_status = TESTNET</span> (nie production)</td>
+        <td><span class="pill roadmap">ROADMAP</span></td>
+        <td>PUBLIC_TESTNET</td>
+        <td>0n40i4 / K0NSULT</td>
+        <td>2026-05-23</td>
+      </tr>
+      <tr>
+        <td>Osobowość prawna agentów / pełna zgodność z AI Act / certyfikacja przez jednostkę notyfikowaną</td>
+        <td>BRAK DOWODU — <strong>tych claimów świadomie NIE podnosimy</strong></td>
+        <td><span class="pill roadmap">ROADMAP</span></td>
+        <td>NIE TWIERDZIMY</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="section">Proof levels — legenda</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="who"><span class="pill verified">VERIFIED</span></div>
+      <h2>Zweryfikowany na żywo</h2>
+      <p>Claim potwierdzony bezpośrednio przez działający publiczny endpoint lub artefakt z hashem,
+      który da się sprawdzić w momencie odczytu.</p>
+    </div>
+    <div class="card">
+      <div class="who"><span class="pill controlled">CONTROLLED_VERIFICATION</span></div>
+      <h2>Weryfikacja kontrolowana</h2>
+      <p>Dowód istnieje i jest sprawdzalny (hash, manifest, chain), ale w trybie GO CONTROLLED —
+      część weryfikacji wymaga tokenu operatora lub kopii referencyjnej.</p>
+    </div>
+    <div class="card">
+      <div class="who"><span class="pill self">SELF-ASSERTED</span></div>
+      <h2>Deklaracja własna</h2>
+      <p>Komunikat oparty na własnej ocenie/mapowaniu (np. readiness pod AI Act). Nie jest to
+      certyfikacja ani audyt zewnętrznej jednostki.</p>
+    </div>
+    <div class="card">
+      <div class="who"><span class="pill roadmap">ROADMAP</span></div>
+      <h2>Plan / niepodniesiony</h2>
+      <p>Funkcja planowana lub claim, którego świadomie nie podnosimy do czasu pojawienia się dowodu.
+      Status PUBLIC_TESTNET oznacza działanie wyłącznie w trybie testowym.</p>
+    </div>
+  </div>
+
+  <h2 class="section">Dowody źródłowe (manifest v1.4)</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tytuł</th>
+        <th>Link</th>
+        <th>Hash (skrócony)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="mono">DOC-001</span></td>
+        <td>UNIONAI_Wytyczne_Wdrozeniowe_Flagowce</td>
+        <td><a href="https://drive.google.com/file/d/1DuNHK-OMEHeVcCGIHc7rDaikormGuQfv/view">Drive</a></td>
+        <td class="mono">8a811a10…b574a962</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-002</span></td>
+        <td>UNIONAI_Dokument_Wdrozeniowy_DEV</td>
+        <td><a href="https://drive.google.com/file/d/1Qoo0J6IB1ts7YtzxeA9K1_LYEUgpLW1K/view">Drive</a></td>
+        <td class="mono">8e1e0845…40916d</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-003</span></td>
+        <td>UNIONAI_Etap_III_Raport_Zatwierdzajacy</td>
+        <td><a href="https://drive.google.com/file/d/1qVVCyNS7qhN-snvZfoHOK3moSsgfkrz2/view">Drive</a></td>
+        <td class="mono">dfe9522c…abada6f</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-004</span></td>
+        <td>UNIONAI_Raport_Calosci_Konsultacji</td>
+        <td><a href="/docs/UNIONAI_Raport_Calosci_Konsultacji.pdf">PDF</a></td>
+        <td class="mono">7e07bce5…3fc44c96</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-005</span></td>
+        <td>UNIONAI_AI_FEDERATION_DEV_SPEC-1</td>
+        <td><a href="https://drive.google.com/file/d/1vmx-YbDPiUHmVpMo8K7q76YFsQbeGitA/view">Drive</a></td>
+        <td class="mono">877d89b6…af5711cb</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-006</span></td>
+        <td>UNIONAI_Operator_VSCode_Guide</td>
+        <td><a href="https://drive.google.com/file/d/1ePyX1UPrTbZNC044aGrC91EnbPywvVq2/view">Drive</a></td>
+        <td class="mono">b17a44f3…fe5c4483</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-007</span></td>
+        <td>UNIONAI_Publication_Protection_Pack</td>
+        <td><a href="https://drive.google.com/file/d/19Xx37UgblwXI3xtsnbEAdIfivbsT20Ex/view">Drive</a></td>
+        <td class="mono">07b4b004…ff322027</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-008</span></td>
+        <td>UCHWALA_001_UNIONAI</td>
+        <td><a href="/legal/UCHWALA_001_UNIONAI_DRAFT.pdf">PDF</a></td>
+        <td class="mono">280436c4…3e6c91a6</td>
+        <td><span class="pill verified">ACTIVE</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-009</span></td>
+        <td>K0NSULT_EU_AI_ACT_IMPLEMENTATION_ROADMAP</td>
+        <td><a href="https://drive.google.com/drive/folders/10LsIrBltc3k03R1q6kf3MQS848W5SKEn">Drive (folder)</a></td>
+        <td class="mono">— (kolekcja)</td>
+        <td><span class="pill roadmap">pending</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-010</span></td>
+        <td>K0NSULT_DEV_BLUEPRINT</td>
+        <td><a href="https://drive.google.com/drive/folders/10LsIrBltc3k03R1q6kf3MQS848W5SKEn">Drive (folder)</a></td>
+        <td class="mono">— (kolekcja)</td>
+        <td><span class="pill roadmap">pending</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-NOTICE-v1.1</span></td>
+        <td>UNIONAI Final Participation Notice v1.1</td>
+        <td><a href="/participation-notice.html">HTML</a></td>
+        <td class="mono">577801cd…017333eb</td>
+        <td><span class="pill verified">verified</span></td>
+      </tr>
+      <tr>
+        <td><span class="mono">DOC-011</span></td>
+        <td>UNIONAI_Uzupelniajacy_Pakiet_Governance_Evidence_DEV</td>
+        <td><a href="https://drive.google.com/drive/folders/1g5SXlX0MCOkblvqp_9fZhCSUmtk67jCd">Drive (folder)</a></td>
+        <td class="mono">częściowy (3 pliki)</td>
+        <td><span class="pill roadmap">pending</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="lead" style="margin-top:10px">Pełny manifest z kompletnymi hashami SHA-256 i metadanymi:
+  <a href="/evidence/manifest.json" class="mono">/evidence/manifest.json</a>.
+  Skróty hashy podano w formacie pierwsze 8 znaków…ostatnie 8 znaków; źródło prawdy to manifest.</p>
+
+  <div class="banner" style="margin-top:24px">
+    <strong>Kontakt / owner.</strong> Source of truth: Grass Roots Lobbing / K0NSULT Ω∞ / 0n40i4.
+    Kod potwierdzenia federacji: <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span>.
+    Tryb publikacji: GO CONTROLLED. Uwagi i zgłoszenia rozbieżności claim ≤ proof kierujemy przez
+    stronę <a href="/incidents">incydentów</a>.
+  </div>
+</main>
+<footer>
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+</footer>
+</body>
+</html>

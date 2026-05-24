@@ -59,6 +59,22 @@
   th { background: var(--card); color: var(--text); font-weight: 700; }
   td.mono, th.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
   tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  pre.log {
+    background: #0b0f14; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; color: var(--text); line-height: 1.5; margin: 10px 0;
+  }
+  ol.steps { padding-left: 20px; margin: 8px 0; }
+  ol.steps li { margin: 5px 0; }
+  ul.check { list-style: none; padding-left: 4px; margin: 8px 0; }
+  ul.check li { margin: 6px 0; }
+  ul.check li::before { content: "\2610"; color: var(--accent); margin-right: 8px; font-size: 15px; }
+  .note { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+  .roadmap {
+    display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; background: rgba(88,166,255,.12); color: var(--accent);
+    border: 1px solid rgba(88,166,255,.35); margin-left: 6px;
+  }
   footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
 </style>
 </head>
@@ -193,6 +209,140 @@
     <strong>Eskalacja:</strong> sytuacje wymagające pilnej interwencji zgłaszaj przez
     <a href="/incidents">stronę incydentów</a>. Kontekst zgodności i mapowanie wymagań nadzoru człowieka
     opisuje <a href="/docs/ai-act-readiness.html">dokument gotowości AI Act</a>.
+  </div>
+
+  <h2 class="section">Dowody działania nadzoru ludzkiego</h2>
+  <p>Poniższa sekcja dokumentuje, że nadzór człowieka jest realny i operacyjny: kto sprawuje kontrolę,
+  jak działa przycisk stop, kiedy wymagane jest ręczne zatwierdzenie, oraz jak wygląda przykładowy log
+  override i procedury operatora.</p>
+
+  <h2 class="section">1. Kto ma uprawnienia operatora</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="who">Operator</div>
+      <h2>Operator 0n40i4</h2>
+      <p>Jedyna rola z uprawnieniami do stop / veto / override. Każde wywołanie endpointu operatorskiego
+      przechodzi przez middleware <span class="mono">requireAuth</span> i wymaga ważnego
+      <strong>tokenu operatora</strong>.</p>
+      <ul>
+        <li>autoryzacja: token operatora (<span class="mono">requireAuth</span>),</li>
+        <li>zakres: stop, veto, override, eksport audytu,</li>
+        <li>brak tokenu = brak dostępu (akcje niepubliczne).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="who">Compliance owner</div>
+      <h2>Ścieżka eskalacji</h2>
+      <p>Właściciel obszaru zgodności nie wykonuje akcji samodzielnie, lecz może wymusić interwencję:
+      zgłasza incydent i eskaluje sprawę do operatora, który wykonuje stop / veto.</p>
+      <ul>
+        <li>wnioskuje o zatrzymanie działania,</li>
+        <li>nadzoruje rejestr ryzyk i audyt,</li>
+        <li>eskaluje do operatora 0n40i4.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="who">Sekrety</div>
+      <h2>Poza repozytorium</h2>
+      <p>Token operatora i pozostałe sekrety nadzoru są przechowywane poza repozytorium kodu
+      (zarządzane jako sekrety środowiskowe). Nie są commitowane ani publikowane.</p>
+      <ul>
+        <li>brak sekretów w repo,</li>
+        <li>brak sekretów w odpowiedziach publicznych,</li>
+        <li>rotacja po stronie operatora.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="section">2. Jak działa STOP</h2>
+  <p>Przycisk stop realizują operatorskie endpointy zamrażania. Każdy wymaga tokenu operatora
+  (<span class="mono">requireAuth</span>) i działa natychmiastowo — wstrzymuje wskazaną warstwę do czasu
+  ręcznego wznowienia.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Akcja</th>
+        <th>Efekt</th>
+        <th class="mono">Endpoint</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Zatrzymaj relay</td>
+        <td>Zatrzymuje warstwę relay — agenci nie wymieniają zapytań produkcyjnych.</td>
+        <td class="mono">POST /api/operator/freeze-relay</td>
+      </tr>
+      <tr>
+        <td>Wznów relay</td>
+        <td>Wznawia warstwę relay po usunięciu przyczyny.</td>
+        <td class="mono">POST /api/operator/unfreeze-relay</td>
+      </tr>
+      <tr>
+        <td>Zatrzymaj pamięć</td>
+        <td>Zatrzymuje warstwę pamięci — blokuje utrwalanie skutków działań agentów.</td>
+        <td class="mono">POST /api/operator/freeze-memory</td>
+      </tr>
+      <tr>
+        <td>Wznów pamięć</td>
+        <td>Wznawia warstwę pamięci po usunięciu przyczyny.</td>
+        <td class="mono">POST /api/operator/unfreeze-memory</td>
+      </tr>
+      <tr>
+        <td>Sprawdź status</td>
+        <td>Zwraca stan zamrożenia warstw (za uwierzytelnieniem, bez ujawniania sekretów).</td>
+        <td class="mono">GET /api/operator/status</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section">3. Kiedy wymagane jest ręczne zatwierdzenie</h2>
+  <div class="banner">
+    Następujące działania nigdy nie są wykonywane autonomicznie — wymagają ręcznego zatwierdzenia człowieka
+    (operatora), zanim wywołają skutek:
+    <ul>
+      <li><strong>Rejestracja providera</strong> — przyjęcie nowej organizacji.</li>
+      <li><strong>Zmiana poziomu zaufania (trust tier)</strong> — awans/degradacja sterujący uprawnieniami.</li>
+      <li><strong>Governance / uchwały</strong> — decyzje wpływające na zasady federacji.</li>
+      <li><strong>Relay produkcyjny</strong> — uruchomienie produkcyjnej wymiany zapytań między agentami.</li>
+      <li><strong>Akcje wpływające na dane lub decyzje</strong> — wszelkie działania o skutkach dla danych użytkowników lub podejmowanych decyzji.</li>
+    </ul>
+  </div>
+
+  <h2 class="section">4. Przykład zanonimizowanego logu override</h2>
+  <p>Każde użycie stop / veto / override jest zapisywane w rejestrze audytu. Poniżej przykład wpisu —
+  <strong>dane zanonimizowane, wartości ilustracyjne</strong>:</p>
+  <pre class="log">{"event":"operator.override","actor":"operator:0n40i4","action":"freeze-relay","reason":"incident triage","ts":"2026-05-24T21:14:07Z","target":"relay","result":"frozen"}</pre>
+  <p class="note">Przykład poglądowy. Identyfikatory i szczegóły zostały zanonimizowane; rzeczywiste wpisy
+  są częścią weryfikowalnego rejestru (hash-chain) dostępnego operatorowi.</p>
+
+  <h2 class="section">5. Playbook: kiedy operator zatrzymuje routing</h2>
+  <ol class="steps">
+    <li>Wykrycie anomalii lub incydentu (alert, monitoring, zgłoszenie).</li>
+    <li>Ocena wpływu — zasięg, ryzyko dla danych i decyzji.</li>
+    <li>Wywołanie <span class="mono">POST /api/operator/freeze-relay</span> (zatrzymanie routingu).</li>
+    <li>Wpis incydentu na <a href="/incidents">stronie incydentów</a>.</li>
+    <li>Analiza przyczyny źródłowej.</li>
+    <li>Wywołanie <span class="mono">POST /api/operator/unfreeze-relay</span> po usunięciu przyczyny.</li>
+    <li>Zapis logu override w rejestrze audytu.</li>
+  </ol>
+
+  <h2 class="section">6. Checklista dyżurnego operatora</h2>
+  <div class="banner">
+    <ul class="check">
+      <li>Monitoruje <a href="/status">stronę status</a> federacji.</li>
+      <li>Reaguje na alert (uptime / Discord) w uzgodnionym czasie.</li>
+      <li>Klasyfikuje incydent (zasięg, waga, dotknięte warstwy).</li>
+      <li>Ma dostęp do mechanizmów STOP (token operatora, endpointy freeze).</li>
+      <li>Dokumentuje decyzję (wpis incydentu + log override).</li>
+      <li>Eskaluje do compliance owner, gdy wymagane.</li>
+    </ul>
+  </div>
+
+  <div class="banner">
+    <strong>Roadmap <span class="roadmap">ROADMAP</span></strong> — planowany jest pełny publiczny endpoint
+    statusu nadzoru (bez uwierzytelnienia), udostępniający stan zamrożenia warstw bez ujawniania sekretów.
+    Obecnie status nadzoru jest dostępny za uwierzytelnieniem operatora
+    (<span class="mono">GET /api/operator/status</span>).
   </div>
 </main>
 <footer>

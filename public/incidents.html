@@ -192,6 +192,84 @@
     szerszy kontekst zgodności i bezpieczeństwa znajdziesz w <a href="/trust-center">Trust Center</a>.</p>
   </div>
 
+  <h2 class="section">Procedura incydentu (Incident Playbook)</h2>
+  <p>Pełna procedura postępowania od przyjęcia zgłoszenia do zamknięcia incydentu z hashem dowodu.
+  Kroki techniczne oznaczone jako <span class="mono">POST /api/incident/*</span> wymagają tokenu operatora.</p>
+  <ol>
+    <li><strong>Przyjęcie zgłoszenia</strong> — rejestracja sygnału z kanału:
+    <span class="mono">kontakt@grassrootslobbing.pl</span>, GitHub issues lub alert uptime.</li>
+    <li><strong>Nadanie ID incydentu</strong> — <span class="mono">POST /api/incident/open</span> (token operatora);
+    incydent otrzymuje unikalny identyfikator w rejestrze.</li>
+    <li><strong>Klasyfikacja severity</strong> — przypisanie klasy istotności
+    (<span class="badge blocker">BLOCKER</span> / <span class="badge critical">CRITICAL</span> /
+    <span class="badge major">MAJOR</span> / <span class="badge minor">MINOR</span>).</li>
+    <li><strong>Zamrożenie dowodów</strong> — <span class="mono">POST /api/incident/freeze</span> (token operatora);
+    w razie potrzeby zamrożenie relay/memory dla zachowania integralności dowodów.</li>
+    <li><strong>Ocena wpływu</strong> — analiza skutków dla danych, dowodów (evidence), governance oraz użytkowników.</li>
+    <li><strong>Decyzja</strong> — wybór reakcji: monitorować / ograniczyć funkcję / zatrzymać system.</li>
+    <li><strong>Komunikat wewnętrzny</strong> — powiadomienie operatora oraz zespołu compliance.</li>
+    <li><strong>Komunikat publiczny</strong> — jeżeli dotyczy, publikacja statusu na
+    <a href="/incidents">/incidents</a> oraz <a href="/status">/status</a>.</li>
+    <li><strong>Root cause analysis</strong> — ustalenie pierwotnej przyczyny incydentu.</li>
+    <li><strong>Korekta i retest</strong> — wdrożenie poprawki oraz ponowny test (smoke).</li>
+    <li><strong>Zamknięcie incydentu</strong> — <span class="mono">POST /api/incident/export</span> (token operatora);
+    domknięcie z hashem dowodu.</li>
+  </ol>
+
+  <h2 class="section">Macierz reakcji</h2>
+  <p>Tabela określa odpowiedzialności i progi czasowe per klasa istotności.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Klasa</th>
+        <th>Kto przyjmuje zgłoszenie</th>
+        <th>Czas reakcji</th>
+        <th>Kto eskaluje</th>
+        <th>Kiedy informowani użytkownicy</th>
+        <th>Kiedy informowany provider zewnętrzny</th>
+        <th>Kiedy zawiesza się funkcję / środowisko</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge blocker">BLOCKER</span></td>
+        <td>dev (triage)</td>
+        <td>Natychmiast.</td>
+        <td>dev → operator owner (0n40i4); compliance owner przy danych/bezpieczeństwie.</td>
+        <td>Niezwłocznie — komunikat publiczny na /incidents i /status.</td>
+        <td>Niezwłocznie, jeżeli incydent dotyczy usługi providera.</td>
+        <td>Zawieszenie systemu lub środowiska do czasu opanowania.</td>
+      </tr>
+      <tr>
+        <td><span class="badge critical">CRITICAL</span></td>
+        <td>dev (triage)</td>
+        <td>&lt; 4h.</td>
+        <td>dev → operator owner; compliance owner przy wycieku/naruszeniu danych.</td>
+        <td>Po potwierdzeniu wpływu — komunikat na /incidents i /status.</td>
+        <td>Po potwierdzeniu wpływu na komponent providera.</td>
+        <td>Ograniczenie lub zawieszenie dotkniętej funkcji.</td>
+      </tr>
+      <tr>
+        <td><span class="badge major">MAJOR</span></td>
+        <td>dev (triage)</td>
+        <td>&lt; 24h.</td>
+        <td>dev; operator owner w razie eskalacji.</td>
+        <td>W aktualizacji statusu, jeżeli odczuwalne dla użytkowników.</td>
+        <td>Jeżeli przyczyna leży po stronie providera.</td>
+        <td>Zwykle bez zawieszenia (dostępny workaround); ograniczenie wyjątkowo.</td>
+      </tr>
+      <tr>
+        <td><span class="badge minor">MINOR</span></td>
+        <td>dev (triage)</td>
+        <td>Następne wydanie (release).</td>
+        <td>dev (zwykle bez eskalacji).</td>
+        <td>Zwykle bez komunikatu; ewentualnie w notatkach wydania.</td>
+        <td>Zwykle nie dotyczy.</td>
+        <td>Brak zawieszenia.</td>
+      </tr>
+    </tbody>
+  </table>
+
   <h2 class="section">Jak zgłosić incydent</h2>
   <div class="card">
     <p>Aby zgłosić incydent, podaj możliwie precyzyjny opis, czas zaobserwowania oraz kroki

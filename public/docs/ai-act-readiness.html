@@ -135,50 +135,66 @@
 
   <section>
     <h2>2. Klasyfikacja ryzyka per use-case</h2>
+    <p>Klasyfikacja prowadzona per use-case (nie zbiorczo). Najwrażliwsze: ranking zaufania, governance,
+    onboarding podmiotów zewnętrznych, użycie wyników AI do decyzji wobec ludzi.</p>
     <p>Klasyfikacja nie jest robiona jednym zdaniem dla całej platformy. Każdy use-case oceniamy osobno
     i ostrożnie. W trybie testnet/research większość funkcji nie jest oceniana jako wysokiego ryzyka,
     ale każda ocena podlega weryfikacji i może się zmienić wraz z faktycznym przeznaczeniem.</p>
     <table>
       <thead>
-        <tr><th>Use-case</th><th>Czy high-risk?</th><th>Uzasadnienie</th><th>Mitigation</th></tr>
+        <tr><th>Use-case</th><th>Obecny status</th><th>Możliwy trigger high-risk</th><th>Decyzja</th><th>Dowód</th></tr>
       </thead>
       <tbody>
         <tr>
           <td>Rejestracja agenta</td>
-          <td><span class="badge no">wstępnie nie</span></td>
-          <td>Czynność techniczno-administracyjna (zapis DID i metadanych). Nie podejmuje decyzji
-          wpływających na prawa osób.</td>
-          <td>Walidacja danych wejściowych, brak PII w rejestrze publicznym, ślad audytowy.</td>
+          <td><span class="badge no">low</span> / admin</td>
+          <td>Brak, jeśli bez PII i bez skutków prawnych.</td>
+          <td>Testnet OK.</td>
+          <td>Log + schema.</td>
         </tr>
         <tr>
           <td>Routing zapytań</td>
-          <td><span class="badge no">wstępnie nie</span></td>
-          <td>Przekierowanie zapytania do agenta wg poziomu zaufania; tryb research, brak rozstrzygnięć
-          o skutkach prawnych dla osób.</td>
-          <td>Rate limiting, gating po trust tier, logi wejść/wyjść, możliwość stop przez operatora.</td>
-        </tr>
-        <tr>
-          <td>Audyt K0NSULAT</td>
-          <td><span class="badge no">wstępnie nie</span></td>
-          <td>Wewnętrzna ocena jakości/spójności agenta na potrzeby federacji; nie jest oceną osób fizycznych.</td>
-          <td>Jawne kryteria, weryfikowalny hash dowodów, przegląd przez operatora.</td>
+          <td><span class="badge no">limited</span> / operational</td>
+          <td>Wpływ na decyzje wobec ludzi.</td>
+          <td>Monitorować.</td>
+          <td>Route log.</td>
         </tr>
         <tr>
           <td>Ranking zaufania</td>
-          <td><span class="badge review">wymaga weryfikacji</span></td>
-          <td>Scoring agentów (nie ludzi). Należy ostrożnie zweryfikować, czy w przyszłych zastosowaniach
-          nie wpływa pośrednio na dostęp do usług.</td>
-          <td>Transparentne kryteria, audytowalność, brak profilowania osób fizycznych, przegląd okresowy.</td>
+          <td><span class="badge review">requires review</span></td>
+          <td>Dostęp do usług / reputacja / profiling.</td>
+          <td>P1 review.</td>
+          <td>Scoring policy.</td>
+        </tr>
+        <tr>
+          <td>Audyt K0NSULAT</td>
+          <td><span class="badge no">low</span></td>
+          <td>Ocena podmiotów ze skutkiem.</td>
+          <td>Monitorować.</td>
+          <td>Audit log.</td>
         </tr>
         <tr>
           <td>Governance / uchwały</td>
-          <td><span class="badge review">wymaga weryfikacji</span></td>
-          <td>Decyzje organizacyjne w obrębie federacji. Ocena zależna od ostatecznego przeznaczenia
-          i ewentualnych skutków dla uczestników.</td>
-          <td>Veto operatora, ręczne zatwierdzanie, pełny ślad decyzji i wersji polityk.</td>
+          <td><span class="badge review">requires review</span></td>
+          <td>Wiążące decyzje prawne/finansowe.</td>
+          <td>Manual gate + human veto.</td>
+          <td>Uchwała + log veto.</td>
+        </tr>
+        <tr>
+          <td>External provider onboarding</td>
+          <td><span class="badge review">requires review</span></td>
+          <td>Odpowiedzialność za system zewnętrzny.</td>
+          <td>Legal/security review.</td>
+          <td>Onboarding checklist.</td>
         </tr>
       </tbody>
     </table>
+    <div class="banner warn">
+      <strong>Twarda zasada.</strong> Każde wdrożenie produkcyjne lub użycie w konkretnym sektorze
+      (administracja, ocena osób, dostęp do usług, rekrutacja, edukacja, scoring, egzekwowanie prawa,
+      infrastruktura krytyczna) wymaga osobnej klasyfikacji AI Act per use-case PRZED uruchomieniem;
+      jeśli wpływa na prawa/obowiązki/dostęp osób — klasyfikacja może przejść na high-risk.
+    </div>
   </section>
 
   <section>

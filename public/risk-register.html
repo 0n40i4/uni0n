@@ -94,6 +94,11 @@
 </header>
 <main>
   <div class="banner">
+    <strong>Rejestr ryzyk v1 — wersjonowany.</strong> Data: <span class="mono">2026-05-24</span> ·
+    owner: <span class="mono">Compliance / 0n40i4</span> · status: <strong>roboczy testnet</strong>.
+  </div>
+
+  <div class="banner">
     <strong>Rejestr żywy — przeglądany cyklicznie.</strong> Tryb GO CONTROLLED / PUBLIC TESTNET.
     Oceny istotności odzwierciedlają ograniczony, kontrolowany zakres działania w środowisku testnet
     i mogą zmieniać się przy każdym przeglądzie. Dokument nie stanowi deklaracji pełnej zgodności
@@ -239,6 +244,76 @@
       </tbody>
     </table>
   </div>
+
+  <h2 class="section">Rejestr formalny v1 (per AI Act readiness)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ryzyko</th>
+          <th>Severity</th>
+          <th>Owner</th>
+          <th>Mitigacja</th>
+          <th>Status</th>
+          <th>Dowód</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="id">R-001</td>
+          <td>Claim silniejszy niż dowód.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>publication owner</td>
+          <td>Claim review (CLAIMS_MATRIX) — zasada <em>claim ≤ proof</em>.</td>
+          <td>open</td>
+          <td><a href="/trust-center">Trust Center</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-002</td>
+          <td>Ranking agentów użyty jako ocena ludzi.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>compliance owner</td>
+          <td>Zakaz / disclaimer / gate na użycie poza zakresem.</td>
+          <td>open</td>
+          <td>use-case matrix (<a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a>)</td>
+        </tr>
+        <tr>
+          <td class="id">R-003</td>
+          <td>Brak jasnej retencji logów.</td>
+          <td><span class="sev medium">MAJOR</span></td>
+          <td>data owner</td>
+          <td>Polityka retencji. <strong>Zaadresowane</strong> przez politykę prywatności.</td>
+          <td>mitigated</td>
+          <td><a href="/privacy">/privacy</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-004</td>
+          <td>Incydent evidence bez procedury eskalacji.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>incident owner</td>
+          <td>Incident playbook. <strong>Zaadresowane</strong> przez playbook incydentów.</td>
+          <td>mitigated</td>
+          <td><a href="/incidents">/incidents</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-005</td>
+          <td>Brak retestu po poprawkach.</td>
+          <td><span class="sev medium">MAJOR</span></td>
+          <td>security owner</td>
+          <td>External review + retest.</td>
+          <td>planned</td>
+          <td><a href="/external-review">/external-review</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px; color:var(--muted); font-size:13px;">
+    Severity rejestru formalnego v1 używa skali audytu K0NSULT (<span class="mono">CRITICAL / MAJOR</span>).
+    Ryzyka <span class="mono">R-003</span> oraz <span class="mono">R-004</span> są już zaadresowane —
+    odpowiednio przez politykę prywatności (<a href="/privacy">/privacy</a>) oraz playbook incydentów
+    (<a href="/incidents">/incidents</a>).
+  </p>
 
   <h2 class="section">Proces przeglądu</h2>
   <div class="card">

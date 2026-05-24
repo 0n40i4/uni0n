@@ -7,6 +7,14 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Compliance — reakcja na EU AI Act readiness review (2026-05-24, GO CONTROLLED warunkowo)
+- **F-002:** matryca RACI w `/governance` (AI Act readiness/evidence/incydenty/claim/oversight/production-gate) + podrole operatora.
+- **F-003/F-004:** `/docs/ai-act-readiness.html` — formalna tabela high-risk per use-case (Use-case | status | trigger | decyzja | dowód) + twarda zasada „klasyfikacja per use-case przed wdrożeniem".
+- **F-005:** `/human-oversight` — dowody: procedura, STOP (freeze-*), przykład logu override, playbook „zatrzymanie routingu", checklista dyżurnego.
+- **F-006:** `/risk-register` — Rejestr formalny v1 (R-001..R-005: claim>proof, ranking-jako-ocena-ludzi, retencja, eskalacja incydentu, retest) + wersjonowanie.
+- **F-007:** `/incidents` — 11-krokowy incident playbook + macierz reakcji (kto/czas/eskalacja/komunikaty/zawieszenie).
+- **F-010:** raport `docs/reports/AI_ACT_READINESS_REVIEW_2026-05-24.md` + linki 3 przeglądów w `/external-review` (techniczny/prawny/readiness — wszystkie GO CONTROLLED).
+
 ### Changed — reakcja na external review prawno-komunikacyjny (2026-05-24)
 - **L-01:** „Pierwsza w UE federacja…" → „Publiczny testnet federacji agentów AI… inicjatywa badawczo-techniczna" (hero index, README, GitHub About).
 - **L-06:** „Compliance Cron — ciągła weryfikacja zgodności" → „cykliczne śledzenie gotowości/evidence/ryzyk; nie formalna weryfikacja zgodności".

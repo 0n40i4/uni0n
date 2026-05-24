@@ -145,6 +145,21 @@
   </section>
 
   <section>
+    <h2>Matryca odpowiedzialności (RACI)</h2>
+    <p>Doprecyzowanie ról „deployer/operator" (readiness audit F-002): R=Responsible, A=Accountable, C=Consulted, I=Informed.</p>
+    <table>
+      <tr><th>Obszar</th><th>Responsible</th><th>Accountable</th><th>Consulted</th><th>Informed</th></tr>
+      <tr><td>AI Act readiness</td><td>Compliance owner</td><td>Operator / zarząd (GRL)</td><td>audytor zewnętrzny</td><td>publicznie</td></tr>
+      <tr><td>Evidence layer</td><td>Tech owner</td><td>Operator</td><td>security reviewer</td><td>Trust Center</td></tr>
+      <tr><td>Incydenty</td><td>Incident owner</td><td>Operator</td><td>dev / security</td><td>użytkownicy</td></tr>
+      <tr><td>Claim ≤ proof</td><td>Publication owner</td><td>Operator</td><td>legal / compliance</td><td>publicznie</td></tr>
+      <tr><td>Human oversight</td><td>Dyżurny operator</td><td>Operator główny</td><td>dev / security</td><td>użytkownicy</td></tr>
+      <tr><td>Production-gate</td><td>Tech lead</td><td>Operator</td><td>compliance owner</td><td>publicznie</td></tr>
+    </table>
+    <p class="mono" style="opacity:.7">Podrole operatora: organizacyjny, techniczny, administrator evidence, administrator incydentów, odpowiedzialny za publikację claimów, zatwierdzający production-gate.</p>
+  </section>
+
+  <section>
     <h2>Ścieżki decyzji</h2>
     <p>Każda decyzja o wpływie na federację przechodzi tę samą ścieżkę: od wniosku, przez przegląd
     i głosowanie, po potwierdzenie operatora i zapis w audit trail. Diagram poniżej pokazuje przepływ.</p>

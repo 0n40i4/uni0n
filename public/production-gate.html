@@ -187,12 +187,22 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">8 · External review</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Przegląd zewnętrzny zakończony</strong>
-        <span class="crit">Kryterium: niezależny przegląd (security / compliance) wykonany, ustalenia zaadresowane i udokumentowane. Dowód: <a href="/external-review">/external-review</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Przeglądy nieinwazyjne (techniczny + prawny + AI Act readiness)</strong>
+        <span class="crit">Wykonane 2026-05-24, wszystkie ustalenia BLOCKER/CRITICAL/MAJOR zaadresowane i udokumentowane. Dowód: <a href="/external-review">/external-review</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Self-pentest (aktywny, bounded)</strong>
+        <span class="crit">Wykonany 2026-05-24, 0 BLOCKER/CRITICAL/MAJOR, 2× MINOR naprawione. <em>Self-assessment — nie zastępuje niezależnego.</em></span></li>
+      <li><span class="box todo">☐</span><strong>Niezależny aktywny pentest</strong>
+        <span class="crit">JEDYNY otwarty warunek techniczny. Wymaga zewnętrznego wykonawcy (Securitum / równoważny). RFP gotowy: <span class="mono">docs/EXTERNAL_REVIEW_EMAIL.md</span>.</span></li>
     </ul>
   </div>
 
   <h2 style="font-size:20px; margin-top:24px;">Kto podpisuje</h2>
+  <div class="banner warn">
+    <strong>READY-TO-SIGN (stan 2026-05-24):</strong> wszystkie warunki techniczne, prawne i readiness są ☑ i zweryfikowane.
+    Przed złożeniem podpisów pozostaje <strong>jeden warunek</strong>: <strong>niezależny aktywny pentest</strong>
+    (zewnętrzny). Po jego zakończeniu i zaadresowaniu ustaleń — uzupełnij poniższe trzy podpisy (imię/rola/data),
+    zamień ostatni ☐ na ☑, i dopiero wtedy wykonaj „Procedurę przełączenia".
+  </div>
   <div class="banner">
     Przejście do <span class="mono">PRODUCTION</span> wymaga podpisu trzech ról (zgodnie z kryteriami FULL LIVE).
     Wszystkie trzy podpisy są wymagane — brak choćby jednego = brak przejścia.
@@ -236,13 +246,14 @@
   </div>
 
   <div class="final">
-    <strong>Status końcowy: <span class="status-fail">NIE SPEŁNIONE (2 pozycje otwarte)</span></strong><br />
-    <strong>Warunki techniczne spełnione i zweryfikowane</strong> (registry, trust tiers, auth boundary,
-    monitoring, incydenty, SLA/SLO, evidence — zob. ☑ powyżej, stan 2026-05-24). Otwarte pozostają
-    dwie pozycje organizacyjne: <strong>(1) przegląd zewnętrzny</strong> (P2-03 — RFP gotowy:
-    <span class="mono">docs/EXTERNAL_REVIEW_RFP.md</span>) oraz <strong>(2) podpisy</strong> operatora,
-    tech leada i compliance ownera. Do ich domknięcia <strong>pozostajemy w trybie GO CONTROLLED /
-    PUBLIC TESTNET</strong>; <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>.
+    <strong>Status końcowy: <span class="status-fail">READY-TO-SIGN — 1 warunek + 3 podpisy otwarte</span></strong><br />
+    <strong>Wszystkie warunki techniczne, prawne i readiness są ☑ i zweryfikowane</strong> (registry, trust tiers,
+    auth boundary, monitoring, incydenty, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof —
+    stan 2026-05-24; 3 przeglądy nieinwazyjne + self-pentest wykonane). Otwarte pozostają:
+    <strong>(1) niezależny aktywny pentest</strong> (zewnętrzny — RFP: <span class="mono">docs/EXTERNAL_REVIEW_EMAIL.md</span>)
+    oraz <strong>(2) trzy podpisy</strong> (operator + tech lead + compliance owner) — do złożenia PO pentescie.
+    Do ich domknięcia <strong>pozostajemy w trybie GO CONTROLLED / PUBLIC TESTNET</strong>;
+    <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>. Nie komunikować FULL LIVE.
     <div class="cta">
       <a class="alt" href="/trust-center">Trust Center</a>
       <a class="alt" href="/external-review">Przegląd zewnętrzny</a>

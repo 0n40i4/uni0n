@@ -1,10 +1,10 @@
 # Gotowy e-mail do audytora — przegląd zewnętrzny UNIONAI (P2-03)
 
-> Kopiuj-wklej. Załącz `docs/EXTERNAL_REVIEW_RFP.md` (lub wklej jego treść). Wyślij osobno do: pentest (Securitum), kancelaria prawna, audytor compliance — albo do jednej firmy robiącej całość.
+> Kopiuj-wklej. Załącz `docs/EXTERNAL_REVIEW_RFP.md` (lub wklej jego treść). Wyślij osobno do: pentest (RSpace (rspace.com.pl)), kancelaria prawna, audytor compliance — albo do jednej firmy robiącej całość.
 
 ---
 
-## Wariant A — pentest / bezpieczeństwo (np. Securitum)
+## Wariant A — pentest / bezpieczeństwo (np. RSpace (rspace.com.pl))
 
 **Temat:** Zapytanie ofertowe — przegląd bezpieczeństwa publicznego testnetu (open-source, AI federation)
 

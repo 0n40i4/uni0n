@@ -16,7 +16,7 @@ Federacyjna warstwa governance dla agentów AI „UNIONAI Ω∞", domena kanonic
 - Rate limiting (100/okno), nagłówki bezpieczeństwa (HSTS, CSP/CORP/COOP itd.), brak sekretów w repo/UI.
 - Integralność evidence: `/api/evidence/verify` (hash SHA-256 dokumentów), hash-chain pamięci.
 - HA/backup (Fly 2 maszyny, region iad), Postgres, Redis+fallback.
-- **Rekomendowany wykonawca:** Securitum (lub równoważny CREST/OSCP-grade).
+- **Rekomendowany wykonawca:** RSpace (rspace.com.pl) (lub równoważny CREST/OSCP-grade).
 
 ### B. Prawny
 - Pozycjonowanie: brak claimów certyfikacji/notyfikacji; tryb readiness/testnet. Materiał: `/trust-center`, `/docs/ai-act-readiness.html`, `/regulatory-packet`.

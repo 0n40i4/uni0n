@@ -224,7 +224,7 @@
       kryterium tej bramki. Rekomendowany skład:</p>
       <ul>
         <li><strong>Niezależny audytor prawny</strong> — weryfikacja claimów, pozycjonowania audit-only, parasola GRL i zgodności RODO.</li>
-        <li><strong>Pentest / audyt bezpieczeństwa</strong> — niezależna firma (np. wcześniejsza rekomendacja: Securitum) potwierdzająca auth boundary, rate limiting i brak sekretów.</li>
+        <li><strong>Pentest / audyt bezpieczeństwa</strong> — niezależna firma (np. wybór operatora: RSpace (rspace.com.pl)) potwierdzająca auth boundary, rate limiting i brak sekretów.</li>
         <li><strong>Przegląd compliance</strong> — niezależna weryfikacja macierzy AI Act readiness, rejestru ryzyk i polityk (incydenty, nadzór ludzki).</li>
       </ul>
       <p><strong>Wynik:</strong> raport zewnętrzny z datą, zakresem, ustaleniami i statusem każdej pozycji
@@ -241,7 +241,7 @@
         <li>Przegląd prawno-komunikacyjny: <span class="mono">✅ 2026-05-24</span> — GO CONTROLLED; claimy złagodzone (LEGAL_CLAIMS_MATRIX).</li>
         <li>EU AI Act readiness review: <span class="mono">✅ 2026-05-24</span> — GO CONTROLLED warunkowo. Raport: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/AI_ACT_READINESS_REVIEW_2026-05-24.md">AI_ACT_READINESS_REVIEW_2026-05-24.md</a></li>
         <li>Self-pentest (aktywny, bounded, <strong>self-assessment — NIE niezależny</strong>): <span class="mono">✅ 2026-05-24</span> — 0 BLOCKER/CRITICAL/MAJOR, 2× MINOR naprawione. Raport: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/SELF_PENTEST_2026-05-24.md">SELF_PENTEST_2026-05-24.md</a></li>
-        <li>Pentest <strong>niezależny aktywny</strong> (Securitum / równoważny): <span class="mono">— do zlecenia (RFP gotowy) —</span> — wymagany do P2-07.</li>
+        <li>Pentest <strong>niezależny aktywny</strong> (RSpace (rspace.com.pl) / równoważny): <span class="mono">— do zlecenia (RFP gotowy) —</span> — wymagany do P2-07.</li>
       </ul>
       <p><strong>Readiness review — zakres:</strong> matryca ról provider/deployer/operator, klasyfikacja high-risk per use-case, human oversight, rejestr ryzyk, polityka incydentów, claim ≤ proof. Status: GO CONTROLLED — readiness review, NIE certyfikacja/notyfikacja/ocena zgodności. Warunek P2-07: zamknięcie BLOCKER/CRITICAL (zaadresowane) + aktywny pentest + podpisy.</p>
       <p><strong>Remediacja:</strong> CRITICAL-01 (CSP), CRITICAL-02 (CORS allowlist), BLOCKER-01 (incident/governance auth, agent unverified, ack pending), BLOCKER-02 (status language), MAJOR-02/03 — <strong>zamknięte</strong>. Otwarte: refaktor klas endpointów + quarantine, evidence v2, CI security tooling. Szczegóły w raporcie.</p>

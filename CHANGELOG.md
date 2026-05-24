@@ -7,6 +7,12 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security — self-pentest (active, bounded) 2026-05-24
+- Self-assessment (NIE niezależny pentest). Wynik: 0 BLOCKER/CRITICAL/MAJOR. PASS: auth boundary (write→401, memory→403), SQLi-safe (parametryzowane), path-traversal-safe, CORS allowlist, nagłówki, rate-limit.
+- **F-PT-01 (MINOR):** `/api/agent/join` — walidacja formatu DID (`^did:method:identifier$`), zły DID → 400 (było: dowolny string → junk/poisoning).
+- **F-PT-02 (MINOR):** nagłówek `Permissions-Policy` (geolocation/microphone/camera/payment/usb/interest-cohort = ()).
+- smoke: +`agent/join` zły DID→400, +Permissions-Policy obecny. Raport: `docs/reports/SELF_PENTEST_2026-05-24.md`. Niezależny pentest aktywny nadal wymagany do P2-07.
+
 ### Compliance — reakcja na EU AI Act readiness review (2026-05-24, GO CONTROLLED warunkowo)
 - **F-002:** matryca RACI w `/governance` (AI Act readiness/evidence/incydenty/claim/oversight/production-gate) + podrole operatora.
 - **F-003/F-004:** `/docs/ai-act-readiness.html` — formalna tabela high-risk per use-case (Use-case | status | trigger | decyzja | dowód) + twarda zasada „klasyfikacja per use-case przed wdrożeniem".

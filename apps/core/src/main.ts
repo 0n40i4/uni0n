@@ -381,6 +381,12 @@ app.use(cors({
   exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'Retry-After'],
 }));
 
+// F-PT-02 (self-pentest 2026-05-24): Permissions-Policy — wyłącz nieużywane API przeglądarki (defense-in-depth).
+app.use((_req, res, next) => {
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()');
+  next();
+});
+
 app.use(['/api/relay/send', '/api/relay/route'], requireRelaySharedSecret);
 // BLOCKER-01 (audyt 2026-05-24): governance/event = akcja governance (hash-chain) → token operatora.
 app.use(['/api/governance/event'], requireAuth);
@@ -998,8 +1004,10 @@ app.get('/openapi.json', (req, res) => {
 app.post('/api/agent/join', async (req, res) => {
   try {
     const { did, provider, capabilities, zone, intent_id, operator_did, runtime_type, public_key } = req.body || {};
-    if (!did) {
-      return res.status(400).json({ error: 'did is required' });
+    // F-PT-01 (self-pentest 2026-05-24): walidacja formatu DID — ogranicza junk/poisoning
+    // otwartej rejestracji T0 (musi być did:metoda:identyfikator, bezpieczny charset, ≤200 zn.).
+    if (!did || typeof did !== 'string' || !/^did:[a-zA-Z0-9]+:[a-zA-Z0-9._:-]{1,200}$/.test(did)) {
+      return res.status(400).json({ error: 'did is required and must be a valid DID (did:method:identifier)' });
     }
     // capability_manifest stored as JSONB; accept array or object from client
     const capManifest = capabilities !== undefined

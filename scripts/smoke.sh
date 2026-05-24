@@ -171,6 +171,24 @@ else
   printf 'FAIL  csp   brak naglowka Content-Security-Policy\n'
   FAILED=$((FAILED + 1))
 fi
+# F-PT-02: Permissions-Policy obecny (self-pentest 2026-05-24)
+CHECKS=$((CHECKS + 1))
+if curl -sS -I --max-time 15 "${BASE}/" | grep -qi 'permissions-policy'; then
+  printf 'OK    hdr   naglowek Permissions-Policy obecny\n'
+else
+  printf 'FAIL  hdr   brak naglowka Permissions-Policy\n'
+  FAILED=$((FAILED + 1))
+fi
+# F-PT-01: agent/join z niepoprawnym DID -> 400 (self-pentest 2026-05-24)
+CHECKS=$((CHECKS + 1))
+JOIN_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"did":"not a did"}' --max-time 15 "${BASE}/api/agent/join" || echo "000")"
+if [ "${JOIN_CODE}" = "400" ]; then
+  printf 'OK    %s  POST /api/agent/join (niepoprawny DID odrzucony)\n' "${JOIN_CODE}"
+else
+  printf 'FAIL  %s  POST /api/agent/join  (oczekiwano 400 dla zlego DID)\n' "${JOIN_CODE}"
+  FAILED=$((FAILED + 1))
+fi
 
 # --- API / JSON ---
 echo "--- API / JSON ---"

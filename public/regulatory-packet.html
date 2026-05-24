@@ -66,6 +66,11 @@
   th { background: var(--card); color: var(--accent); font-weight: 700; }
   td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
   .note { color: var(--muted); font-size: 13px; font-style: italic; }
+  .disclaimer {
+    background: rgba(210,153,34,.08); border: 1px solid var(--warn); border-radius: 8px;
+    padding: 18px 22px; margin: 0 0 28px;
+  }
+  .disclaimer strong { color: var(--warn); }
 </style>
 </head>
 <body>
@@ -85,6 +90,13 @@
   </nav>
 </header>
 <main>
+
+  <div class="disclaimer">
+    <strong>Zastrzeżenie ogólne.</strong> UNIONAI Ω∞ działa jako publiczny testnet i inicjatywa
+    badawczo-techniczna. Projekt nie jest systemem produkcyjnym, jednostką notyfikowaną, organem
+    certyfikującym ani formalnym podmiotem oceny zgodności. Materiały dotyczące AI Act mają
+    charakter readiness/tracking i nie stanowią deklaracji zgodności ani opinii prawnej.
+  </div>
 
   <section class="summary">
     <h2>Skrót 1-stronicowy</h2>
@@ -176,6 +188,44 @@
         </tr>
       </tbody>
     </table>
+
+    <h3>Matryca ról</h3>
+    <table>
+      <thead>
+        <tr><th>Rola</th><th>Bezpieczne określenie</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>UNIONAI Ω∞</td>
+          <td>inicjatywa badawczo-techniczna / publiczny testnet</td>
+        </tr>
+        <tr>
+          <td>Grass Roots Lobbing Sp. z o.o.</td>
+          <td>podmiot organizacyjny, administrator danych, parasol prawny</td>
+        </tr>
+        <tr>
+          <td><span class="mono">0n40i4</span> / K0NSULT</td>
+          <td>operator techniczno-governance / warstwa wykonawcza</td>
+        </tr>
+        <tr>
+          <td>Zewnętrzni providerzy modeli</td>
+          <td>odrębni dostawcy własnych modeli</td>
+        </tr>
+        <tr>
+          <td>Agenci / integratorzy</td>
+          <td>uczestnicy testnetu / podmioty podłączające własne komponenty</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>UNIONAI Ω∞ jest inicjatywą badawczo-techniczną (public testnet). Grass Roots Lobbing
+    Sp. z o.o. pełni funkcję podmiotu organizacyjnego, parasola prawnego oraz administratora
+    danych. Projekt nie jest organem publicznym, jednostką notyfikowaną, akredytowaną jednostką
+    certyfikującą ani podmiotem wydającym certyfikaty zgodności.</p>
+
+    <div class="banner" style="border-color: var(--warn); margin-top:16px">
+      <strong>Zasada per use-case.</strong> Każde wdrożenie produkcyjne lub użycie w konkretnym
+      sektorze wymaga osobnej klasyfikacji AI Act per use-case przed uruchomieniem.
+    </div>
   </section>
 
   <section>

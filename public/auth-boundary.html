@@ -89,7 +89,11 @@
   </table>
 
   <h2>Read-only kontra write</h2>
-  <p>Wszystkie endpointy publiczne są <strong>read-only</strong> — nie zmieniają stanu federacji. Każda zmiana stanu
+  <p>Publiczne endpointy <strong>GET są read-only</strong>. Otwarte endpointy <strong>POST rejestracji T0</strong>
+  (<span class="mono">/api/agent/join</span>, <span class="mono">/api/agent/register</span>) są świadomie dopuszczone
+  w trybie testnet jako <strong>ograniczony onboarding</strong> — zapisują agenta jako <span class="mono">unverified</span>
+  (T0, score 0), <strong>nie nadają uprawnień uprzywilejowanych</strong>, nie zapisują memory/governance/evidence bez
+  dalszej bramki zaufania i mogą podlegać resetowi. Każda inna zmiana stanu
   (rejestracja, pamięć, relay, governance, operator) przechodzi przez co najmniej jedną z bramek: trust tier,
   relay shared secret lub token operatora. Sekrety nie są umieszczane w repozytorium ani w UI.</p>
 

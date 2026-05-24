@@ -186,6 +186,56 @@
           incydentów (zob. <a href="/incidents">/incidents</a>).</td>
           <td class="review">2026-06-30</td>
         </tr>
+        <tr>
+          <td class="id">R-08</td>
+          <td>Błędne zrozumienie statusu środowiska — testnet odbierany jako produkcja.</td>
+          <td>Komunikacja</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Badge <strong>GO CONTROLLED / PUBLIC TESTNET</strong> obecny we wszystkich widokach,
+          globalny disclaimer i jednoznaczne oznaczenie środowiska (zob. <a href="/trust-center">Trust Center</a>).</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-09</td>
+          <td>Zbyt mocne claimy publiczne — komunikaty wykraczające poza dowody.</td>
+          <td>Komunikacja</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Zasada <em>claim ≤ proof</em> — każdy claim ma pokrycie w dowodach
+          (<a href="/trust-center">Trust Center</a>, CLAIMS_MATRIX) oraz przechodzi przegląd prawny.</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-10</td>
+          <td>Nieuprawnione użycie terminu „certyfikacja / audyt / compliance".</td>
+          <td>Prawne</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Jawne oświadczenie „<strong>NIE TWIERDZIMY</strong>" certyfikacji ani notyfikacji
+          (zob. <a href="/docs/ai-act-readiness.html">gotowość AI Act</a>, <a href="/trust-center">Trust Center</a>).</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-11</td>
+          <td>Niejasna relacja projekt – spółka – operator.</td>
+          <td>Prawne / Organizacyjne</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Matryca ról i odpowiedzialności (zob. <a href="/regulatory-packet">pakiet regulacyjny</a>)
+          oraz spójna polityka prywatności (zob. <a href="/privacy">/privacy</a>).</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+        <tr>
+          <td class="id">R-12</td>
+          <td>Przekroczenie zakresu readiness wobec AI Act — readiness mylone z pełną zgodnością.</td>
+          <td>Compliance</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Klasyfikacja ryzyka per use-case oraz zasada „<strong>każde wdrożenie produkcyjne
+          wymaga osobnej klasyfikacji AI Act</strong>" (zob. <a href="/docs/ai-act-readiness.html">gotowość AI Act</a>).</td>
+          <td class="review">2026-06-30</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -216,6 +266,44 @@
     <p style="margin-top:12px; color:var(--muted); font-size:13px;">
       Oceny dotyczą ograniczonego, kontrolowanego zakresu działania w środowisku testnet
       i są weryfikowane przy każdym przeglądzie.
+    </p>
+  </div>
+
+  <h2 class="section">Mapowanie severity → klasyfikacja audytu K0NSULT</h2>
+  <div class="card">
+    <p style="margin:0 0 12px; color:var(--muted); font-size:13px;">
+      Dla spójności z audytami techniczno-organizacyjnymi K0NSULT (skala
+      <span class="mono">BLOCKER / CRITICAL / MAJOR / MINOR</span>) severity rejestru ryzyk
+      mapujemy następująco:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Rejestr ryzyk (severity)</th>
+            <th>Audyt K0NSULT (klasyfikacja)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="sev high">HIGH</span></td>
+            <td>CRITICAL / MAJOR</td>
+          </tr>
+          <tr>
+            <td><span class="sev medium">MEDIUM</span></td>
+            <td>MAJOR / MINOR</td>
+          </tr>
+          <tr>
+            <td><span class="sev low">LOW</span></td>
+            <td>MINOR</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px; color:var(--muted); font-size:13px;">
+      Mapowanie jest orientacyjne — konkretną klasyfikację ustala się per ustalenie audytowe,
+      z uwzględnieniem kontekstu i zakresu. Skala <span class="mono">BLOCKER</span> jest zarezerwowana
+      dla ustaleń blokujących wdrożenie i nie ma bezpośredniego odpowiednika w rejestrze ryzyk.
     </p>
   </div>
 </main>

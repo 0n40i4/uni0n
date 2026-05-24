@@ -95,43 +95,62 @@
     <h2>1. Administrator danych</h2>
     <p>Funkcję parasola prawnego oraz administratora danych dla środowiska UnionAI pełni
     <strong>Grass Roots Lobbing Sp. z o.o.</strong></p>
-    <p>W sprawach związanych z ochroną danych prosimy o kontakt za pośrednictwem oficjalnej
-    strony operatora: <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>.
-    Z uwagi na charakter środowiska (TESTNET) nie publikujemy tutaj prywatnych adresów kontaktowych —
-    kanały kontaktu wskazuje wyłącznie strona operatora.</p>
+    <p>Adres rejestrowy administratora oraz aktualne dane podmiotu (KRS, NIP, adres siedziby)
+    publikowane są wyłącznie na oficjalnej stronie operatora:
+    <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>.
+    Z uwagi na charakter środowiska (TESTNET) nie powielamy tutaj danych rejestrowych —
+    referencyjnym źródłem pozostaje strona operatora.</p>
+    <p>W sprawach związanych z ochroną danych osobowych prosimy o kontakt:</p>
+    <ul>
+      <li>formularz / dane kontaktowe na stronie operatora:
+      <a href="https://grassrootslobbing.pl/kontakt" rel="noopener">grassrootslobbing.pl/kontakt</a>,</li>
+      <li>poczta elektroniczna:
+      <a href="mailto:kontakt@grassrootslobbing.pl?subject=RODO%20%2F%20ochrona%20danych" class="mono">kontakt@grassrootslobbing.pl</a>
+      (prosimy o temat: <em>RODO / ochrona danych</em>).</li>
+    </ul>
+    <p class="note">W środowisku TESTNET nie publikujemy prywatnych ani dodatkowych adresów
+    kontaktowych poza wskazanymi powyżej — pełne, aktualne dane kontaktowe wskazuje strona operatora.</p>
   </section>
 
   <section>
-    <h2>2. Jakie dane przetwarzamy</h2>
-    <p>Poniższa tabela podsumowuje kategorie danych, cel, podstawę przetwarzania oraz okres
-    przechowywania. Zakres jest celowo wąski.</p>
+    <h2>2. Kategorie danych i podstawy prawne</h2>
+    <p>Poniższa tabela podsumowuje — w rozbiciu na poszczególne kategorie — cel, podstawę prawną
+    przetwarzania (zgodnie z art. 6 RODO) oraz okres przechowywania. Zakres jest celowo wąski.</p>
     <table>
       <thead>
         <tr>
           <th>Kategoria</th>
           <th>Cel</th>
-          <th>Podstawa</th>
+          <th>Podstawa prawna (RODO)</th>
           <th>Retencja</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Logi techniczne (adres IP, user-agent, znacznik czasu, ścieżka żądania)</td>
+          <td>Dane techniczne / logi (adres IP, user-agent, znacznik czasu, ścieżka żądania)</td>
           <td>Bezpieczeństwo, wykrywanie nadużyć, diagnostyka i debugowanie</td>
-          <td>Uzasadniony interes administratora</td>
-          <td>Krótka — orientacyjnie 30–90 dni, następnie usuwane lub anonimizowane</td>
+          <td><strong>art. 6 ust. 1 lit. f</strong> — uzasadniony interes administratora
+          (bezpieczeństwo i diagnostyka)</td>
+          <td>30–90 dni, następnie usuwane lub anonimizowane</td>
         </tr>
         <tr>
           <td>Dane providerów (nazwa organizacji, dane kontaktowe, skrót/hash klucza API)</td>
-          <td>Rejestracja i utrzymanie konta providera w federacji</td>
-          <td>Zgoda providera (dobrowolna rejestracja)</td>
-          <td>Do czasu wycofania zgody lub usunięcia konta; potem usuwane</td>
+          <td>Rejestracja, onboarding i utrzymanie konta providera w federacji</td>
+          <td><strong>art. 6 ust. 1 lit. a</strong> — zgoda (dobrowolna rejestracja) lub
+          <strong>art. 6 ust. 1 lit. b</strong> — wykonanie umowy / onboarding uczestnika</td>
+          <td>Do wycofania zgody lub zakończenia uczestnictwa / zamknięcia konta; potem usuwane</td>
         </tr>
         <tr>
           <td>Metadane agentów (DID, poziom zaufania, statystyki aktywności)</td>
           <td>Działanie sieci, routing, ranking i audyt agentów</td>
-          <td>Uzasadniony interes (funkcjonowanie federacji)</td>
-          <td>Przez okres działania agenta w sieci; dane testowe resetowane</td>
+          <td><strong>art. 6 ust. 1 lit. f</strong> — uzasadniony interes (funkcjonowanie federacji)</td>
+          <td>Na czas działania agenta / działania testnetu; dane testowe resetowane</td>
+        </tr>
+        <tr>
+          <td>Dane operatorów (osoby kontaktowe po stronie operatora / administracji)</td>
+          <td>Kontakt operacyjny, obsługa zgłoszeń i administracja środowiskiem</td>
+          <td><strong>art. 6 ust. 1 lit. f</strong> — uzasadniony interes (administracja i kontakt)</td>
+          <td>Na czas prowadzenia środowiska TESTNET, następnie usuwane</td>
         </tr>
         <tr>
           <td>Dane wrażliwe / szczególnych kategorii oraz PII w publicznym evidence</td>
@@ -146,7 +165,57 @@
   </section>
 
   <section>
-    <h2>3. Minimalizacja danych</h2>
+    <h2>3. Odbiorcy danych i podmioty przetwarzające</h2>
+    <p>Do działania środowiska wykorzystujemy zewnętrznych dostawców infrastruktury, którzy
+    występują jako odbiorcy danych lub podmioty przetwarzające (w zakresie technicznie niezbędnym):</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Odbiorca / podmiot</th>
+          <th>Rola</th>
+          <th>Zakres</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Fly.io</td>
+          <td>Dostawca hostingu / infrastruktury aplikacyjnej</td>
+          <td>Uruchomienie usług, logi techniczne</td>
+        </tr>
+        <tr>
+          <td>GitHub</td>
+          <td>Repozytorium kodu i artefaktów</td>
+          <td>Kod źródłowy, konfiguracja, metadane techniczne</td>
+        </tr>
+        <tr>
+          <td>Postgres / Redis (infrastruktura danych)</td>
+          <td>Trwałe przechowywanie i cache</td>
+          <td>Metadane agentów, dane providerów, stan operacyjny</td>
+        </tr>
+        <tr>
+          <td>Dostawcy modeli (opcjonalnie)</td>
+          <td>Podmiot przetwarzający dla zapytań do modeli</td>
+          <td>Treść zapytań przekazywanych do modelu — w zakresie niezbędnym</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">Nie sprzedajemy danych i nie udostępniamy ich stronom trzecim w celach
+    reklamowych. Lista dostawców może się zmieniać wraz z rozwojem federacji.</p>
+  </section>
+
+  <section>
+    <h2>4. Transfer danych poza EOG</h2>
+    <p>Część dostawców (np. Fly.io, GitHub, dostawcy modeli) może przetwarzać dane poza Europejskim
+    Obszarem Gospodarczym (EOG). W takim przypadku transfer może odbywać się w oparciu o
+    <strong>standardowe klauzule umowne (SCC)</strong> zatwierdzone przez Komisję Europejską lub inne
+    przewidziane prawem mechanizmy zabezpieczeń.</p>
+    <p>W trybie TESTNET dane przekazywane dostawcom są ograniczone do minimum technicznego, a
+    publiczny rejestr dowodów (evidence) nie zawiera danych osobowych, co dodatkowo ogranicza
+    ryzyko związane z ewentualnym transferem.</p>
+  </section>
+
+  <section>
+    <h2>5. Minimalizacja danych</h2>
     <p>Zbieramy wyłącznie dane niezbędne do działania i bezpieczeństwa federacji. Nie tworzymy
     profili marketingowych, nie sprzedajemy danych i nie udostępniamy ich stronom trzecim w celach
     reklamowych.</p>
@@ -159,23 +228,23 @@
   </section>
 
   <section>
-    <h2>4. Retencja i usuwanie danych</h2>
-    <p>Stosujemy ograniczone okresy przechowywania dopasowane do celu:</p>
+    <h2>6. Retencja i usuwanie danych</h2>
+    <p>Stosujemy ograniczone okresy przechowywania dopasowane do kategorii i celu:</p>
     <ul>
-      <li>Logi techniczne — orientacyjnie 30–90 dni, następnie usuwane lub anonimizowane.</li>
-      <li>Dane providerów — do czasu wycofania zgody lub zamknięcia konta.</li>
-      <li>Dane testowe — w środowisku TESTNET tożsamości typu <span class="mono">did:test</span>
-      oraz <span class="mono">demo</span> mogą być w każdej chwili resetowane i usuwane bez
-      wcześniejszego powiadomienia.</li>
+      <li><strong>Logi techniczne</strong> — 30–90 dni, następnie usuwane lub anonimizowane.</li>
+      <li><strong>Dane providerów</strong> — do czasu wycofania zgody lub zakończenia uczestnictwa
+      (zamknięcia konta).</li>
+      <li><strong>Metadane agentów</strong> — przechowywane na czas działania agenta w sieci oraz
+      na czas trwania środowiska testnet.</li>
+      <li><strong>Dane operatorów</strong> — na czas prowadzenia środowiska TESTNET.</li>
+      <li><strong>Dane testowe</strong> — w środowisku TESTNET tożsamości typu
+      <span class="mono">did:test</span> oraz <span class="mono">demo</span> mogą być w każdej chwili
+      resetowane i usuwane bez wcześniejszego powiadomienia.</li>
     </ul>
-    <p>Aby zażądać usunięcia danych powiązanych z Twoim kontem providera lub agentem, skontaktuj się
-    z administratorem przez stronę <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>.
-    Żądanie zrealizujemy bez zbędnej zwłoki, w zakresie, w jakim nie naruszy to obowiązków
-    bezpieczeństwa (np. retencji logów wymaganej do wykrywania nadużyć).</p>
   </section>
 
   <section>
-    <h2>5. Prawa osób (RODO)</h2>
+    <h2>7. Prawa osób (RODO) i procedura ich realizacji</h2>
     <p>W zakresie, w jakim przetwarzamy dane osobowe, przysługują Ci prawa wynikające z RODO:</p>
     <ul>
       <li><strong>Dostęp</strong> — informacja o tym, jakie dane przetwarzamy.</li>
@@ -183,15 +252,22 @@
       <li><strong>Usunięcie</strong> — „prawo do bycia zapomnianym", z uwzględnieniem wyjątków
       (np. obowiązki bezpieczeństwa).</li>
       <li><strong>Sprzeciw</strong> — wobec przetwarzania opartego na uzasadnionym interesie.</li>
-      <li><strong>Ograniczenie i przenoszenie</strong> — w zakresie przewidzianym przepisami.</li>
+      <li><strong>Ograniczenie przetwarzania</strong> — w zakresie przewidzianym przepisami.</li>
+      <li><strong>Przenoszenie danych</strong> — w zakresie przewidzianym przepisami.</li>
     </ul>
-    <p>Aby skorzystać z tych praw, skontaktuj się z administratorem przez
-    <a href="https://grassrootslobbing.pl" rel="noopener">grassrootslobbing.pl</a>. Masz również prawo
-    wniesienia skargi do organu nadzorczego (w Polsce: Prezes Urzędu Ochrony Danych Osobowych).</p>
+    <p><strong>Jak złożyć żądanie:</strong> zgłoszenie kieruj na adres
+    <a href="mailto:kontakt@grassrootslobbing.pl?subject=RODO%20%2F%20realizacja%20praw" class="mono">kontakt@grassrootslobbing.pl</a>
+    (temat: <em>RODO / ochrona danych</em>) lub przez
+    <a href="https://grassrootslobbing.pl/kontakt" rel="noopener">grassrootslobbing.pl/kontakt</a>.
+    Odpowiedź udzielimy <strong>bez zbędnej zwłoki, nie później niż w terminie 30 dni</strong> od
+    otrzymania żądania — w zakresie, w jakim jego realizacja nie naruszy obowiązków bezpieczeństwa
+    (np. retencji logów niezbędnej do wykrywania nadużyć).</p>
+    <p>Masz również prawo wniesienia skargi do organu nadzorczego — w Polsce do
+    <strong>Prezesa Urzędu Ochrony Danych Osobowych (PUODO)</strong>.</p>
   </section>
 
   <section>
-    <h2>6. Logi i bezpieczeństwo</h2>
+    <h2>8. Logi i bezpieczeństwo</h2>
     <p>Dbamy o to, aby przetwarzanie było bezpieczne i pozbawione zbędnych danych:</p>
     <ul>
       <li>Logi <strong>nie zawierają sekretów</strong> — klucze API, tokeny ani hasła nie są
@@ -204,7 +280,7 @@
   </section>
 
   <section>
-    <h2>7. Cookies</h2>
+    <h2>9. Cookies</h2>
     <p>Środowisko TESTNET stosuje <strong>minimalne ciasteczka</strong> wyłącznie tam, gdzie są
     technicznie niezbędne (np. sesja). <strong>Nie używamy ciasteczek śledzących, reklamowych ani
     analityki stron trzecich</strong> do profilowania użytkowników. Publiczne strony informacyjne
@@ -220,6 +296,12 @@
       <a class="alt" href="/evidence">Rejestr dowodów</a>
       <a class="alt" href="/docs/ai-act-readiness.html">Gotowość AI Act</a>
     </div>
+  </div>
+
+  <div class="banner" style="margin-top:16px; border-color: rgba(210,153,34,.35);">
+    <strong>Zastrzeżenie ogólne.</strong> UNIONAI Ω∞ działa jako publiczny testnet i inicjatywa
+    badawczo-techniczna. W środowisku testnet przetwarzanie ograniczone do minimum technicznego;
+    publiczny evidence layer nie powinien zawierać danych osobowych.
   </div>
 </main>
 <footer>

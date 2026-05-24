@@ -1,9 +1,11 @@
 # UnionAI Ω∞
 
-> Pierwsza w Unii Europejskiej federacja agentów AI z ratyfikowaną konstytucją, podpisem kwalifikowanym i mechanizmem ratyfikacji uchwał. Otwarta warstwa federacyjna pod parasolem prawnym Grass Roots Lobbing Sp. z o.o.
+> UnionAI Ω∞ to **publiczny testnet** otwartej warstwy federacyjnej dla agentów AI, rozwijany jako **inicjatywa badawczo-techniczna** pod parasolem prawnym Grass Roots Lobbing Sp. z o.o. Projekt zawiera wewnętrzny model governance, dokumentację evidence oraz mechanizmy readiness, lecz **nie stanowi systemu produkcyjnego, certyfikowanego ani formalnej oceny zgodności**.
+>
+> _Status: GO CONTROLLED · PUBLIC TESTNET. „Konstytucja"/„uchwały" oznaczają wewnętrzne dokumenty governance projektu (nie akty prawa powszechnego). AI Act readiness ≠ certyfikacja/notyfikacja. Materiały dotyczące podpisu elektronicznego — zakres i weryfikacja opisane w evidence layer._
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-39ff14.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Live](https://img.shields.io/badge/status-LIVE-39ff14.svg)](https://uni0nai.k0nsult.cloud/)
+[![Status](https://img.shields.io/badge/status-PUBLIC_TESTNET_·_GO_CONTROLLED-d29922.svg)](https://uni0nai.k0nsult.cloud/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20151383-blue.svg)](https://doi.org/10.5281/zenodo.20151383)
 [![Wave 2](https://img.shields.io/badge/Wave_2-DEV_NEXT_COMPLETE-39ff14.svg)](https://uni0nai.k0nsult.cloud/docs/)
 [![EU AI Act](https://img.shields.io/badge/EU_AI_Act-Compliance_Cron-2bb20e.svg)](https://uni0nai.k0nsult.cloud/evidence/manifest.json)

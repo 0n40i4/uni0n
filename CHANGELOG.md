@@ -7,6 +7,17 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed — reakcja na external review prawno-komunikacyjny (2026-05-24)
+- **L-01:** „Pierwsza w UE federacja…" → „Publiczny testnet federacji agentów AI… inicjatywa badawczo-techniczna" (hero index, README, GitHub About).
+- **L-06:** „Compliance Cron — ciągła weryfikacja zgodności" → „cykliczne śledzenie gotowości/evidence/ryzyk; nie formalna weryfikacja zgodności".
+- **L-07/L-08:** kwalifikacja „konstytucji" (= wewnętrzny dokument governance, nie akt prawa) i złagodzenie bare-claimu „podpis kwalifikowany" (meta/footer/README).
+- **L-09:** `/auth-boundary` — „wszystkie publiczne read-only" → „GET read-only; otwarte POST T0 = ograniczony onboarding, unverified, bez uprawnień".
+- **L-10:** matryca ról projekt/spółka/operator/provider/integrator (`/regulatory-packet`) + zasada „każde wdrożenie wymaga klasyfikacji AI Act per use-case".
+- **L-11:** `/privacy` — pełne RODO (administrator, kanał, podstawy prawne per kategoria, odbiorcy, transfer EOG/SCC, prawa osób+PUODO, retencja).
+- **L-12:** `/risk-register` — mapowanie HIGH/MED/LOW→severity audytu + ryzyka R-08..R-12 (status/claimy/role/AI Act scope).
+- Globalny disclaimer w stopce index + `/trust-center` kwalifikator proof-levels (nie certyfikacja prawna).
+- Nowy `docs/LEGAL_CLAIMS_MATRIX.md`. GitHub About description złagodzony (NOT certification/compliance).
+
 ### Security — reakcja na external review (P2-03, audyt nieinwazyjny 2026-05-24), WAVE 1
 - **CRITICAL-01 CSP:** włączony `helmet` Content-Security-Policy (było `false`). Dyrektywy: `script-src 'self'`, `style-src 'self' 'unsafe-inline' fonts.googleapis.com`, `font-src 'self' fonts.gstatic.com`, `img-src 'self' data: https:`, `frame-ancestors 'none'`.
 - **CRITICAL-02 CORS:** domyślny fallback `'*'` → allowlista domen K0nsult (gdy `CORS_ORIGIN` env nieustawiony). Jawne `'*'` w env nadal możliwe (decyzja operatora).

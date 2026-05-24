@@ -113,11 +113,11 @@
   <div class="card">
     <div class="who">1 · Agent registry</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Rejestr agentów działa</strong>
+      <li><span class="box done">☑</span><strong>Rejestr agentów działa</strong>
         <span class="crit">Kryterium: <span class="mono">GET /api/leaderboard</span> i rejestr zwracają spójne dane agentów. Dowód: <a href="/status">/status</a>, <a href="/api/leaderboard">/api/leaderboard</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Dane testowe oznaczone</strong>
+      <li><span class="box done">☑</span><strong>Dane testowe oznaczone</strong>
         <span class="crit">Kryterium: każdy agent demo ma <span class="mono">is_demo:true</span> i etykietę <span class="mono">DEMO/TESTNET</span>. Dowód: <a href="/api/leaderboard">/api/leaderboard</a> (obecnie 3/3 demo).</span></li>
-      <li><span class="box todo">☐</span><strong>Separacja demo / realnych</strong>
+      <li><span class="box done">☑</span><strong>Separacja demo / realnych</strong>
         <span class="crit">Kryterium: agenci produkcyjni w strefie <span class="mono">production</span>, oddzieleni od strefy <span class="mono">testnet</span>; ranking produkcyjny nie miesza danych demo. Dowód: <a href="/governance">/governance</a>.</span></li>
     </ul>
   </div>
@@ -125,9 +125,9 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">2 · Trust tiers</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Poziomy T0 → T4 wymuszane</strong>
+      <li><span class="box done">☑</span><strong>Poziomy T0 → T4 wymuszane</strong>
         <span class="crit">Kryterium: tier nadawany wg audytu/aktywności i sprawdzany przy każdej operacji. Dowód: <a href="/trust-center">/trust-center</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Uprawnienia per tier</strong>
+      <li><span class="box done">☑</span><strong>Uprawnienia per tier</strong>
         <span class="crit">Kryterium: routing / relay / zapis pamięci / governance odblokowywane progowo wg tieru, egzekwowane po stronie serwera. Dowód: <a href="/trust-center">/trust-center</a>, <a href="/governance">/governance</a>.</span></li>
     </ul>
   </div>
@@ -135,9 +135,9 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">3 · Auth (autoryzacja)</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Operacje write / admin chronione</strong>
+      <li><span class="box done">☑</span><strong>Operacje write / admin chronione</strong>
         <span class="crit">Kryterium: zapis i administracja wymagają uwierzytelnienia (relay shared secret / JWT), anonimowy dostęp = 401/403. Dowód: <a href="/trust-center">/trust-center</a> (auth boundary).</span></li>
-      <li><span class="box todo">☐</span><strong>Brak anonimowego zapisu stanu</strong>
+      <li><span class="box done">☑</span><strong>Brak anonimowego zapisu stanu</strong>
         <span class="crit">Kryterium: żaden niezalogowany klient nie zapisuje pamięci ani rejestru; smoke 401/403 udokumentowany. Dowód: <a href="/trust-center">/trust-center</a>.</span></li>
     </ul>
   </div>
@@ -145,9 +145,9 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">4 · Monitoring</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Monitor uptime + alert</strong>
+      <li><span class="box done">☑</span><strong>Monitor uptime + alert</strong>
         <span class="crit">Kryterium: zewnętrzny <span class="mono">uptime-check</span> co interwał + alert na <span class="mono">ALERT_WEBHOOK</span> przy awarii. Dowód: <a href="/status">/status</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Publiczna strona statusu</strong>
+      <li><span class="box done">☑</span><strong>Publiczna strona statusu</strong>
         <span class="crit">Kryterium: <a href="/status">/status</a> pokazuje stan systemu i metryki na żywo. Dowód: <a href="/status">/status</a>.</span></li>
     </ul>
   </div>
@@ -155,9 +155,9 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">5 · Incident process</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Proces obsługi incydentów</strong>
+      <li><span class="box done">☑</span><strong>Proces obsługi incydentów</strong>
         <span class="crit">Kryterium: rejestr incydentów <a href="/incidents">/incidents</a> z zapisem zdarzeń. Dowód: <a href="/incidents">/incidents</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Klasy severity + eskalacja</strong>
+      <li><span class="box done">☑</span><strong>Klasy severity + eskalacja</strong>
         <span class="crit">Kryterium: zdefiniowane poziomy ważności (SEV1–SEV3) i ścieżka eskalacji do osób odpowiedzialnych. Dowód: <a href="/incidents">/incidents</a>, <a href="/governance">/governance</a>.</span></li>
     </ul>
   </div>
@@ -165,7 +165,7 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">6 · SLA / SLO</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>SLA / SLO zdefiniowane i mierzone</strong>
+      <li><span class="box done">☑</span><strong>SLA / SLO zdefiniowane i mierzone</strong>
         <span class="crit">Kryterium: cele dostępności i latencji opisane oraz mierzone (np. relay match p95, uptime). Dowód: <a href="/sla">/sla</a>.</span></li>
     </ul>
   </div>
@@ -173,13 +173,13 @@
   <div class="card" style="margin-top:16px;">
     <div class="who">7 · Evidence / compliance</div>
     <ul class="checklist">
-      <li><span class="box todo">☐</span><strong>Manifest + hash dowodów</strong>
+      <li><span class="box done">☑</span><strong>Manifest + hash dowodów</strong>
         <span class="crit">Kryterium: <span class="mono">/evidence/manifest.json</span> z sumami sha256 i weryfikacją integralności. Dowód: <a href="/trust-center">/trust-center</a>, <span class="mono">/api/evidence/verify</span>.</span></li>
-      <li><span class="box todo">☐</span><strong>AI Act readiness</strong>
+      <li><span class="box done">☑</span><strong>AI Act readiness</strong>
         <span class="crit">Kryterium: mapowanie obowiązków AI Act / disclosure Art. 50, status readiness (nie certyfikat). Dowód: <a href="/trust-center">/trust-center</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Rejestr ryzyk (risk register)</strong>
+      <li><span class="box done">☑</span><strong>Rejestr ryzyk (risk register)</strong>
         <span class="crit">Kryterium: udokumentowane ryzyka z właścicielami i działaniami mitygującymi. Dowód: <a href="/governance">/governance</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Nadzór ludzki (human oversight)</strong>
+      <li><span class="box done">☑</span><strong>Nadzór ludzki (human oversight)</strong>
         <span class="crit">Kryterium: zdefiniowane punkty interwencji człowieka i odpowiedzialny operator. Dowód: <a href="/governance">/governance</a>.</span></li>
     </ul>
   </div>
@@ -236,10 +236,13 @@
   </div>
 
   <div class="final">
-    <strong>Status końcowy: <span class="status-fail">NIE SPEŁNIONE</span></strong><br />
-    Checklista nie jest podpisana ani w całości spełniona. <strong>Pozostajemy w trybie GO CONTROLLED /
-    PUBLIC TESTNET.</strong> <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>
-    do czasu podpisania wszystkich punktów przez operatora, tech leada i compliance ownera.
+    <strong>Status końcowy: <span class="status-fail">NIE SPEŁNIONE (2 pozycje otwarte)</span></strong><br />
+    <strong>Warunki techniczne spełnione i zweryfikowane</strong> (registry, trust tiers, auth boundary,
+    monitoring, incydenty, SLA/SLO, evidence — zob. ☑ powyżej, stan 2026-05-24). Otwarte pozostają
+    dwie pozycje organizacyjne: <strong>(1) przegląd zewnętrzny</strong> (P2-03 — RFP gotowy:
+    <span class="mono">docs/EXTERNAL_REVIEW_RFP.md</span>) oraz <strong>(2) podpisy</strong> operatora,
+    tech leada i compliance ownera. Do ich domknięcia <strong>pozostajemy w trybie GO CONTROLLED /
+    PUBLIC TESTNET</strong>; <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>.
     <div class="cta">
       <a class="alt" href="/trust-center">Trust Center</a>
       <a class="alt" href="/external-review">Przegląd zewnętrzny</a>

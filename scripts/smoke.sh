@@ -153,6 +153,16 @@ else
   printf 'FAIL  %s  POST /api/incident/freeze  (oczekiwano 401 bez tokenu)\n' "${INC_CODE}"
   FAILED=$((FAILED + 1))
 fi
+# governance/event bez auth -> 401 (audyt 2026-05-24 BLOCKER-01)
+CHECKS=$((CHECKS + 1))
+GOV_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"event_type":"smoke","action":"smoke"}' --max-time 15 "${BASE}/api/governance/event" || echo "000")"
+if [ "${GOV_CODE}" = "401" ]; then
+  printf 'OK    %s  POST /api/governance/event (bez auth odrzucony)\n' "${GOV_CODE}"
+else
+  printf 'FAIL  %s  POST /api/governance/event  (oczekiwano 401 bez tokenu)\n' "${GOV_CODE}"
+  FAILED=$((FAILED + 1))
+fi
 # CSP wlaczony (audyt 2026-05-24 CRITICAL-01)
 CHECKS=$((CHECKS + 1))
 if curl -sS -I --max-time 15 "${BASE}/" | grep -qi 'content-security-policy'; then

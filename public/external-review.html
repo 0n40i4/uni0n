@@ -234,13 +234,14 @@
     <div class="card">
       <div class="who">Rezultat</div>
       <h2>Wynik przeglądu</h2>
-      <p>Po wykonaniu audytu link do raportu zostanie umieszczony poniżej.</p>
+      <p>Pierwszy przegląd nieinwazyjny: <strong>2026-05-24</strong>. Raport i status remediacji:
+      <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/EXTERNAL_REVIEW_2026-05-24.md">docs/reports/EXTERNAL_REVIEW_2026-05-24.md</a>.</p>
       <ul>
-        <li>Raport prawny: <span class="mono">— oczekuje (placeholder) —</span></li>
-        <li>Raport pentest / bezpieczeństwo: <span class="mono">— oczekuje (placeholder) —</span></li>
-        <li>Raport compliance: <span class="mono">— oczekuje (placeholder) —</span></li>
+        <li>Przegląd nieinwazyjny (kod/OpenAPI/endpointy): <span class="mono">✅ wykonany 2026-05-24</span> — werdykt GO CONTROLLED / NIE FULL GO.</li>
+        <li>Pentest aktywny / prawny / compliance: <span class="mono">— do zlecenia (RFP gotowy) —</span></li>
       </ul>
-      <p class="mono" style="color:var(--muted)">Status zbiorczy: REVIEW NIE WYKONANY — bramka P2-03 otwarta do czasu dostarczenia raportu zewnętrznego.</p>
+      <p><strong>Remediacja:</strong> CRITICAL-01 (CSP), CRITICAL-02 (CORS allowlist), BLOCKER-01 (incident/governance auth, agent unverified, ack pending), BLOCKER-02 (status language), MAJOR-02/03 — <strong>zamknięte</strong>. Otwarte: refaktor klas endpointów + quarantine, evidence v2, CI security tooling. Szczegóły w raporcie.</p>
+      <p class="mono" style="color:var(--muted)">Status zbiorczy: przegląd nieinwazyjny WYKONANY, P0/CRITICAL zaadresowane; pełny audyt aktywny (pentest/prawny/compliance) do zlecenia przed FULL GO (P2-07).</p>
       <div class="cta">
         <a class="alt" href="/production-gate">Brama produkcyjna</a>
         <a class="alt" href="/trust-center">Trust Center</a>

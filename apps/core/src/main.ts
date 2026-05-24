@@ -382,6 +382,8 @@ app.use(cors({
 }));
 
 app.use(['/api/relay/send', '/api/relay/route'], requireRelaySharedSecret);
+// BLOCKER-01 (audyt 2026-05-24): governance/event = akcja governance (hash-chain) → token operatora.
+app.use(['/api/governance/event'], requireAuth);
 
 app.use(express.json());
 app.use(globalRateLimit);

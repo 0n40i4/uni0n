@@ -1153,7 +1153,9 @@ export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) =
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`,
         [
           model || null, organization || null, contact || null,
-          acknowledgement_status || 'acknowledged',
+          // BLOCKER-01 (audyt 2026-05-24): anonimowy submit nie jest autorytatywny → 'pending'
+          // (było 'acknowledged'). Operator zatwierdza ręcznie. Anty-poisoning evidence.
+          acknowledgement_status || 'pending',
           confirmation_code || 'UNIONAI-GENESIS-0N40I4-20260512',
           review_link || null
         ]

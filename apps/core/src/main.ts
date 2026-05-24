@@ -116,7 +116,8 @@ export function parseChangelog(raw: string | null): ReleaseEntry[] {
     r.changelog = r.changelog.trim();
     r.zenodo_doi = zenodoForVersion(r.changelog);
   }
-  return releases;
+  // Pomiń pustą sekcję [Unreleased] — nie jest wydaniem, gdy brak pozycji.
+  return releases.filter((r) => !(/unreleased/i.test(r.version) && r.changes.length === 0));
 }
 
 // Pełna lista wydań: parsuje CHANGELOG i dba o to, by bieżący build był ujęty jako najnowszy wpis.
@@ -1524,7 +1525,7 @@ app.get('/api/evidence/verify', (req, res) => {
     }
 
     const targets = filterId ? docs.filter((d) => d.id === filterId) : docs;
-    const results: Array<{ id: string; file: string | null; expected: string | null; actual: string | null; match: boolean }> = [];
+    const results: Array<{ id: string; file: string | null; expected: string | null; actual: string | null; match: boolean | null; status: string }> = [];
     let checked = 0, matched = 0, mismatched = 0, skipped = 0;
 
     for (const d of targets) {
@@ -1534,7 +1535,7 @@ app.get('/api/evidence/verify', (req, res) => {
       const isLocal = url.startsWith('/') && !url.startsWith('//');
       if (!expected || !isLocal) {
         skipped++;
-        results.push({ id: d.id, file: isLocal ? url : null, expected, actual: null, match: false });
+        results.push({ id: d.id, file: isLocal ? url : null, expected, actual: null, match: null, status: 'skipped' });
         continue;
       }
       // Zabezpieczenie przed path traversal — normalizuj i upewnij się że pozostaje w public/.
@@ -1542,7 +1543,7 @@ app.get('/api/evidence/verify', (req, res) => {
       const filePath = path.normalize(path.join(publicRoot, rel));
       if (!filePath.startsWith(publicRoot) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
         skipped++;
-        results.push({ id: d.id, file: url, expected, actual: null, match: false });
+        results.push({ id: d.id, file: url, expected, actual: null, match: null, status: 'skipped' });
         continue;
       }
       const buf = fs.readFileSync(filePath);
@@ -1550,7 +1551,7 @@ app.get('/api/evidence/verify', (req, res) => {
       const match = actual.toLowerCase() === expected.toLowerCase();
       checked++;
       if (match) matched++; else mismatched++;
-      results.push({ id: d.id, file: url, expected, actual, match });
+      results.push({ id: d.id, file: url, expected, actual, match, status: match ? 'matched' : 'mismatched' });
     }
 
     res.json({ checked, matched, mismatched, skipped, results, verified_at });

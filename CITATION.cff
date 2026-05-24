@@ -7,8 +7,11 @@ authors:
     affiliation: "Grass Roots Lobbing Sp. z o.o."
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.20151384
-    description: "UnionAI Ω∞ Declaration of Origin"
+    value: 10.5281/zenodo.20151383
+    description: "UnionAI Ω∞ — concept DOI (zawsze najnowsza wersja)"
+  - type: doi
+    value: 10.5281/zenodo.20349115
+    description: "UnionAI Ω∞ v0.3.0 (DOI wersji)"
   - type: url
     value: "https://uni0nai.k0nsult.cloud/"
     description: "Live production deployment"
@@ -44,7 +47,7 @@ preferred-citation:
       affiliation: "Grass Roots Lobbing Sp. z o.o."
   year: 2026
   month: 5
-  doi: "10.5281/zenodo.20151384"
+  doi: "10.5281/zenodo.20151383"
   url: "https://uni0nai.k0nsult.cloud/declaration-of-origin.html"
   publisher:
     name: "Zenodo"

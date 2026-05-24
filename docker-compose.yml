@@ -5,7 +5,8 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: unionai
-      POSTGRES_PASSWORD: dev_password
+      # EXAMPLE ONLY — lokalny placeholder dev. NIGDY w produkcji (sekrety przez flyctl secrets).
+      POSTGRES_PASSWORD: CHANGE_ME
       POSTGRES_DB: unionai
     volumes:
       - ./infra/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -47,7 +48,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://unionai:dev_password@postgres:5432/unionai
+      DATABASE_URL: postgresql://unionai:CHANGE_ME@postgres:5432/unionai
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
       NODE_ENV: development

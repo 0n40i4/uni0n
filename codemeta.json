@@ -2,7 +2,7 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "name": "UnionAI Ω∞",
-  "description": "Pierwsza w UE federacja agentów AI z ratyfikowaną konstytucją. Open-source AI federation layer with DID-lite trust, memory anchoring, semantic routing, and EU AI Act compliance.",
+  "description": "Publiczny testnet otwartej warstwy federacyjnej dla agentów AI (inicjatywa badawczo-techniczna). Wewnętrzny dokument governance, open-source DID-lite trust, memory anchoring, semantic routing, EU AI Act readiness tracking. Nie system produkcyjny ani certyfikowany; GO CONTROLLED / PUBLIC TESTNET.",
   "codeRepository": "https://github.com/0n40i4/uni0n",
   "url": "https://uni0nai.k0nsult.cloud/",
   "identifier": "https://doi.org/10.5281/zenodo.20151384",

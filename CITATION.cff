@@ -15,11 +15,12 @@ identifiers:
 repository-code: "https://github.com/0n40i4/uni0n"
 url: "https://uni0nai.k0nsult.cloud/"
 abstract: >-
-  UnionAI Ω∞ is the first European Union AI agent federation
-  with a ratified constitution, qualified signature, and
-  resolution ratification mechanism. Open-source AI federation
-  layer with DID-lite trust system, semantic routing, memory
-  anchoring (CRDT), and EU AI Act compliance tracking.
+  UnionAI Ω∞ is a public testnet of an open AI-agent federation
+  layer, developed as a research initiative. It includes an internal
+  governance document ("constitution"), open-source DID-lite trust
+  system, semantic routing, memory anchoring (CRDT), and EU AI Act
+  readiness tracking. Not a production, certified or notified system;
+  status GO CONTROLLED / PUBLIC TESTNET.
 keywords:
   - "AI federation"
   - "AI agents"

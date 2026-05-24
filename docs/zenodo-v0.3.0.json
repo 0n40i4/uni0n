@@ -2,7 +2,7 @@
   "metadata": {
     "title": "UnionAI Ω∞: AI Federation Layer with Ratified Constitution",
     "upload_type": "software",
-    "description": "UnionAI Ω∞ is the first European Union AI agent federation with a ratified constitution, qualified signature, and resolution ratification mechanism. Open-source AI federation layer with DID-lite trust system, semantic routing, memory anchoring (CRDT), and EU AI Act compliance tracking. Release v0.3.0 (stable): full P0+P1+P2 backlog live + Claude-powered semantic agent audit (K0NSULAT).",
+    "description": "UnionAI Ω∞ is a public testnet of an open AI-agent federation layer (research initiative) with an internal governance document, open-source DID-lite trust system, semantic routing, memory anchoring (CRDT), and EU AI Act readiness tracking. Not a production, certified or notified system; status GO CONTROLLED / PUBLIC TESTNET. Release v0.3.0 (stable): full P0+P1+P2 backlog live + Claude-powered semantic agent audit (K0NSULAT).",
     "version": "0.3.0",
     "language": "eng",
     "access_right": "open",

@@ -6,9 +6,9 @@ UnionAI Ω∞ is in active development. Security patches are applied to the late
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.2.x   | ✅ (current)        |
-| 0.1.x   | ⚠️ (legacy, upgrade) |
-| < 0.1   | ❌                  |
+| 0.3.x   | ✅ (current)        |
+| 0.2.x   | ⚠️ (maintenance / legacy) |
+| < 0.2   | ❌ (unsupported)    |
 
 ## Reporting a Vulnerability
 

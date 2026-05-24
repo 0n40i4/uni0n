@@ -143,6 +143,24 @@ else
   printf 'FAIL  %s  POST /api/memory/anchor  (oczekiwano 403 dla nieznanego DID)\n' "${AB_CODE}"
   FAILED=$((FAILED + 1))
 fi
+# incident/freeze bez auth -> 401 (audyt 2026-05-24 BLOCKER-01)
+CHECKS=$((CHECKS + 1))
+INC_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"incident_id":"smoke","actor":"smoke"}' --max-time 15 "${BASE}/api/incident/freeze" || echo "000")"
+if [ "${INC_CODE}" = "401" ]; then
+  printf 'OK    %s  POST /api/incident/freeze (bez auth odrzucony)\n' "${INC_CODE}"
+else
+  printf 'FAIL  %s  POST /api/incident/freeze  (oczekiwano 401 bez tokenu)\n' "${INC_CODE}"
+  FAILED=$((FAILED + 1))
+fi
+# CSP wlaczony (audyt 2026-05-24 CRITICAL-01)
+CHECKS=$((CHECKS + 1))
+if curl -sS -I --max-time 15 "${BASE}/" | grep -qi 'content-security-policy'; then
+  printf 'OK    csp   naglowek Content-Security-Policy obecny\n'
+else
+  printf 'FAIL  csp   brak naglowka Content-Security-Policy\n'
+  FAILED=$((FAILED + 1))
+fi
 
 # --- API / JSON ---
 echo "--- API / JSON ---"

@@ -343,14 +343,37 @@ let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
 
 // ============ SECURITY: hardening middleware (must run BEFORE other middleware) ============
 app.disable('x-powered-by');
-app.use(helmet({ contentSecurityPolicy: false }));
-// P1.4: CORS_ORIGIN may be a comma-separated whitelist. Parse into an array so
-// multiple K0nsult domains match (cors treats a bare string as a single origin).
-// Unset → '*' (open) preserves backward-compatible public-API behaviour.
+// CRITICAL-01 (audyt 2026-05-24): CSP włączony. Dozwolone Google Fonts (style+font),
+// inline-style (strony używają <style>), data:/https: obrazy; skrypty tylko 'self'.
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      'default-src': ["'self'"],
+      'script-src': ["'self'"],
+      'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      'font-src': ["'self'", 'https://fonts.gstatic.com'],
+      'img-src': ["'self'", 'data:', 'https:'],
+      'connect-src': ["'self'"],
+      'frame-ancestors': ["'none'"],
+    },
+  },
+}));
+// P1.4 + CRITICAL-02 (audyt 2026-05-24): CORS_ORIGIN to allowlista (comma-separated).
+// Gdy env nieustawiony → domyślnie allowlista domen K0nsult (NIE wildcard '*').
+// Jawne '*' w env nadal dozwolone (świadoma decyzja operatora), ale nie jest domyślne.
 const corsOriginEnv = process.env.CORS_ORIGIN;
-const corsOrigin = !corsOriginEnv || corsOriginEnv === '*'
+const corsDefaultAllowlist = [
+  'https://uni0nai.k0nsult.cloud',
+  'https://unionai.grassrootslobbing.pl',
+  'https://unionai-core.fly.dev',
+  'https://k0nsult.cloud',
+];
+const corsOrigin = corsOriginEnv === '*'
   ? '*'
-  : corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean);
+  : (corsOriginEnv
+      ? corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean)
+      : corsDefaultAllowlist);
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
@@ -808,10 +831,10 @@ app.get('/openapi.json', (req, res) => {
       description: `Federacyjna warstwa governance dla agentów AI (channel: ${SERVICE_CHANNEL})`
     },
     servers: [
-      { url: "https://uni0nai.k0nsult.cloud", description: "Production (custom domain)" },
-      { url: "https://unionai.grassrootslobbing.pl", description: "Production (alias)" },
-      { url: "https://unionai-core.fly.dev", description: "Production (Fly app domain)" },
-      { url: "http://localhost:3000", description: "Local" }
+      { url: "https://uni0nai.k0nsult.cloud", description: "Public testnet runtime (custom domain) — GO CONTROLLED, nie pełna produkcja" },
+      { url: "https://unionai.grassrootslobbing.pl", description: "Public testnet runtime (alias)" },
+      { url: "https://unionai-core.fly.dev", description: "Public testnet runtime (Fly app domain)" },
+      { url: "http://localhost:3000", description: "Local development" }
     ],
     components: {
       schemas: {
@@ -983,7 +1006,7 @@ app.post('/api/agent/join', async (req, res) => {
     const agentZone = zone || 'default';
     const result = await pool.query(
       `INSERT INTO agents (did, zone, provider, runtime_type, operator_did, public_key, capability_manifest, trust_score, trust_tier, status, created_at, last_seen)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'T0', 'active', NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'T0', 'unverified', NOW(), NOW())
        ON CONFLICT (did) DO UPDATE SET
          last_seen = NOW(),
          provider = COALESCE(EXCLUDED.provider, agents.provider),
@@ -1357,7 +1380,7 @@ app.get('/debug/env', requireAuth, (req, res) => {
 
 
 // ============ INCIDENT RESPONSE SYSTEM ============
-app.post('/api/incident/open', async (req, res) => {
+app.post('/api/incident/open', requireAuth, async (req, res) => {
   try {
     const { title, severity, description, incident_type } = req.body;
     if (!title || !severity) {
@@ -1394,7 +1417,7 @@ app.get('/api/incident/:id', async (req, res) => {
   }
 });
 
-app.post('/api/incident/freeze', async (req, res) => {
+app.post('/api/incident/freeze', requireAuth, async (req, res) => {
   try {
     const { incident_id, actor, actor_did } = req.body;
     if (!incident_id || !actor) {
@@ -1407,7 +1430,7 @@ app.post('/api/incident/freeze', async (req, res) => {
   }
 });
 
-app.post('/api/incident/export', async (req, res) => {
+app.post('/api/incident/export', requireAuth, async (req, res) => {
   try {
     const { incident_id } = req.body;
     if (!incident_id) {

@@ -7,6 +7,16 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security — reakcja na external review (P2-03, audyt nieinwazyjny 2026-05-24), WAVE 1
+- **CRITICAL-01 CSP:** włączony `helmet` Content-Security-Policy (było `false`). Dyrektywy: `script-src 'self'`, `style-src 'self' 'unsafe-inline' fonts.googleapis.com`, `font-src 'self' fonts.gstatic.com`, `img-src 'self' data: https:`, `frame-ancestors 'none'`.
+- **CRITICAL-02 CORS:** domyślny fallback `'*'` → allowlista domen K0nsult (gdy `CORS_ORIGIN` env nieustawiony). Jawne `'*'` w env nadal możliwe (decyzja operatora).
+- **BLOCKER-01 (część):** `POST /api/incident/open|freeze|export` → `requireAuth` (były anonimowe — freeze relay / export audytu). `POST /api/agent/join` → nowy agent zapisywany jako `unverified` (było `active`) — anty-poisoning, bez auto-statusu zweryfikowanego.
+- **BLOCKER-02 (część):** OpenAPI `servers` opis „Production…" → „Public testnet runtime … GO CONTROLLED, nie pełna produkcja".
+- **MAJOR-02:** `.env.example` `dev_password` → `CHANGE_ME` + nota „EXAMPLE ONLY".
+- **MAJOR-03:** `SECURITY.md` wspierana wersja 0.2.x → **0.3.x current**.
+- smoke.sh: +checki `incident/freeze` bez auth→401 oraz obecność nagłówka CSP.
+- Otwarte (WAVE 2, wymaga decyzji): pełny refaktor 4 klas endpointów + quarantine, auth na `governance/event`/`participation/acknowledge`, split `/health`, evidence manifest v2, dokumenty P1 (SECURITY_AUDIT_SCOPE / PUBLIC_ENDPOINTS_MATRIX / CLAIMS_MATRIX).
+
 ### Changed — domena kanoniczna → `uni0nai.k0nsult.cloud` (alias: `unionai.grassrootslobbing.pl`)
 - Decyzja operatora (2026-05-24): `uni0nai.k0nsult.cloud` jest domeną kanoniczną; `unionai.grassrootslobbing.pl` pozostaje jako alias. Oba CNAME na `unionai-core.fly.dev` — bez zmian DNS.
 - Podmieniono literał `unionai.grassrootslobbing.pl` → `uni0nai.k0nsult.cloud` w żywych powierzchniach: `public/sitemap.xml` (36), `public/index.html` (16), `public/ai-plugin.json` (3), `public/ai-feed.xml` (2), `public/robots.txt`, `public/.well-known/security.txt`, `README.md` (12), `CONTRIBUTING.md` (3), `SECURITY.md`, `.github/ISSUE_TEMPLATE/bug.md`.

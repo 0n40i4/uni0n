@@ -833,12 +833,18 @@ export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) =
 
   // ── POST /api/agent/register ──────────────────────────────────────────────
   router.post('/agent/register', async (req: Request, res: Response) => {
-    const { did, zone, name, capabilities, operator_id, trust_score, tier, runtime_type, public_key } = req.body;
+    const { did, zone, name, capabilities, operator_id, runtime_type, public_key } = req.body;
     if (!did) {
       return res.status(400).json({ error: 'did is required' });
     }
+    // MINOR-15: validate DID format (same regex as /api/agent/join)
+    if (typeof did !== 'string' || !/^did:[a-z0-9]+:[a-zA-Z0-9._:-]+$/.test(did)) {
+      return res.status(400).json({ error: 'Invalid DID format' });
+    }
     const trace_id = makeTraceId();
-    const score = trust_score || 100;
+    // CRITICAL-01: never trust client-supplied trust_score/tier — hardcode T0/0.
+    const score = 0;
+    const tier = 'T0';
     const tierInfo = trustTier(score);
     const cap_manifest = Array.isArray(capabilities)
       ? { capabilities, registered_at: new Date().toISOString() }

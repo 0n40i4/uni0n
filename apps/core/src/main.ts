@@ -1409,7 +1409,7 @@ app.post('/api/incident/open', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/incident/', async (req, res) => {
+app.get('/api/incident/', requireAuth, async (req, res) => {
   try {
     const incidents = await listIncidents(pool);
     res.json({ incidents, count: incidents.length });
@@ -1418,7 +1418,7 @@ app.get('/api/incident/', async (req, res) => {
   }
 });
 
-app.get('/api/incident/:id', async (req, res) => {
+app.get('/api/incident/:id', requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { report, actions } = await getIncident(pool, id);
@@ -1834,7 +1834,7 @@ app.get('/rfc/:id', async (req, res) => {
   }
 });
 
-app.post('/api/rfc', async (req, res) => {
+app.post('/api/rfc', requireOperator, async (req, res) => {
   try {
     const { id, title, status, description, content, tags, dependencies } = req.body;
     const rfc = await createRFC(pool, id, title, status, description, content, tags, dependencies);
@@ -1844,7 +1844,7 @@ app.post('/api/rfc', async (req, res) => {
   }
 });
 
-app.patch('/api/rfc/:id/status', async (req, res) => {
+app.patch('/api/rfc/:id/status', requireOperator, async (req, res) => {
   try {
     const { status } = req.body;
     const rfc = await updateRFCStatus(pool, req.params.id, status);
@@ -1871,7 +1871,7 @@ app.post('/api/provider/join', async (req, res) => {
   }
 });
 
-app.get('/api/provider/applications', async (req, res) => {
+app.get('/api/provider/applications', requireOperator, async (req, res) => {
   try {
     const applications = await listProviderApplications(pool);
     res.json(applications);
@@ -1880,7 +1880,7 @@ app.get('/api/provider/applications', async (req, res) => {
   }
 });
 
-app.get('/api/provider/:providerId', async (req, res) => {
+app.get('/api/provider/:providerId', requireOperator, async (req, res) => {
   try {
     const application = await getProviderApplication(pool, req.params.providerId);
     res.json(application);
@@ -1997,6 +1997,36 @@ app.post('/api/k0nsulat/audit/semantic', requireAuth, operatorRateLimit, async (
   } catch (error) {
     return res.status(502).json({ error: 'Semantyczny audyt nie powiódł się', message: (error as Error).message });
   }
+});
+
+// ── RSpace pentest BLOCKER remediation: mount-level auth guards ──────────────
+// requireAuth/requireOperator are local (non-exported) middleware in main.ts and
+// the routers below cannot reach them, so we gate the affected routes here,
+// PER-PATH and PER-METHOD, before the routers are mounted. Public reads are
+// intentionally left untouched.
+//
+// CRITICAL-02: POST /api/k0nsulat/audit must require a valid JWT (agents may
+// write audit, but anonymous writes are blocked). GET registry stays public.
+app.use((req: any, res: any, next: any) => {
+  if (req.method === 'POST' && req.path === '/api/k0nsulat/audit') {
+    return requireAuth(req, res, next);
+  }
+  next();
+});
+// CRITICAL-01: POST /api/agent/register is operator-only.
+// MAJOR-10: relay prune / incident lock / incident unlock are operator-only.
+app.use((req: any, res: any, next: any) => {
+  if (req.method !== 'POST') return next();
+  const operatorOnly = new Set([
+    '/api/agent/register',
+    '/api/relay/prune',
+    '/api/relay/incident/lock',
+    '/api/relay/incident/unlock',
+  ]);
+  if (operatorOnly.has(req.path)) {
+    return requireOperator(req, res, next);
+  }
+  next();
 });
 
 const k0nsultatRouter = createK0nsultatRouter(pool);
@@ -2341,6 +2371,9 @@ app.get('/trust-center', (_req, res) => {
 });
 app.get('/developer', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'developer.html'));
+});
+app.get('/federation', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'federation.html'));
 });
 app.get('/incidents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));

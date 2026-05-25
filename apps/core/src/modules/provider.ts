@@ -46,16 +46,25 @@ export async function getProviderApplication(pool: Pool, providerId: string): Pr
   if (result.rows.length === 0) {
     throw new Error('Provider application ' + providerId + ' not found');
   }
-  
-  return result.rows[0] as ProviderApplication;
+
+  // CRITICAL-04: never expose secrets in read responses.
+  const row = result.rows[0] as any;
+  delete row.api_key;
+  delete row.confirmation_code;
+  return row as ProviderApplication;
 }
 
 export async function listProviderApplications(pool: Pool): Promise<ProviderApplication[]> {
   const result = await pool.query(
     'SELECT * FROM provider_applications ORDER BY created_at DESC'
   );
-  
-  return result.rows as ProviderApplication[];
+
+  // CRITICAL-04: strip secrets (api_key, confirmation_code) from every record.
+  return result.rows.map((row: any) => {
+    delete row.api_key;
+    delete row.confirmation_code;
+    return row;
+  }) as ProviderApplication[];
 }
 
 export async function approveProviderApplication(

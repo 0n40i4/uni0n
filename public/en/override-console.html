@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>UNIONAI Ω∞ — Human Override Console</title>
+  <title>UNIONAI Ω∞ — Human Override Console (EN)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root{--g:#00ff41;--gd:#00cc33;--gm:#006622;--bg:#0a0a0a;--bg2:#0f1a0f;--br:#003311;--red:#ff4444;--yellow:#ffcc00}
@@ -47,10 +47,12 @@
     .pill-green{background:var(--gm);color:var(--g)}
     .pill-red{background:#330000;color:var(--red)}
   </style>
+<link rel="canonical" href="https://unionai.grassrootslobbing.pl/en/override-console.html">
+<link rel="alternate" hreflang="pl" href="https://unionai.grassrootslobbing.pl/override-console.html">
+<link rel="alternate" hreflang="en" href="https://unionai.grassrootslobbing.pl/en/override-console.html">
 </head>
 <body>
-<p><strong>Język:</strong> <a href="/override-console.html">PL</a> | <a href="/en/override-console.html">EN</a></p>
-<div class="wrap">
+<div class="wrap"><div style="margin-bottom:10px"><a href="/override-console.html">PL</a> | <strong>EN</strong></div>
 
   <div class="header">
     <div>
@@ -62,10 +64,10 @@
 
   <div class="grid">
     <div class="card"><h2>Relay Requests</h2><div class="val" id="m_relay">&#x2014;</div><div class="sub">&#x142;&#x105;cznie wys&#x142;anych</div></div>
-    <div class="card"><h2>Memory Anchors</h2><div class="val" id="m_memory">&#x2014;</div><div class="sub">zapisanych</div></div>
-    <div class="card"><h2>Governance Events</h2><div class="val" id="m_governance">&#x2014;</div><div class="sub">zalogowanych</div></div>
+    <div class="card"><h2>Memory Anchors</h2><div class="val" id="m_memory">&#x2014;</div><div class="sub">saved</div></div>
+    <div class="card"><h2>Governance Events</h2><div class="val" id="m_governance">&#x2014;</div><div class="sub">logged</div></div>
     <div class="card"><h2>Operator Overrides</h2><div class="val" id="m_overrides">&#x2014;</div><div class="sub">veto/override</div></div>
-    <div class="card"><h2>Trust Verifications</h2><div class="val" id="m_trust">&#x2014;</div><div class="sub">weryfikacji</div></div>
+    <div class="card"><h2>Trust Verifications</h2><div class="val" id="m_trust">&#x2014;</div><div class="sub">verifications</div></div>
     <div class="card"><h2>Last Audit Hash</h2><div class="val" id="m_audit" style="font-size:.75rem;word-break:break-all">&#x2014;</div><div class="sub">SHA-256 chain</div></div>
   </div>
 
@@ -192,7 +194,7 @@ function sendOverride() {
   var action = document.getElementById('ovAction').value;
   var operatorId = document.getElementById('ovOperatorId').value.trim() || 'console-operator';
   var reason = document.getElementById('ovReason').value.trim();
-  if (!intentId) { log('Intent ID wymagany', 'log-err'); return; }
+  if (!intentId) { log('Intent ID required', 'log-err'); return; }
   log('Override: ' + action + ' on ' + intentId, 'log-warn');
   apiFetch('/api/operator/override', {
     method: 'POST',
@@ -209,7 +211,7 @@ function loadAudit() {
     lastAudit = rows;
     var tbody = document.getElementById('auditBody');
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:#555;text-align:center">Brak wpisow</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="color:#555;text-align:center">No entries</td></tr>';
       return;
     }
     tbody.innerHTML = rows.slice(0,50).map(function(row){
@@ -217,12 +219,12 @@ function loadAudit() {
       var hash = row.hash ? row.hash.substring(0,14) + '...' : '&#x2014;';
       return '<tr><td style="color:#555">' + ts + '</td><td>' + (row.actor||'&#x2014;') + '</td><td>' + (row.operation||'&#x2014;') + '</td><td>' + (row.action_type||row.action||'&#x2014;') + '</td><td style="color:var(--gm);font-size:10px">' + hash + '</td></tr>';
     }).join('');
-    log('Audit: ' + rows.length + ' wpisow', 'log-ok');
+    log('Audit: ' + rows.length + ' entries', 'log-ok');
   });
 }
 
 function downloadAudit() {
-  if (!lastAudit.length) { log('Najpierw Refresh', 'log-warn'); return; }
+  if (!lastAudit.length) { log('Refresh first', 'log-warn'); return; }
   var blob = new Blob([JSON.stringify(lastAudit, null, 2)], {type:'application/json'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -235,16 +237,16 @@ function init() {
     var connEl = document.getElementById('connStatus');
     var badgeEl = document.getElementById('headerBadge');
     if (r.ok) {
-      connEl.textContent = '● Połączono — ' + (r.data.status || 'OK');
+      connEl.textContent = '● Connected — ' + (r.data.status || 'OK');
       connEl.style.color = 'var(--g)';
       badgeEl.textContent = 'ONLINE';
-      log('Połączono z UNIONAI Core API ✓', 'log-ok');
+      log('Connected to UNIONAI Core API ✓', 'log-ok');
     } else {
-      connEl.textContent = '● Brak połączenia';
+      connEl.textContent = '● Disconnected';
       connEl.style.color = 'var(--red)';
       badgeEl.textContent = 'OFFLINE';
       badgeEl.className = 'badge red';
-      log('Brak połączenia', 'log-err');
+      log('Disconnected', 'log-err');
     }
     return Promise.all([loadMetrics(), loadFreezeStatus(), loadAudit()]);
   });

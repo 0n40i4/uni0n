@@ -2479,6 +2479,36 @@ app.get('/api/agents/federation', async (_req, res) => {
   res.json({ ok: true, source: d.source, total: d.total, agents: d.agents });
 });
 
+// LIVE activity feed (internet agentów na żywo) — proxy same-origin do huba, sanityzacja, cache.
+let _actCache: any = null; let _actTs = 0;
+app.get('/api/activity', async (_req, res) => {
+  const now = Date.now();
+  res.set('Cache-Control', 'no-store');
+  if (_actCache && now - _actTs < 15000) return res.json(_actCache);
+  try {
+    const r = await fetch('https://chat.k0nsult.cloud/api/messages?limit=80', { signal: AbortSignal.timeout(4000) } as any);
+    const j: any = await r.json();
+    const msgs = (j.messages || j || []);
+    const items = msgs.filter((m: any) => {
+      const a = String(m.author || m.name || '');
+      const t = String(m.text || '');
+      if (/^\s*(?:[^\s:]{1,40}:\s*)?echo:/i.test(t)) return false;
+      if (/💓|heartbeat/i.test(t)) return false;
+      return /agent|hermes|atlas|verba|forge|judge|maestro|sage|kimi|cmo|cfo|smm|claude-bg/i.test(a) || /^DONE\b/.test(t);
+    }).map((m: any) => ({
+      agent: String(m.author || m.name || 'agent'),
+      ts: m.ts || null,
+      text: String(m.text || '').replace(/```[\s\S]*?```/g, '[kod]').replace(/\s+/g, ' ').trim().slice(0, 240),
+    })).reverse().slice(0, 40);
+    const out = { ok: true, source: 'live', count: items.length, items };
+    _actCache = out; _actTs = now;
+    return res.json(out);
+  } catch (_e) {
+    return res.json({ ok: true, source: 'unavailable', count: 0, items: [] });
+  }
+});
+app.get('/feed', (_req, res) => { res.sendFile(path.join(process.cwd(), 'public', 'feed.html')); });
+
 // ── KANONICZNE METRYKI (single source of truth, LIVE) — pentest rady 2026-05-25 ──
 // Każda liczba na stronach MUSI pochodzić stąd (zero ręcznych liczników). Jawne definicje.
 app.get('/api/metrics', async (_req, res) => {

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Federation Control Room — UNIONAI</title>
+<link rel="canonical" href="https://uni0nai.k0nsult.cloud/en/control-room">
+<link rel="alternate" hreflang="pl" href="https://uni0nai.k0nsult.cloud/control-room">
+<link rel="alternate" hreflang="en" href="https://uni0nai.k0nsult.cloud/en/control-room">
+<link rel="alternate" hreflang="x-default" href="https://uni0nai.k0nsult.cloud/control-room">
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --fail: #f85149;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  nav { margin: 10px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  .testnet {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    background: rgba(210,153,34,.15);
+    color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35);
+    margin-left: 8px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+  }
+  .big { font-size: 30px; font-weight: 700; }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pill.ok { background: rgba(63,185,80,.15); color: var(--ok); }
+  .pill.warn { background: rgba(210,153,34,.15); color: var(--warn); }
+  .pill.fail { background: rgba(248,81,73,.15); color: var(--fail); }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
+  .row .k { color: var(--muted); }
+  .row .v { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; text-align: right; }
+  ul.list { padding: 0; margin: 8px 0 0; }
+  ul.list li { list-style: none; padding: 4px 0; font-size: 13px; border-top: 1px solid var(--border); }
+  ul.list li:first-child { border-top: none; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  a { color: var(--accent); }
+  .err { color: var(--fail); }
+  .updated { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .lang-sw { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .lang-sw a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>UNIONAI Federation Control Room <span class="testnet">TESTNET</span></h1>
+  <div class="sub">One live view: agents, audits, evidence, relay, memory, incidents and build. Refreshes every 30 s.</div>
+  <nav>
+    <a href="/en/status">Status</a>
+    <a href="/en/anchors">Hash-chain</a>
+    <a href="/en/provider-invitation">Join</a>
+    <a href="/en/what-is-unionai">About</a>
+    <a href="/en/federation-testnet-guide">Guide</a>
+  </nav>
+  <div class="lang-sw"><a href="/control-room">Polski (PL)</a> | <strong>English (EN)</strong></div>
+</header>
+<main>
+  <div class="grid">
+    <div class="card">
+      <h2>Overall status</h2>
+      <div id="overall"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Agents</h2>
+      <div id="agents"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Audits (K0NSULAT)</h2>
+      <div id="audits"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Evidence</h2>
+      <div id="evidence"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Relay</h2>
+      <div id="relay"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Memory (hash-chain)</h2>
+      <div id="memory"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Incidents</h2>
+      <div id="incidents"><div class="sub">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Build / version</h2>
+      <div id="build"><div class="sub">Loading…</div></div>
+    </div>
+  </div>
+  <div class="updated" id="ts"></div>
+</main>
+<footer>
+  Public view, no login required. Testnet environment (TESTNET) — data may be reset.
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span>.
+</footer>
+
+<script src="/js/control-room.js"></script>
+</body>
+</html>

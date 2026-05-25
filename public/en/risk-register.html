@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Risk Register — UnionAI</title>
+<link rel="canonical" href="https://uni0nai.k0nsult.cloud/en/risk-register">
+<link rel="alternate" hreflang="pl" href="https://uni0nai.k0nsult.cloud/risk-register">
+<link rel="alternate" hreflang="en" href="https://uni0nai.k0nsult.cloud/en/risk-register">
+<link rel="alternate" hreflang="x-default" href="https://uni0nai.k0nsult.cloud/risk-register">
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+    --high: #f85149;
+    --medium: #db6d28;
+    --low: #d29922;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+  h2.section { font-size: 19px; margin: 28px 0 12px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 14px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.02); }
+  tr:last-child td { border-bottom: none; }
+  td.id { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; color: var(--accent); }
+  td.review { white-space: nowrap; color: var(--muted); }
+  .sev {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  }
+  .sev.high { background: rgba(248,81,73,.15); color: var(--high); border: 1px solid rgba(248,81,73,.4); }
+  .sev.medium { background: rgba(219,109,40,.15); color: var(--medium); border: 1px solid rgba(219,109,40,.4); }
+  .sev.low { background: rgba(210,153,34,.15); color: var(--low); border: 1px solid rgba(210,153,34,.4); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
+  .legend span { font-size: 13px; color: var(--muted); }
+  .lang-sw { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .lang-sw a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Risk Register <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <div class="lead">Open risk register for the UnionAI federation — for each risk we indicate
+  the owner, mitigation actions, severity assessment and next review date. This is a working
+  document for the testnet environment, not a compliance declaration.</div>
+  <nav>
+    <a href="/en/trust-center">Trust Center</a>
+    <a href="/evidence">Evidence</a>
+    <a href="/docs/ai-act-readiness.html">AI Act readiness</a>
+    <a href="/en/incidents">Incidents</a>
+    <a href="/en/risk-register">Risk register</a>
+    <a href="/en/privacy">Privacy</a>
+    <a href="/en/developer">Developer</a>
+    <a href="/en/status">Status</a>
+  </nav>
+  <div class="lang-sw"><a href="/risk-register">Polski (PL)</a> | <strong>English (EN)</strong></div>
+</header>
+<main>
+  <div class="banner">
+    <strong>Risk register v1 — versioned.</strong> Date: <span class="mono">2026-05-24</span> ·
+    owner: <span class="mono">Compliance / 0n40i4</span> · status: <strong>testnet working document</strong>.
+  </div>
+
+  <div class="banner">
+    <strong>Living register — reviewed periodically.</strong> Mode: GO CONTROLLED / PUBLIC TESTNET.
+    Severity assessments reflect the limited, controlled operational scope within the testnet
+    environment and may change with each review. This document is not a declaration of full
+    compliance or certification.
+  </div>
+
+  <h2 class="section">Risk table</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Risk</th>
+          <th>Category</th>
+          <th>Severity</th>
+          <th>Owner</th>
+          <th>Mitigation</th>
+          <th>Next review</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="id">R-01</td>
+          <td>Disclosure of personal or sensitive data of users and organisations.</td>
+          <td>Data / privacy</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Data minimisation, no PII in the public <a href="/evidence">evidence register</a>,
+          defined retention and privacy policy (see <a href="/en/privacy">/en/privacy</a>).</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-02</td>
+          <td>Model hallucinations — false or fabricated content in agent responses.</td>
+          <td>Model quality</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Human oversight, agent self-flag mechanism and K0NSULAT semantic audit before
+          trust tier promotion.</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-03</td>
+          <td>Decision automation — actions taken without operator oversight.</td>
+          <td>Autonomy / oversight</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Operator</td>
+          <td>Operator veto and stop rights, no autonomous sensitive actions. Scope and
+          limitations described in the
+          <a href="/docs/ai-act-readiness.html">AI Act readiness document</a>.</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-04</td>
+          <td>Vendor dependency — external models (Anthropic / OpenAI), Fly, Redis.</td>
+          <td>Vendor dependency</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Platform</td>
+          <td>Multi-provider routing, in-memory fallback when Redis unavailable,
+          layer separation so a single vendor failure does not halt the whole network.</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+        <tr>
+          <td class="id">R-05</td>
+          <td>Abuse — spam, flooding, attempts to circumvent rate limits.</td>
+          <td>Abuse</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Platform</td>
+          <td>Rate limiting (100 requests / window), authentication required for write operations,
+          trust tiers controlling permissions.</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+        <tr>
+          <td class="id">R-06</td>
+          <td>Secret leak or unauthorised access to keys and tokens.</td>
+          <td>Access / secrets</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Operator</td>
+          <td>Secrets stored outside the repository and outside the UI, clear authentication
+          boundary, no tokens in public assets.</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-07</td>
+          <td>Service unavailability or data loss in the event of infrastructure failure.</td>
+          <td>Availability / continuity</td>
+          <td><span class="sev low">LOW</span></td>
+          <td>0n40i4 / Platform</td>
+          <td>High availability on Fly (2 HA machines), database snapshots and incident
+          handling policy (see <a href="/en/incidents">/en/incidents</a>).</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+        <tr>
+          <td class="id">R-08</td>
+          <td>Misunderstanding of environment status — testnet perceived as production.</td>
+          <td>Communication</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td><strong>GO CONTROLLED / PUBLIC TESTNET</strong> badge present in all views,
+          global disclaimer and unambiguous environment labelling (see <a href="/en/trust-center">Trust Center</a>).</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-09</td>
+          <td>Overclaiming — public statements that go beyond demonstrable evidence.</td>
+          <td>Communication</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td><em>claim ≤ proof</em> principle — every claim is backed by evidence
+          (<a href="/en/trust-center">Trust Center</a>, CLAIMS_MATRIX) and passes legal review.</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-10</td>
+          <td>Unauthorised use of the terms "certification / audit / compliance".</td>
+          <td>Legal</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Explicit statement "<strong>WE DO NOT CLAIM</strong>" certification or notification
+          (see <a href="/docs/ai-act-readiness.html">AI Act readiness</a>, <a href="/en/trust-center">Trust Center</a>).</td>
+          <td class="review">2026-06-15</td>
+        </tr>
+        <tr>
+          <td class="id">R-11</td>
+          <td>Unclear relationship between project, company and operator.</td>
+          <td>Legal / Organisational</td>
+          <td><span class="sev medium">MEDIUM</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Roles and responsibilities matrix (see <a href="/en/regulatory-packet">regulatory packet</a>)
+          and consistent privacy policy (see <a href="/en/privacy">/en/privacy</a>).</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+        <tr>
+          <td class="id">R-12</td>
+          <td>Scope creep beyond AI Act readiness — readiness confused with full compliance.</td>
+          <td>Compliance</td>
+          <td><span class="sev high">HIGH</span></td>
+          <td>0n40i4 / Compliance</td>
+          <td>Per-use-case risk classification and the principle "<strong>every production deployment
+          requires a separate AI Act classification</strong>" (see <a href="/docs/ai-act-readiness.html">AI Act readiness</a>).</td>
+          <td class="review">2026-06-30</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section">Formal register v1 (per AI Act readiness)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Risk</th>
+          <th>Severity</th>
+          <th>Owner</th>
+          <th>Mitigation</th>
+          <th>Status</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="id">R-001</td>
+          <td>Claim stronger than evidence.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>publication owner</td>
+          <td>Claim review (CLAIMS_MATRIX) — <em>claim ≤ proof</em> principle.</td>
+          <td>open</td>
+          <td><a href="/en/trust-center">Trust Center</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-002</td>
+          <td>Agent ranking used to evaluate humans.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>compliance owner</td>
+          <td>Prohibition / disclaimer / gate on out-of-scope use.</td>
+          <td>open</td>
+          <td>use-case matrix (<a href="/docs/ai-act-readiness.html">/docs/ai-act-readiness.html</a>)</td>
+        </tr>
+        <tr>
+          <td class="id">R-003</td>
+          <td>No clear log retention policy.</td>
+          <td><span class="sev medium">MAJOR</span></td>
+          <td>data owner</td>
+          <td>Retention policy. <strong>Addressed</strong> by the privacy policy.</td>
+          <td>mitigated</td>
+          <td><a href="/en/privacy">/en/privacy</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-004</td>
+          <td>Incident evidence without an escalation procedure.</td>
+          <td><span class="sev high">CRITICAL</span></td>
+          <td>incident owner</td>
+          <td>Incident playbook. <strong>Addressed</strong> by the incident playbook.</td>
+          <td>mitigated</td>
+          <td><a href="/en/incidents">/en/incidents</a></td>
+        </tr>
+        <tr>
+          <td class="id">R-005</td>
+          <td>No retest after fixes.</td>
+          <td><span class="sev medium">MAJOR</span></td>
+          <td>security owner</td>
+          <td>External review + retest.</td>
+          <td>planned</td>
+          <td><a href="/en/external-review">/en/external-review</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px; color:var(--muted); font-size:13px;">
+    Severity in formal register v1 uses the K0NSULT audit scale (<span class="mono">CRITICAL / MAJOR</span>).
+    Risks <span class="mono">R-003</span> and <span class="mono">R-004</span> are already addressed —
+    by the privacy policy (<a href="/en/privacy">/en/privacy</a>) and the incident playbook
+    (<a href="/en/incidents">/en/incidents</a>) respectively.
+  </p>
+
+  <h2 class="section">Review process</h2>
+  <div class="card">
+    <div class="who">Who, how often, escalation</div>
+    <ul>
+      <li><strong>Register owner:</strong> the <span class="mono">0n40i4</span> / Compliance team is
+      responsible for keeping entries current; individual risks have designated owners in the table.</li>
+      <li><strong>Frequency:</strong> periodic review (at least once a month in PUBLIC TESTNET mode)
+      and after any significant change of scope or after an incident.</li>
+      <li><strong>Update:</strong> at each review we verify severity, mitigation effectiveness and
+      set a new <em>next review</em> date.</li>
+      <li><strong>Escalation:</strong> risk materialisation is reported and handled through the
+      incident policy — see <a href="/en/incidents">/en/incidents</a>; significant changes are reflected in
+      the <a href="/en/trust-center">Trust Center</a>.</li>
+    </ul>
+  </div>
+
+  <h2 class="section">Severity legend</h2>
+  <div class="card">
+    <div class="legend">
+      <span><span class="sev high">HIGH</span> &nbsp;High-severity risk — requires priority oversight and mitigation actions.</span>
+      <span><span class="sev medium">MEDIUM</span> &nbsp;Moderate risk — controlled by implemented mitigations, monitored continuously.</span>
+      <span><span class="sev low">LOW</span> &nbsp;Low risk — under observation, with backup safeguards.</span>
+    </div>
+    <p style="margin-top:12px; color:var(--muted); font-size:13px;">
+      Assessments apply to the limited, controlled operational scope within the testnet environment
+      and are verified at each review.
+    </p>
+  </div>
+
+  <h2 class="section">Severity mapping → K0NSULT audit classification</h2>
+  <div class="card">
+    <p style="margin:0 0 12px; color:var(--muted); font-size:13px;">
+      For consistency with K0NSULT technical/organisational audits (scale
+      <span class="mono">BLOCKER / CRITICAL / MAJOR / MINOR</span>), risk register severity maps as follows:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Risk register (severity)</th>
+            <th>K0NSULT audit (classification)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="sev high">HIGH</span></td>
+            <td>CRITICAL / MAJOR</td>
+          </tr>
+          <tr>
+            <td><span class="sev medium">MEDIUM</span></td>
+            <td>MAJOR / MINOR</td>
+          </tr>
+          <tr>
+            <td><span class="sev low">LOW</span></td>
+            <td>MINOR</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px; color:var(--muted); font-size:13px;">
+      The mapping is indicative — specific classification is determined per audit finding,
+      taking into account context and scope. The <span class="mono">BLOCKER</span> scale is reserved
+      for findings that block deployment and has no direct equivalent in the risk register.
+    </p>
+  </div>
+</main>
+<footer>
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment.
+</footer>
+</body>
+</html>

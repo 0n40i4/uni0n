@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Production Gate (TESTNET → PRODUCTION) — UnionAI</title>
+<link rel="canonical" href="https://uni0nai.k0nsult.cloud/en/production-gate">
+<link rel="alternate" hreflang="pl" href="https://uni0nai.k0nsult.cloud/production-gate">
+<link rel="alternate" hreflang="en" href="https://uni0nai.k0nsult.cloud/en/production-gate">
+<link rel="alternate" hreflang="x-default" href="https://uni0nai.k0nsult.cloud/production-gate">
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header { padding: 28px 20px; border-bottom: 1px solid var(--border); }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 720px; }
+  nav { margin: 14px 0 0; font-size: 14px; }
+  nav a { margin-right: 14px; color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .testnet {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35); margin-left: 8px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 17px; margin: 0 0 8px; }
+  .card .who { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .banner {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .cta { margin-top: 12px; }
+  .cta a {
+    display: inline-block; margin: 6px 8px 0 0; padding: 9px 16px; border-radius: 6px;
+    background: var(--accent); color: #0d1117; font-weight: 700; font-size: 14px; text-decoration: none;
+  }
+  .cta a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: var(--accent); }
+  footer { color: var(--muted); font-size: 12px; padding: 24px 20px; text-align: center; }
+
+  /* checklist / table extensions */
+  .checklist { list-style: none; padding-left: 0; margin: 10px 0; }
+  .checklist > li {
+    padding: 10px 0 10px 30px; border-bottom: 1px solid var(--border); position: relative;
+  }
+  .checklist > li:last-child { border-bottom: none; }
+  .box { position: absolute; left: 0; top: 9px; font-size: 17px; line-height: 1; }
+  .box.todo { color: var(--warn); }
+  .box.done { color: var(--ok); }
+  .crit { color: var(--muted); font-size: 14px; display: block; margin-top: 2px; }
+  .crit .mono { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .status-fail {
+    display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    letter-spacing: .06em; background: rgba(210,153,34,.15); color: var(--warn);
+    border: 1px solid rgba(210,153,34,.35);
+  }
+  .final {
+    background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.35);
+    border-radius: 8px; padding: 16px 20px; margin-top: 16px;
+  }
+  .sig { color: var(--muted); }
+  .lang-sw { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .lang-sw a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Production Gate (TESTNET → PRODUCTION) <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <div class="lead">Control gate P2-07. The UnionAI federation may change
+  <span class="mono">network_status</span> from <strong>TESTNET</strong> to <strong>PRODUCTION</strong>
+  only after fulfilling and <strong>signing</strong> the checklist below: agent registry, trust tiers,
+  authorisation, monitoring and incident-handling process.</div>
+  <nav>
+    <a href="/en/trust-center">Trust Center</a>
+    <a href="/en/sla-slo">SLA / SLO</a>
+    <a href="/en/governance">Governance</a>
+    <a href="/en/incidents">Incidents</a>
+    <a href="/en/external-review">External review</a>
+    <a href="/en/status">Status</a>
+  </nav>
+  <div class="lang-sw"><a href="/production-gate">Polski (PL)</a> | <strong>English (EN)</strong></div>
+</header>
+<main>
+  <div class="banner">
+    <strong>Current state: <span class="testnet" style="margin-left:0">network_status = TESTNET</span></strong><br />
+    Live check <span class="mono">GET /api/leaderboard</span> (state as of 2026-05-23) returns
+    <span class="mono">"network_status":"TESTNET"</span>, 3 agents, all marked
+    <span class="mono">"is_demo":true</span> / label <span class="mono">DEMO/TESTNET</span> (tiers T1–T2).
+    This <strong>is a testnet environment</strong> — data may be reset and there are no stability guarantees.
+    Switching to <span class="mono">PRODUCTION</span> requires the <strong>signed checklist below</strong>.
+  </div>
+
+  <h2 style="font-size:20px; margin-top:24px;">Transition conditions checklist</h2>
+  <p class="lead" style="margin-bottom:8px;">Legend: <span class="box todo" style="position:static">☐</span> not met &nbsp;·&nbsp;
+  <span class="box done" style="position:static">☑</span> met and verified. Each item requires a criterion and a link to evidence.</p>
+
+  <div class="card">
+    <div class="who">1 · Agent registry</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Agent registry operational</strong>
+        <span class="crit">Criterion: <span class="mono">GET /api/leaderboard</span> and registry return consistent agent data. Evidence: <a href="/en/status">/en/status</a>, <a href="/api/leaderboard">/api/leaderboard</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Test data labelled</strong>
+        <span class="crit">Criterion: every demo agent has <span class="mono">is_demo:true</span> and label <span class="mono">DEMO/TESTNET</span>. Evidence: <a href="/api/leaderboard">/api/leaderboard</a> (currently 3/3 demo).</span></li>
+      <li><span class="box done">☑</span><strong>Demo / production separation</strong>
+        <span class="crit">Criterion: production agents in the <span class="mono">production</span> zone, separated from the <span class="mono">testnet</span> zone; production leaderboard does not mix demo data. Evidence: <a href="/en/governance">/en/governance</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">2 · Trust tiers</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Tiers T0 → T4 enforced</strong>
+        <span class="crit">Criterion: tier assigned based on audit/activity and checked on every operation. Evidence: <a href="/en/trust-center">/en/trust-center</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Permissions per tier</strong>
+        <span class="crit">Criterion: routing / relay / memory write / governance unlocked progressively by tier, enforced server-side. Evidence: <a href="/en/trust-center">/en/trust-center</a>, <a href="/en/governance">/en/governance</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">3 · Authorisation</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Write / admin operations protected</strong>
+        <span class="crit">Criterion: write and administration require authentication (relay shared secret / JWT); anonymous access = 401/403. Evidence: <a href="/en/trust-center">/en/trust-center</a> (auth boundary).</span></li>
+      <li><span class="box done">☑</span><strong>No anonymous state writes</strong>
+        <span class="crit">Criterion: no unauthenticated client can write to memory or registry; smoke 401/403 documented. Evidence: <a href="/en/trust-center">/en/trust-center</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">4 · Monitoring</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Uptime monitor + alert</strong>
+        <span class="crit">Criterion: external <span class="mono">uptime-check</span> at interval + alert to <span class="mono">ALERT_WEBHOOK</span> on failure. Evidence: <a href="/en/status">/en/status</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Public status page</strong>
+        <span class="crit">Criterion: <a href="/en/status">/en/status</a> shows live system state and metrics. Evidence: <a href="/en/status">/en/status</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">5 · Incident process</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Incident handling process</strong>
+        <span class="crit">Criterion: incident register <a href="/en/incidents">/en/incidents</a> with event records. Evidence: <a href="/en/incidents">/en/incidents</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Severity classes + escalation</strong>
+        <span class="crit">Criterion: defined severity levels (SEV1–SEV3) and escalation path to responsible parties. Evidence: <a href="/en/incidents">/en/incidents</a>, <a href="/en/governance">/en/governance</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">6 · SLA / SLO</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>SLA / SLO defined and measured</strong>
+        <span class="crit">Criterion: availability and latency targets described and measured (e.g. relay match p95, uptime). Evidence: <a href="/en/sla-slo">/en/sla-slo</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">7 · Evidence / compliance</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Manifest + evidence hashes</strong>
+        <span class="crit">Criterion: <span class="mono">/evidence/manifest.json</span> with sha256 checksums and integrity verification. Evidence: <a href="/en/trust-center">/en/trust-center</a>, <span class="mono">/api/evidence/verify</span>.</span></li>
+      <li><span class="box done">☑</span><strong>AI Act readiness</strong>
+        <span class="crit">Criterion: AI Act obligations mapping / Art. 50 disclosure, readiness status (not a certificate). Evidence: <a href="/en/trust-center">/en/trust-center</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Risk register</strong>
+        <span class="crit">Criterion: documented risks with owners and mitigation actions. Evidence: <a href="/en/governance">/en/governance</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Human oversight</strong>
+        <span class="crit">Criterion: human intervention points and responsible operator defined. Evidence: <a href="/en/governance">/en/governance</a>.</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="who">8 · External review</div>
+    <ul class="checklist">
+      <li><span class="box done">☑</span><strong>Non-invasive reviews (technical + legal + AI Act readiness)</strong>
+        <span class="crit">Completed 2026-05-24; all BLOCKER/CRITICAL/MAJOR findings addressed and documented. Evidence: <a href="/en/external-review">/en/external-review</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Self-pentest (active, bounded)</strong>
+        <span class="crit">Completed 2026-05-24; 0 BLOCKER/CRITICAL/MAJOR; 2× MINOR fixed. <em>Self-assessment — does not replace an independent pentest.</em></span></li>
+      <li><span class="box todo">☐</span><strong>Independent active pentest</strong>
+        <span class="crit">ONLY remaining technical condition. Requires an external contractor (RSpace (rspace.com.pl) / equivalent). RFP ready: <span class="mono">docs/EXTERNAL_REVIEW_EMAIL.md</span>.</span></li>
+    </ul>
+  </div>
+
+  <h2 style="font-size:20px; margin-top:24px;">Who signs</h2>
+  <div class="banner warn">
+    <strong>READY-TO-SIGN (state 2026-05-24):</strong> all technical, legal and readiness conditions are ☑ and verified.
+    Before signatures are submitted, <strong>one condition</strong> remains: <strong>independent active pentest</strong>
+    (external). Once complete and findings addressed — fill in the three signatures below (name/role/date),
+    change the last ☐ to ☑, and only then execute the "Switchover Procedure".
+  </div>
+  <div class="banner">
+    Transition to <span class="mono">PRODUCTION</span> requires signatures from three roles (per FULL LIVE criteria).
+    All three signatures are required — even one missing = no transition.
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Who</th><th>What they confirm</th><th>Signature</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Operator</td>
+          <td>0n40i4</td>
+          <td>Business decision to proceed, risk acceptance, operational responsibility.</td>
+          <td class="sig">☐ ____________ (date)</td>
+        </tr>
+        <tr>
+          <td>Tech lead</td>
+          <td>UnionAI tech lead</td>
+          <td>Technical items (registry, tiers, auth, monitoring, SLA) met and verified.</td>
+          <td class="sig">☐ ____________ (date)</td>
+        </tr>
+        <tr>
+          <td>Compliance owner</td>
+          <td>Compliance owner</td>
+          <td>Evidence/manifest, AI Act readiness, risk register, human oversight and external review.</td>
+          <td class="sig">☐ ____________ (date)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 style="font-size:20px; margin-top:24px;">Switchover procedure</h2>
+  <div class="card">
+    <ol>
+      <li><strong>Signatures</strong> — all three roles (operator + tech lead + compliance owner) sign the checklist; every item <span class="mono">☐ → ☑</span> with evidence.</li>
+      <li><strong>Configuration change</strong> — set <span class="mono">NETWORK_STATUS=PRODUCTION</span> as env / secret (e.g. <span class="mono">flyctl secrets set NETWORK_STATUS=PRODUCTION</span>).</li>
+      <li><strong>Redeploy</strong> — deploy with correct <span class="mono">GIT_SHA</span> (or <span class="mono">scripts/deploy.sh</span>), without build_sha regression.</li>
+      <li><strong>Smoke</strong> — live verification: <span class="mono">/api/leaderboard</span> returns <span class="mono">"network_status":"PRODUCTION"</span>, auth 401/403 working, <a href="/en/status">/en/status</a> green.</li>
+      <li><strong>Announcement</strong> — publish the change (changelog / Trust Center) and notify providers.</li>
+    </ol>
+    <p class="crit" style="margin-top:8px;">Rollback: if problems arise, restore <span class="mono">NETWORK_STATUS=TESTNET</span> and redeploy.</p>
+  </div>
+
+  <div class="final">
+    <strong>Final status: <span class="status-fail">READY-TO-SIGN — 1 condition + 3 signatures open</span></strong><br />
+    <strong>All technical, legal and readiness conditions are ☑ and verified</strong> (registry, trust tiers,
+    auth boundary, monitoring, incidents, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof —
+    state 2026-05-24; 3 non-invasive reviews + self-pentest completed). Remaining open:
+    <strong>(1) independent active pentest</strong> (external — RFP: <span class="mono">docs/EXTERNAL_REVIEW_EMAIL.md</span>)
+    and <strong>(2) three signatures</strong> (operator + tech lead + compliance owner) — to be submitted AFTER the pentest.
+    Until these are closed <strong>we remain in GO CONTROLLED / PUBLIC TESTNET mode</strong>;
+    <span class="mono">network_status</span> remains <span class="mono">TESTNET</span>. Do not communicate FULL LIVE.
+    <div class="cta">
+      <a class="alt" href="/en/trust-center">Trust Center</a>
+      <a class="alt" href="/en/external-review">External review</a>
+      <a class="alt" href="/en/status">Status</a>
+    </div>
+  </div>
+</main>
+<footer>
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment · production gate P2-07.
+</footer>
+</body>
+</html>

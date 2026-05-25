@@ -19,7 +19,7 @@
         '</div>';
     }).join('');
     var src = document.getElementById('fed-agents-src');
-    if (src) src.textContent = d.source === 'live' ? 'live z hubie' : 'katalog';
+    if (src) src.textContent = d.source === 'live' ? ((typeof d.total === 'number' ? d.total : agents.length) + ' agentów live z sieci') : 'dane niedostępne';
   }).catch(function () {
     root.innerHTML = '<p style="color:var(--mut)">Agenci niedostępni chwilowo.</p>';
   });

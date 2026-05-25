@@ -2454,29 +2454,80 @@ app.get('/federation', (_req, res) => {
 });
 // Agent directory (internet agentów): proxy same-origin do huba (omija CSP), z fallbackiem.
 let _fedAgentsCache: any = null; let _fedAgentsTs = 0;
-app.get('/api/agents/federation', async (_req, res) => {
+// LIVE-ONLY: zero hardkodowanych liczb. Wszystko z żywego stanu sieci (hub). Brak źródła → 'unavailable', nie stale.
+async function getFedAgents(): Promise<{ source: string; total: number | null; agents: any[] }> {
   const now = Date.now();
-  if (_fedAgentsCache && now - _fedAgentsTs < 30000) return res.json(_fedAgentsCache);
-  const fallback = [
-    { name: 'HERMES-GROQ', role: 'Szybki Analityk / Triage', model: 'Llama @ Groq', skills: ['analysis', 'synthesis', 'runtime'] },
-    { name: 'ATLAS-GEMINI', role: 'Badacz / Research', model: 'Gemini 2.0', skills: ['research', 'analysis', 'reasoning'] },
-    { name: 'VERBA-MISTRAL', role: 'Syntetyk / Redaktor', model: 'Mistral Large', skills: ['synthesis', 'translation', 'reasoning'] },
-    { name: 'FORGE-DEEPSEEK', role: 'Inżynier / Reasoning', model: 'DeepSeek', skills: ['code', 'reasoning', 'analysis'] },
-  ];
+  if (_fedAgentsCache && now - _fedAgentsTs < 15000) return _fedAgentsCache;
   try {
     const r = await fetch('https://chat.k0nsult.cloud/api/agent-skills', { signal: AbortSignal.timeout(4000) } as any);
     const j: any = await r.json();
+    const list = j.agents || [];
+    const total = typeof j.count === 'number' ? j.count : list.length;
     const known = ['hermes-groq', 'atlas-gemini', 'verba-mistral', 'forge-deepseek'];
-    const agents = (j.agents || [])
+    const featured = list
       .filter((a: any) => known.some(k => (a.did || '').includes(k)))
       .map((a: any) => ({ name: a.name, role: (a.profile || '').split('|')[0].trim() || 'Agent', skills: a.skills || [], did: a.did }));
-    const out = { ok: true, source: 'live', agents: agents.length ? agents : fallback };
+    const out = { source: 'live', total, agents: featured };
     _fedAgentsCache = out; _fedAgentsTs = now;
-    return res.json(out);
+    return out;
   } catch (_e) {
-    return res.json({ ok: true, source: 'fallback', agents: fallback });
+    return { source: 'unavailable', total: null, agents: [] };
+  }
+}
+app.get('/api/agents/federation', async (_req, res) => {
+  const d = await getFedAgents();
+  res.json({ ok: true, source: d.source, total: d.total, agents: d.agents });
+});
+
+// ── MCP CONNECTOR (Streamable HTTP, read-only) — uni0nai jako konektor dla model-agentów ──
+// np. Mistral le Chat: "Niestandardowy konektor MCP" → Adres serwera: https://uni0nai.k0nsult.cloud/mcp
+const MCP_TOOLS = [
+  { name: 'federation_status', description: 'Status federacji UNIONAI: network_status, liczba agentów w katalogu, znacznik czasu.', inputSchema: { type: 'object', properties: {}, required: [] } },
+  { name: 'list_agents', description: 'Lista agentów federacji UNIONAI (nazwa, rola, model, skille).', inputSchema: { type: 'object', properties: {}, required: [] } },
+  { name: 'query_capability', description: 'Znajdź agentów federacji o danej umiejętności (skill).', inputSchema: { type: 'object', properties: { skill: { type: 'string', description: 'np. code, research, synthesis, analysis' } }, required: ['skill'] } },
+];
+app.post('/mcp', async (req: any, res) => {
+  const msg = req.body || {};
+  const id = msg.id !== undefined ? msg.id : null;
+  const reply = (result: any) => res.json({ jsonrpc: '2.0', id, result });
+  const fail = (code: number, message: string) => res.json({ jsonrpc: '2.0', id, error: { code, message } });
+  try {
+    switch (msg.method) {
+      case 'initialize':
+        return reply({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'unionai-federation', version: '0.3.0' } });
+      case 'notifications/initialized':
+      case 'notifications/cancelled':
+        return res.status(202).end();
+      case 'ping':
+        return reply({});
+      case 'tools/list':
+        return reply({ tools: MCP_TOOLS });
+      case 'tools/call': {
+        const name = msg.params?.name;
+        const args = msg.params?.arguments || {};
+        const d = await getFedAgents();
+        let text = '';
+        if (name === 'federation_status') {
+          text = JSON.stringify({ federation: 'UNIONAI-GENESIS-0N40I4-20260512', network_status: process.env.NETWORK_STATUS || 'TESTNET', agents_total_live: d.total, featured_agents: d.agents.length, source: d.source, timestamp: new Date().toISOString() }, null, 2);
+        } else if (name === 'list_agents') {
+          text = JSON.stringify(d.agents, null, 2);
+        } else if (name === 'query_capability') {
+          const skill = String(args.skill || '').toLowerCase();
+          const m = d.agents.filter((a: any) => (a.skills || []).some((s: string) => String(s).toLowerCase().includes(skill)));
+          text = m.length ? JSON.stringify(m, null, 2) : 'Brak agentów z umiejętnością: ' + skill;
+        } else {
+          return fail(-32602, 'Unknown tool: ' + name);
+        }
+        return reply({ content: [{ type: 'text', text }] });
+      }
+      default:
+        return fail(-32601, 'Method not found: ' + msg.method);
+    }
+  } catch (_e) {
+    return fail(-32603, 'Internal error');
   }
 });
+app.get('/mcp', (_req, res) => { res.set('Allow', 'POST').status(405).json({ error: 'Use POST (JSON-RPC / MCP Streamable HTTP)' }); });
 app.get('/incidents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));
 });

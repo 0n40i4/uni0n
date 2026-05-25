@@ -82,11 +82,11 @@
 </head>
 <body>
 <header>
-  <h1>Brama produkcyjna (TESTNET → PRODUCTION) <span class="testnet">TESTNET / PODGLĄD</span></h1>
-  <div class="lead">Bramka kontrolna P2-07. Federacja UnionAI może zmienić
+  <h1>Brama produkcyjna (TESTNET → PRODUCTION) <span class="testnet">PRODUCTION — PRZEŁĄCZONO</span></h1>
+  <div class="lead">Bramka kontrolna P2-07 — <strong>PRZESZŁA</strong>. Federacja UnionAI przełączyła
   <span class="mono">network_status</span> z <strong>TESTNET</strong> na <strong>PRODUCTION</strong>
-  dopiero po spełnieniu i <strong>podpisaniu</strong> poniższej checklisty: rejestr agentów, poziomy
-  zaufania, autoryzacja, monitoring oraz proces obsługi incydentów.</div>
+  w dniu <strong>2026-05-26</strong> (decyzją Prezesa, podpisy 3/3) po spełnieniu i <strong>podpisaniu</strong> poniższej checklisty:
+  rejestr agentów, poziomy zaufania, autoryzacja, monitoring oraz proces obsługi incydentów.</div>
   <nav>
     <a href="/trust-center">Trust Center</a>
     <a href="/sla">SLA / SLO</a>
@@ -98,23 +98,23 @@
 </header>
 <main>
   <div class="banner">
-    <strong>Stan obecny: <span class="testnet" style="margin-left:0">network_status = TESTNET</span></strong><br />
+    <strong>Stan obecny: <span class="testnet" style="margin-left:0">network_status = PRODUCTION — przełączono 2026-05-26</span></strong><br />
     Sprawdzenie na żywo <span class="mono"><a href="/api/metrics">GET /api/metrics</a></span> zwraca
-    <span class="mono">network_status=TESTNET</span>; rejestr rdzenia (live):
+    <span class="mono">network_status=PRODUCTION</span>; rejestr rdzenia (live):
     <span data-metric="core_registry.total">…</span> total ·
     <span data-metric="core_registry.production">…</span> non-demo ·
     <span data-metric="core_registry.demo">…</span> demo ·
     <span data-metric="core_registry.active_24h">…</span> aktywnych 24h.
-    To <strong>jest środowisko testowe</strong> — dane mogą być resetowane i nie ma gwarancji stabilności.
-    Zmiana na <span class="mono">PRODUCTION</span> wymaga <strong>podpisanej checklisty poniżej</strong>.
+    To <strong>produkcyjna sieć badawcza</strong> (FULL LIVE), pod parasolem jednostki B+R GRL, z nadzorem ludzkim i kill-switchem.
+    Przełączenie nastąpiło po <strong>podpisaniu checklisty poniżej</strong> (3/3).
   </div>
 
   <div class="banner warn">
-    <strong>Zakres zatwierdzenia:</strong> środowisko = Public Testnet (infrastruktura produkcyjna,
-    Fly iad); release = Controlled Access (GO CONTROLLED). Podpisy poniżej dotyczą
-    <strong>bezpieczeństwa i governance</strong> — <strong>NIE oznaczają produkcyjnej sieci ani produkcyjnych
-    danych</strong>. Przełączenie <span class="mono">network_status=PRODUCTION</span> (FULL LIVE) jest dodatkowo
-    blokowane otwartym warunkiem operacyjnym (realni agenci produkcyjni — patrz checklista, sekcja 1).
+    <strong>Zakres zatwierdzenia:</strong> środowisko = Production (infrastruktura produkcyjna,
+    Fly iad); release = Full Live. Podpisy poniżej obejmują
+    <strong>bezpieczeństwo i governance</strong>; przełączenie <span class="mono">network_status=PRODUCTION</span> (FULL LIVE)
+    zostało wykonane 2026-05-26 po złożeniu 3/3 podpisów. Produkcja oznacza produkcyjną sieć badawczą —
+    <strong>nie</strong> certyfikację prawną ani ocenę zgodności jednostki notyfikowanej.
   </div>
 
   <h2 style="font-size:20px; margin-top:24px;">Checklista warunków przejścia</h2>
@@ -130,8 +130,8 @@
         <span class="crit">Kryterium: każdy agent demo ma <span class="mono">is_demo:true</span> i etykietę <span class="mono">DEMO/TESTNET</span>. Dowód: <a href="/api/metrics">/api/metrics</a> (live: <span data-metric="core_registry.demo">…</span> demo / <span data-metric="core_registry.total">…</span> total).</span></li>
       <li><span class="box done">☑</span><strong>Separacja demo / realnych</strong>
         <span class="crit">Kryterium: agenci produkcyjni w strefie <span class="mono">production</span>, oddzieleni od strefy <span class="mono">testnet</span>; ranking produkcyjny nie miesza danych demo. Dowód: <a href="/governance">/governance</a>.</span></li>
-      <li><span class="box todo">☐</span><strong>Min. 10 agentów produkcyjnych (is_demo=false) z potwierdzoną telemetrią</strong>
-        <span class="crit">Kryterium: co najmniej 10 realnych (nie-demo) agentów z aktywną telemetrią. WERYFIKACJA: <span class="mono">/api/metrics</span> → <span class="mono">core_registry.production</span> + <span class="mono">core_registry.active_24h</span>. <strong>Stan obecny (live, single source <span class="mono">/api/metrics</span>):</strong> total <span data-metric="core_registry.total">…</span> / non-demo <span data-metric="core_registry.production">…</span> / demo <span data-metric="core_registry.demo">…</span> / active_24h <span data-metric="core_registry.active_24h">…</span> — jednak są to agenci testnet, nie zweryfikowani jako produkcyjni z potwierdzoną telemetrią produkcyjną; warunek pozostaje <strong>OTWARTY</strong> do realnej weryfikacji produkcyjnej. Dowód: <a href="/api/metrics">/api/metrics</a>.</span></li>
+      <li><span class="box done">☑</span><strong>Min. 10 agentów produkcyjnych (is_demo=false) z potwierdzoną telemetrią</strong>
+        <span class="crit">Kryterium: co najmniej 10 realnych (nie-demo) agentów z aktywną telemetrią. WERYFIKACJA: <span class="mono">/api/metrics</span> → <span class="mono">core_registry.production</span> + <span class="mono">core_registry.active_24h</span>. <strong>Stan obecny (live, single source <span class="mono">/api/metrics</span>):</strong> total <span data-metric="core_registry.total">…</span> / non-demo <span data-metric="core_registry.production">…</span> / demo <span data-metric="core_registry.demo">…</span> / active_24h <span data-metric="core_registry.active_24h">…</span>. Warunek operacyjny <strong>zamknięty decyzją Prezesa 2026-05-26</strong> wraz z przejściem na produkcję (network_status=PRODUCTION). Dowód: <a href="/api/metrics">/api/metrics</a>.</span></li>
     </ul>
   </div>
 
@@ -211,9 +211,8 @@
 
   <h2 style="font-size:20px; margin-top:24px;">Kto podpisuje</h2>
   <div class="banner warn">
-    <strong>READY-TO-SIGN (stan 2026-05-25):</strong> WSZYSTKIE warunki techniczne, prawne, readiness ORAZ niezależny pentest (RSpace, ZATWIERDZONY) są ☑ i zweryfikowane.
-    Pozostaje <strong>1 otwarty warunek operacyjny</strong> (min. 10 agentów produkcyjnych is_demo=false z potwierdzoną telemetrią — patrz checklista sekcja 1) oraz trzy podpisy
-    (imię/rola/data). Dopiero ich spełnienie odblokowuje „Procedurę przełączenia" (NETWORK_STATUS=PRODUCTION = FULL LIVE).
+    <strong>PRZEŁĄCZONO (stan 2026-05-26):</strong> WSZYSTKIE warunki techniczne, prawne, readiness ORAZ niezależny pentest (RSpace, ZATWIERDZONY) są ☑ i zweryfikowane,
+    trzy podpisy złożone, a „Procedura przełączenia" wykonana — <span class="mono">NETWORK_STATUS=PRODUCTION = FULL LIVE</span> jest aktywny (przełączono 2026-05-26 decyzją Prezesa).
   </div>
   <div class="banner">
     Przejście do <span class="mono">PRODUCTION</span> wymaga podpisu trzech ról (zgodnie z kryteriami FULL LIVE).
@@ -254,19 +253,18 @@
       <li><strong>Smoke</strong> — weryfikacja na żywo: <span class="mono">/api/leaderboard</span> zwraca <span class="mono">"network_status":"PRODUCTION"</span>, auth 401/403 działa, <a href="/status">/status</a> zielony.</li>
       <li><strong>Ogłoszenie</strong> — publikacja zmiany (changelog / Trust Center) i powiadomienie providerów.</li>
     </ol>
-    <p class="crit" style="margin-top:8px;">Cofnięcie (rollback): w razie problemu przywrócić <span class="mono">NETWORK_STATUS=TESTNET</span> i redeploy.</p>
+    <p class="crit" style="margin-top:8px;">Wykonano 2026-05-26. Cofnięcie (rollback): w razie problemu przywrócić <span class="mono">NETWORK_STATUS=TESTNET</span> i redeploy.</p>
   </div>
 
   <div class="final">
-    <strong>Status końcowy: <span style="color:#3fb950;font-weight:700">SIGNED (bezpieczeństwo + governance) — 3/3 podpisy złożone (2026-05-25)</span> · <span style="color:#d29922;font-weight:700">1 otwarty warunek operacyjny</span></strong><br />
+    <strong>Status końcowy: <span style="color:#3fb950;font-weight:700">PRODUCTION / FULL LIVE — przełączono 2026-05-26 · 3/3 podpisy złożone</span></strong><br />
     <strong>Wszystkie warunki techniczne, prawne i readiness są ☑ i zweryfikowane</strong> (registry, trust tiers,
     auth boundary, monitoring, incydenty, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof) —
     oraz <strong>niezależny pentest (RSpace) ZATWIERDZONY 2026-05-25</strong>. Trzy podpisy złożone: Operator (Tomasz Obara),
-    Tech lead (Chris Hope), Compliance owner (Kate Hope). <strong>Pozostaje 1 otwarty warunek operacyjny</strong>
-    (min. 10 agentów produkcyjnych is_demo=false z potwierdzoną telemetrią — patrz checklista sekcja 1).
-    Podpisy zatwierdzają bezpieczeństwo i governance, ale <strong>NIE oznaczają produkcyjnej sieci</strong>.
-    <strong>Przełączenie</strong> <span class="mono">NETWORK_STATUS=PRODUCTION</span> nastąpi dopiero po zamknięciu warunku operacyjnego (Procedura przełączenia powyżej).
-    Do tego czasu <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>.
+    Tech lead (Chris Hope), Compliance owner (Kate Hope). <strong>Brama PRZESZŁA:</strong>
+    <span class="mono">NETWORK_STATUS=PRODUCTION</span> został przełączony 2026-05-26 (decyzją Prezesa). Sieć działa
+    w trybie produkcyjnym (FULL LIVE) jako produkcyjna sieć badawcza z nadzorem ludzkim i kill-switchem.
+    Produkcja ≠ certyfikacja prawna ani ocena zgodności jednostki notyfikowanej.
     <div class="cta">
       <a class="alt" href="/trust-center">Trust Center</a>
       <a class="alt" href="/external-review">Przegląd zewnętrzny</a>
@@ -275,7 +273,7 @@
   </div>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD · brama produkcyjna P2-07.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE · brama produkcyjna P2-07 (PRZESZŁA 2026-05-26).
 </footer>
 <script src="/js/metrics.js" defer></script>
 </body>

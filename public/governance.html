@@ -79,7 +79,7 @@
 </head>
 <body>
 <header>
-  <h1>Governance <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Governance <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Jak podejmowane są decyzje w federacji UnionAI — głosowania, akceptacje, blokady,
   role i ścieżki decyzyjne. Każda decyzja ma przypisanego ownera oraz weryfikowalny audit trail.</div>
   <nav>
@@ -97,16 +97,18 @@
     (capability <span class="mono">human-sovereignty</span>) oraz <strong>przeglądu federacyjnego</strong>
     (<span class="mono">federated-review</span>). Decyzje przechodzą przez przegląd Rady/K0NSULAT
     i rejestr standardów RFC, a operator <span class="mono">0n40i4</span> zachowuje prawo
-    potwierdzenia (confirm) lub weta (veto). Środowisko TESTNET — mechanizmy działają realnie,
-    ale dane mogą być resetowane.
+    potwierdzenia (confirm) lub weta (veto). Środowisko PRODUCTION — mechanizmy działają realnie,
+    z nadzorem ludzkim i kill-switchem.
   </div>
 
   <section>
-    <h2>Definicja: <span class="mono">GO CONTROLLED</span></h2>
+    <h2>Status sieci: <span class="mono">FULL LIVE / PRODUCTION</span></h2>
     <div class="banner">
-      <strong>GO CONTROLLED</strong> = infrastruktura produkcyjna; sieć w trybie public testnet
-      (<span class="mono">network_status=TESTNET</span>); ograniczony krąg partnerów; bez SLA i bez
-      gwarancji produkcyjnych; dane testowe/demo jawnie oznaczone; człowiek nad AI (override).
+      <strong>FULL LIVE</strong> = infrastruktura produkcyjna; sieć w trybie produkcyjnym
+      (<span class="mono">network_status=PRODUCTION</span>, przełączono 2026-05-26 decyzją Prezesa, podpisy 3/3 — patrz
+      <a href="/production-gate">/production-gate</a>); produkcyjna sieć badawcza pod parasolem jednostki B+R GRL;
+      człowiek nad AI (override, kill-switch). Wcześniejszy tryb <span class="mono">GO CONTROLLED</span> (public testnet)
+      został zamknięty wraz z przejściem na produkcję. Produkcja ≠ certyfikacja prawna ani ocena zgodności jednostki notyfikowanej.
     </div>
   </section>
 
@@ -345,7 +347,7 @@
   </div>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 </body>
 </html>

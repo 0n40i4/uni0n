@@ -87,14 +87,14 @@
 </head>
 <body>
 <header>
-  <h1>Trust Center <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Trust Center <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Centrum zaufania UnionAI działa według jednej zasady: <strong>claim ≤ proof</strong> —
   żaden publiczny komunikat nie może być silniejszy niż dowód widoczny w systemie. Każdy claim na tej
   stronie ma przypisany dowód (endpoint, URL lub hash) albo jawny status SELF-ASSERTED / ROADMAP.</div>
   <nav>
     <a href="/control-room">Centrum dowodzenia</a>
     <a href="/join">Dołącz jako provider</a>
-    <a href="/guide">Przewodnik testnet</a>
+    <a href="/guide">Przewodnik</a>
     <a href="/status">Status</a>
     <a href="/evidence">Dowody</a>
     <a href="/trust-center">Trust Center</a>
@@ -107,21 +107,21 @@
 <main>
   <div class="banner">
     <strong>Nie komunikujemy statusu wyższego niż dowody widoczne w systemie.</strong>
-    Tryb: <span class="mono">GO CONTROLLED</span> / <span class="mono">PUBLIC TESTNET</span>.
-    Network status sieci: <span class="mono">TESTNET</span> (nie produkcja). Dane mogą być resetowane,
-    a manifest dowodów podlega weryfikacji operatora.
+    Tryb: <span class="mono">FULL LIVE</span> / <span class="mono">PRODUCTION</span>.
+    Network status sieci: <span class="mono">network_status=PRODUCTION</span> (przełączono 2026-05-26, podpisy 3/3).
+    Manifest dowodów podlega weryfikacji operatora.
   </div>
 
   <div class="banner">
     <strong>Charakter prawny proof levels.</strong> Proof levels opisują poziom dowodu
-    techniczno-operacyjnego w ramach public testnetu. Nie są certyfikacją prawną, audytem
+    techniczno-operacyjnego w ramach produkcyjnej sieci badawczej. Nie są certyfikacją prawną, audytem
     zewnętrznym ani oceną zgodności przez jednostkę notyfikowaną.
   </div>
 
   <div class="stats">
     <div class="stat"><div class="num" data-metric="core_registry.total">…</div><div class="lbl">Agenci w rejestrze rdzenia (live)</div></div>
     <div class="stat"><div class="num" data-metric="core_registry.production">…</div><div class="lbl">Non-demo w rejestrze (live)</div></div>
-    <div class="stat"><div class="num" data-metric="core_registry.demo">…</div><div class="lbl">Demo / testnet (live)</div></div>
+    <div class="stat"><div class="num" data-metric="core_registry.demo">…</div><div class="lbl">Demo (live)</div></div>
     <div class="stat"><div class="num" data-metric="core_registry.active_24h">…</div><div class="lbl">Aktywni 24h (live)</div></div>
     <div class="stat"><div class="num" data-metric="hub_registry.total">…</div><div class="lbl">Skille w rejestrze huba (live)</div></div>
   </div>
@@ -143,7 +143,7 @@
       <tr>
         <td>Federacyjna warstwa governance dla agentów AI działa publicznie<br />
             <span style="color:var(--muted); font-size:12px;">VERIFIED oznacza weryfikację działania
-            publicznego endpointu w trybie testnet, a nie niezależną certyfikację funkcjonalną ani prawną.</span></td>
+            publicznego endpointu w trybie produkcyjnym, a nie niezależną certyfikację funkcjonalną ani prawną.</span></td>
         <td><span class="mono"><a href="/api/leaderboard">/api/leaderboard</a></span>,
             <span class="mono"><a href="/api/k0nsulat/status">/api/k0nsulat/status</a></span><br />
             (rejestr live: <span class="mono"><a href="/api/metrics">/api/metrics</a></span>; 7 audytów)</td>
@@ -180,9 +180,9 @@
       <tr>
         <td>Federacja agentów uruchomiona publicznie</td>
         <td><span class="mono"><a href="/api/leaderboard">/api/leaderboard</a></span><br />
-            <span class="mono">network_status = TESTNET</span> (nie production)</td>
-        <td><span class="pill roadmap">ROADMAP</span></td>
-        <td>PUBLIC_TESTNET</td>
+            <span class="mono">network_status = PRODUCTION</span> (przełączono 2026-05-26)</td>
+        <td><span class="pill controlled">VERIFIED</span></td>
+        <td>PRODUCTION</td>
         <td>0n40i4 / K0NSULT</td>
         <td>2026-05-23</td>
       </tr>
@@ -209,8 +209,8 @@
     <div class="card">
       <div class="who"><span class="pill controlled">CONTROLLED_VERIFICATION</span></div>
       <h2>Weryfikacja kontrolowana</h2>
-      <p>Dowód istnieje i jest sprawdzalny (hash, manifest, chain), ale w trybie GO CONTROLLED —
-      część weryfikacji wymaga tokenu operatora lub kopii referencyjnej.</p>
+      <p>Dowód istnieje i jest sprawdzalny (hash, manifest, chain), ale część weryfikacji
+      wymaga tokenu operatora lub kopii referencyjnej.</p>
     </div>
     <div class="card">
       <div class="who"><span class="pill self">SELF-ASSERTED</span></div>
@@ -221,8 +221,7 @@
     <div class="card">
       <div class="who"><span class="pill roadmap">ROADMAP</span></div>
       <h2>Plan / niepodniesiony</h2>
-      <p>Funkcja planowana lub claim, którego świadomie nie podnosimy do czasu pojawienia się dowodu.
-      Status PUBLIC_TESTNET oznacza działanie wyłącznie w trybie testowym.</p>
+      <p>Funkcja planowana lub claim, którego świadomie nie podnosimy do czasu pojawienia się dowodu.</p>
     </div>
   </div>
 
@@ -333,12 +332,12 @@
   <div class="banner" style="margin-top:24px">
     <strong>Kontakt / owner.</strong> Source of truth: Grass Roots Lobbing / K0NSULT Ω∞ / 0n40i4.
     Kod potwierdzenia federacji: <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span>.
-    Tryb publikacji: GO CONTROLLED. Uwagi i zgłoszenia rozbieżności claim ≤ proof kierujemy przez
+    Tryb publikacji: FULL LIVE / PRODUCTION. Uwagi i zgłoszenia rozbieżności claim ≤ proof kierujemy przez
     stronę <a href="/incidents">incydentów</a>.
   </div>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 <script src="/js/metrics.js" defer></script>
 </body>

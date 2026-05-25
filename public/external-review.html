@@ -70,7 +70,7 @@
 </head>
 <body>
 <header>
-  <h1>Przegląd zewnętrzny (External review) <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Przegląd zewnętrzny (External review) <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Lista kontrolna do niezależnego audytu claimów i dokumentów (prawny / techniczny /
   compliance) przed przejściem z TESTNET do FULL LIVE. To checklist gotowości — nie zastępuje raportu
   zewnętrznego audytora.</div>
@@ -246,7 +246,7 @@
       </ul>
       <p><strong>Readiness review — zakres:</strong> matryca ról provider/deployer/operator, klasyfikacja high-risk per use-case, human oversight, rejestr ryzyk, polityka incydentów, claim ≤ proof. Status: GO CONTROLLED — readiness review, NIE certyfikacja/notyfikacja/ocena zgodności. Warunek P2-07: zamknięcie BLOCKER/CRITICAL (zaadresowane) + aktywny pentest + podpisy.</p>
       <p><strong>Remediacja:</strong> CRITICAL-01 (CSP), CRITICAL-02 (CORS allowlist), BLOCKER-01 (incident/governance auth, agent unverified, ack pending), BLOCKER-02 (status language), MAJOR-02/03 — <strong>zamknięte</strong>. Otwarte: refaktor klas endpointów + quarantine, evidence v2, CI security tooling. Szczegóły w raporcie.</p>
-      <p class="mono" style="color:var(--muted)">Status zbiorczy: niezależny pentest (RSpace) WYKONANY i ZATWIERDZONY 2026-05-25; wszystkie CRITICAL + MAJOR zaadresowane, zweryfikowane live i przyjęte przez audytora. Do FULL GO (P2-07) pozostaje wyłącznie governance: 3 podpisy /production-gate + NETWORK_STATUS=PRODUCTION.</p>
+      <p class="mono" style="color:var(--muted)">Status zbiorczy: niezależny pentest (RSpace) WYKONANY i ZATWIERDZONY 2026-05-25; wszystkie CRITICAL + MAJOR zaadresowane, zweryfikowane live i przyjęte przez audytora. FULL GO (P2-07) OSIĄGNIĘTY: 3 podpisy /production-gate złożone + NETWORK_STATUS=PRODUCTION przełączony 2026-05-26. Sieć działa w trybie produkcyjnym (FULL LIVE).</p>
 
       <h3 style="margin-top:20px">Ścieżka dowodowa remediacji (pentest RSpace)</h3>
       <p style="color:var(--muted);font-size:.9em">Zbiorczo, bez ujawniania technicznych szczegółów podatności. Pełny raport: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/RSPACE_PENTEST_2026-05-25.md">docs/reports/RSPACE_PENTEST_2026-05-25.md</a>.</p>
@@ -268,7 +268,7 @@
   </div>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 </body>
 </html>

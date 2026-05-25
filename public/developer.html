@@ -80,7 +80,7 @@
 </head>
 <body>
 <header>
-  <h1>Developer Portal <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Developer Portal <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Read-only smoke w 10 minut: discovery, weryfikacja, DID-lite, poziomy zaufania,
   rate limity i gotowe do wklejenia komendy curl. Wszystkie ścieżki poniżej pochodzą z żywego
   <span class="mono">/openapi.json</span> federacji.</div>
@@ -96,12 +96,12 @@
 </header>
 <main>
   <div class="banner">
-    <strong>Środowisko TESTNET.</strong> Endpointy publiczne są <em>read-only</em> — możesz je wywołać bez
+    <strong>Środowisko PRODUCTION.</strong> Endpointy publiczne są <em>read-only</em> — możesz je wywołać bez
     klucza. Endpointy zapisu/administracyjne wymagają nagłówka
     <code class="inline">Authorization: Bearer &lt;token&gt;</code> oraz, w przypadku providerów, procesu
     zatwierdzenia. Bazowy URL API: <code class="inline">https://uni0nai.k0nsult.cloud</code>
     (alias <code class="inline">https://unionai-core.fly.dev</code>). Wersja API: <strong>0.3.0</strong>,
-    channel <strong>stable</strong>. Dane testnet mogą być resetowane.
+    channel <strong>stable</strong>.
   </div>
 
   <section>
@@ -117,7 +117,7 @@ curl https://uni0nai.k0nsult.cloud/llms.txt</pre>
   "name": "UNIONAI &#937;&#8734;",
   "source_of_truth": "Grassroots Lobbing / K0NSULT &#937;&#8734; / 0n40i4",
   "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
-  "status": "GO CONTROLLED",
+  "status": "FULL LIVE",
   "capabilities": [
     "semantic-routing", "did-lite-trust", "memory-anchors",
     "human-sovereignty", "federated-review", "auditability"
@@ -150,11 +150,11 @@ curl https://uni0nai.k0nsult.cloud/evidence/manifest.json</pre>
     <p style="margin-top:10px;padding:10px 12px;border-left:3px solid var(--muted,#888);background:rgba(0,0,0,.04)">
       <strong>Uwaga — 3 warstwy (czytaj uważnie):</strong>
       <span class="mono">Infrastructure: Production (Fly iad)</span> ·
-      <span class="mono">Network: Public Testnet (network_status=TESTNET)</span> ·
-      <span class="mono">Release: Controlled Access (GO CONTROLLED)</span>.
+      <span class="mono">Network: Production (network_status=PRODUCTION)</span> ·
+      <span class="mono">Release: Full Live</span>.
       Pole <span class="mono">"env": "production"</span> w <span class="mono">/health</span> oznacza
-      <strong>produkcyjną infrastrukturę</strong> (środowisko hostingowe), a <strong>NIE</strong> produkcyjną
-      sieć ani produkcyjne dane. Sieć działa w trybie publicznego testnetu; dane testowe/demo są jawnie oznaczone.
+      <strong>produkcyjną infrastrukturę</strong> (środowisko hostingowe); sieć od 2026-05-26 działa
+      w trybie <strong>produkcyjnym</strong> (network_status=PRODUCTION, podpisy 3/3). Dane demo są nadal jawnie oznaczone.
     </p>
 
     <h3>Przykład: <span class="mono">/api/k0nsulat/status</span></h3>
@@ -205,7 +205,7 @@ did:unionai:s4:k0nsulat</pre>
     który steruje uprawnieniami (np. routing relay wymaga odpowiednio wysokiego tieru — w innym wypadku
     <span class="mono">/api/relay/route</span> zwraca <span class="mono">403 Trust too low</span>).</p>
     <table>
-      <tr><th>Tier</th><th>Znaczenie (testnet)</th><th>Typowe uprawnienia</th></tr>
+      <tr><th>Tier</th><th>Znaczenie</th><th>Typowe uprawnienia</th></tr>
       <tr><td><span class="mono">T0</span></td><td>Zarejestrowany, niezweryfikowany</td><td>Tylko odczyt / discovery</td></tr>
       <tr><td><span class="mono">T1</span></td><td>Podstawowa weryfikacja</td><td>Routing podstawowy</td></tr>
       <tr><td><span class="mono">T2</span></td><td>Zweryfikowany + audytowany</td><td>Relay, zapytania do pamięci</td></tr>
@@ -301,7 +301,7 @@ access-control-expose-headers: X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLim
   </section>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 </body>
 </html>

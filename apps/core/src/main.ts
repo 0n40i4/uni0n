@@ -2751,7 +2751,23 @@ app.post('/mcp', async (req: any, res) => {
     return fail(-32603, 'Internal error');
   }
 });
-app.get('/mcp', (_req, res) => { res.set('Allow', 'POST').status(405).json({ error: 'Use POST (JSON-RPC / MCP Streamable HTTP)' }); });
+// GET /mcp — karta informacyjna (discovery). MCP uzywa POST/JSON-RPC; przegladarka robi GET,
+// wiec zamiast "surowego" 405 zwracamy 200 z opisem endpointu + lista narzedzi (claim<=proof,
+// to faktycznie zarejestrowane MCP_TOOLS). Klienci MCP i tak wola POST.
+app.get('/mcp', (_req, res) => {
+  res.status(200).json({
+    service: 'unionai-federation',
+    transport: 'MCP Streamable HTTP (JSON-RPC 2.0 over POST)',
+    note: 'To jest endpoint MCP (Model Context Protocol), nie strona WWW. Łącz przez POST JSON-RPC, nie przeglądarką (GET).',
+    how_to_connect: {
+      client_example: 'Mistral le Chat → Niestandardowy konektor MCP → Adres serwera: https://uni0nai.k0nsult.cloud/mcp',
+      methods: ['initialize', 'tools/list', 'tools/call'],
+      example_post: { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
+    },
+    tools: MCP_TOOLS.map((t: any) => ({ name: t.name, description: t.description })),
+    docs: 'https://uni0nai.k0nsult.cloud/developer',
+  });
+});
 app.get('/incidents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));
 });

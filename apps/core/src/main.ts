@@ -281,22 +281,31 @@ function inMemoryRateLimit(maxReq: number, windowMs: number, key: string, res: a
 
 function makeRateLimiter(maxReq: number, windowMs: number) {
   return async (req: any, res: any, next: any) => {
-    const key = (req.ip || req.connection?.remoteAddress || 'unknown') + ':' + req.route?.path;
+    // MAJOR-L03: per-route bucket via req.path (req.route is undefined for mount-level guarded routes → would collapse to one shared bucket per IP)
+    const key = (req.ip || req.connection?.remoteAddress || 'unknown') + ':' + req.method + ':' + (req.path || req.originalUrl || 'unknown');
     res.set('X-RateLimit-Limit', String(maxReq));
 
-    // Redis fixed-window (shared, durable)
+    // MAJOR-L03: Redis sliding-window log (sorted set) — matches in-memory semantics; no fixed-window burst at boundary
     if (redisClient && redisConnected) {
       try {
         const rkey = `rl:${key}`;
-        const count = await redisClient.incr(rkey);
-        if (count === 1) await redisClient.pExpire(rkey, windowMs);
-        const ttlMs = await redisClient.pTtl(rkey);
-        const resetSec = Math.ceil((Date.now() + (ttlMs > 0 ? ttlMs : windowMs)) / 1000);
+        const now = Date.now();
+        const member = `${now}-${Math.random().toString(36).slice(2)}`;
+        const results: any = await redisClient.multi()
+          .zRemRangeByScore(rkey, 0, now - windowMs)
+          .zAdd(rkey, [{ score: now, value: member }])
+          .zCard(rkey)
+          .pExpire(rkey, windowMs)
+          .exec();
+        const count = Number(Array.isArray(results) ? results[2] : 0) || 0;
+        const resetSec = Math.ceil((now + windowMs) / 1000);
         res.set('X-RateLimit-Remaining', String(Math.max(0, maxReq - count)));
         res.set('X-RateLimit-Reset', String(resetSec));
         if (count > maxReq) {
-          res.set('Retry-After', String(Math.ceil((ttlMs > 0 ? ttlMs : windowMs) / 1000)));
-          return res.status(429).json({ error: 'Too many requests', retry_after_ms: ttlMs > 0 ? ttlMs : windowMs });
+          // rejected request should not consume a slot in the window
+          try { await redisClient.zRem(rkey, member); } catch (_) {}
+          res.set('Retry-After', String(Math.ceil(windowMs / 1000)));
+          return res.status(429).json({ error: 'Too many requests', retry_after_ms: windowMs });
         }
         return next();
       } catch (_) {
@@ -376,15 +385,19 @@ const corsDefaultAllowlist = [
   'https://unionai-core.fly.dev',
   'https://k0nsult.cloud',
 ];
-const corsOrigin = corsOriginEnv === '*'
-  ? '*'
-  : (corsOriginEnv
-      ? corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean)
-      : corsDefaultAllowlist);
-// MINOR-13 (pentest RSpace): ostrzeż gdy CORS wyłączony wildcardem w produkcji.
-if (corsOriginEnv === '*' && process.env.NODE_ENV === 'production') {
-  console.error('[SECURITY] CORS_ORIGIN=* w produkcji — ochrona CORS wyłączona');
+// MINOR-13 + MAJOR-L04 (pentest RSpace re-weryfikacja): w produkcji wildcard '*' jest TWARDO BLOKOWANY —
+// degradujemy do jawnej allowlisty (nie tylko logujemy). Jawne origins zawsze egzekwowane w prod.
+const corsWildcardInProd = corsOriginEnv === '*' && process.env.NODE_ENV === 'production';
+if (corsWildcardInProd) {
+  console.error('[SECURITY] CORS_ORIGIN=* zignorowany w produkcji — wymuszam jawną allowlistę K0nsult');
 }
+const corsOrigin = corsWildcardInProd
+  ? corsDefaultAllowlist
+  : (corsOriginEnv === '*'
+      ? '*'
+      : (corsOriginEnv
+          ? corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean)
+          : corsDefaultAllowlist));
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],

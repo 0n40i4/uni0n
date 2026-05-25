@@ -99,11 +99,22 @@
 <main>
   <div class="banner">
     <strong>Stan obecny: <span class="testnet" style="margin-left:0">network_status = TESTNET</span></strong><br />
-    Sprawdzenie na żywo <span class="mono">GET /api/leaderboard</span> (stan z 2026-05-23) zwraca
-    <span class="mono">"network_status":"TESTNET"</span>, 3 agentów, wszyscy oznaczeni
-    <span class="mono">"is_demo":true</span> / etykietą <span class="mono">DEMO/TESTNET</span> (tiery T1–T2).
+    Sprawdzenie na żywo <span class="mono"><a href="/api/metrics">GET /api/metrics</a></span> zwraca
+    <span class="mono">network_status=TESTNET</span>; rejestr rdzenia (live):
+    <span data-metric="core_registry.total">…</span> total ·
+    <span data-metric="core_registry.production">…</span> non-demo ·
+    <span data-metric="core_registry.demo">…</span> demo ·
+    <span data-metric="core_registry.active_24h">…</span> aktywnych 24h.
     To <strong>jest środowisko testowe</strong> — dane mogą być resetowane i nie ma gwarancji stabilności.
     Zmiana na <span class="mono">PRODUCTION</span> wymaga <strong>podpisanej checklisty poniżej</strong>.
+  </div>
+
+  <div class="banner warn">
+    <strong>Zakres zatwierdzenia:</strong> środowisko = Public Testnet (infrastruktura produkcyjna,
+    Fly iad); release = Controlled Access (GO CONTROLLED). Podpisy poniżej dotyczą
+    <strong>bezpieczeństwa i governance</strong> — <strong>NIE oznaczają produkcyjnej sieci ani produkcyjnych
+    danych</strong>. Przełączenie <span class="mono">network_status=PRODUCTION</span> (FULL LIVE) jest dodatkowo
+    blokowane otwartym warunkiem operacyjnym (realni agenci produkcyjni — patrz checklista, sekcja 1).
   </div>
 
   <h2 style="font-size:20px; margin-top:24px;">Checklista warunków przejścia</h2>
@@ -116,9 +127,11 @@
       <li><span class="box done">☑</span><strong>Rejestr agentów działa</strong>
         <span class="crit">Kryterium: <span class="mono">GET /api/leaderboard</span> i rejestr zwracają spójne dane agentów. Dowód: <a href="/status">/status</a>, <a href="/api/leaderboard">/api/leaderboard</a>.</span></li>
       <li><span class="box done">☑</span><strong>Dane testowe oznaczone</strong>
-        <span class="crit">Kryterium: każdy agent demo ma <span class="mono">is_demo:true</span> i etykietę <span class="mono">DEMO/TESTNET</span>. Dowód: <a href="/api/leaderboard">/api/leaderboard</a> (obecnie 3/3 demo).</span></li>
+        <span class="crit">Kryterium: każdy agent demo ma <span class="mono">is_demo:true</span> i etykietę <span class="mono">DEMO/TESTNET</span>. Dowód: <a href="/api/metrics">/api/metrics</a> (live: <span data-metric="core_registry.demo">…</span> demo / <span data-metric="core_registry.total">…</span> total).</span></li>
       <li><span class="box done">☑</span><strong>Separacja demo / realnych</strong>
         <span class="crit">Kryterium: agenci produkcyjni w strefie <span class="mono">production</span>, oddzieleni od strefy <span class="mono">testnet</span>; ranking produkcyjny nie miesza danych demo. Dowód: <a href="/governance">/governance</a>.</span></li>
+      <li><span class="box todo">☐</span><strong>Min. 10 agentów produkcyjnych (is_demo=false) z potwierdzoną telemetrią</strong>
+        <span class="crit">Kryterium: co najmniej 10 realnych (nie-demo) agentów z aktywną telemetrią. WERYFIKACJA: <span class="mono">/api/metrics</span> → <span class="mono">core_registry.production</span> + <span class="mono">core_registry.active_24h</span>. <strong>Stan obecny (live, single source <span class="mono">/api/metrics</span>):</strong> total <span data-metric="core_registry.total">…</span> / non-demo <span data-metric="core_registry.production">…</span> / demo <span data-metric="core_registry.demo">…</span> / active_24h <span data-metric="core_registry.active_24h">…</span> — jednak są to agenci testnet, nie zweryfikowani jako produkcyjni z potwierdzoną telemetrią produkcyjną; warunek pozostaje <strong>OTWARTY</strong> do realnej weryfikacji produkcyjnej. Dowód: <a href="/api/metrics">/api/metrics</a>.</span></li>
     </ul>
   </div>
 
@@ -199,8 +212,8 @@
   <h2 style="font-size:20px; margin-top:24px;">Kto podpisuje</h2>
   <div class="banner warn">
     <strong>READY-TO-SIGN (stan 2026-05-25):</strong> WSZYSTKIE warunki techniczne, prawne, readiness ORAZ niezależny pentest (RSpace, ZATWIERDZONY) są ☑ i zweryfikowane.
-    Nie pozostał żaden otwarty warunek techniczny. Aby przejść na FULL LIVE — uzupełnij poniższe trzy podpisy
-    (imię/rola/data) i dopiero wtedy wykonaj „Procedurę przełączenia" (NETWORK_STATUS=PRODUCTION).
+    Pozostaje <strong>1 otwarty warunek operacyjny</strong> (min. 10 agentów produkcyjnych is_demo=false z potwierdzoną telemetrią — patrz checklista sekcja 1) oraz trzy podpisy
+    (imię/rola/data). Dopiero ich spełnienie odblokowuje „Procedurę przełączenia" (NETWORK_STATUS=PRODUCTION = FULL LIVE).
   </div>
   <div class="banner">
     Przejście do <span class="mono">PRODUCTION</span> wymaga podpisu trzech ról (zgodnie z kryteriami FULL LIVE).
@@ -245,13 +258,15 @@
   </div>
 
   <div class="final">
-    <strong>Status końcowy: <span style="color:#3fb950;font-weight:700">SIGNED — wszystkie warunki ☑ + 3/3 podpisy złożone (2026-05-25)</span></strong><br />
+    <strong>Status końcowy: <span style="color:#3fb950;font-weight:700">SIGNED (bezpieczeństwo + governance) — 3/3 podpisy złożone (2026-05-25)</span> · <span style="color:#d29922;font-weight:700">1 otwarty warunek operacyjny</span></strong><br />
     <strong>Wszystkie warunki techniczne, prawne i readiness są ☑ i zweryfikowane</strong> (registry, trust tiers,
     auth boundary, monitoring, incydenty, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof) —
     oraz <strong>niezależny pentest (RSpace) ZATWIERDZONY 2026-05-25</strong>. Trzy podpisy złożone: Operator (Tomasz Obara),
-    Tech lead (Chris Hope), Compliance owner (Kate Hope). Nie pozostał żaden otwarty warunek.
-    <strong>Pozostaje wyłącznie przełączenie</strong> <span class="mono">NETWORK_STATUS=PRODUCTION</span> (Procedura przełączenia powyżej).
-    Do momentu przełączenia <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>.
+    Tech lead (Chris Hope), Compliance owner (Kate Hope). <strong>Pozostaje 1 otwarty warunek operacyjny</strong>
+    (min. 10 agentów produkcyjnych is_demo=false z potwierdzoną telemetrią — patrz checklista sekcja 1).
+    Podpisy zatwierdzają bezpieczeństwo i governance, ale <strong>NIE oznaczają produkcyjnej sieci</strong>.
+    <strong>Przełączenie</strong> <span class="mono">NETWORK_STATUS=PRODUCTION</span> nastąpi dopiero po zamknięciu warunku operacyjnego (Procedura przełączenia powyżej).
+    Do tego czasu <span class="mono">network_status</span> pozostaje <span class="mono">TESTNET</span>.
     <div class="cta">
       <a class="alt" href="/trust-center">Trust Center</a>
       <a class="alt" href="/external-review">Przegląd zewnętrzny</a>
@@ -262,5 +277,6 @@
 <footer>
   Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD · brama produkcyjna P2-07.
 </footer>
+<script src="/js/metrics.js" defer></script>
 </body>
 </html>

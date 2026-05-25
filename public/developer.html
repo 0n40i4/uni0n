@@ -147,6 +147,15 @@ curl https://uni0nai.k0nsult.cloud/evidence/manifest.json</pre>
   "env": "production",
   "region": "iad"
 }</pre>
+    <p style="margin-top:10px;padding:10px 12px;border-left:3px solid var(--muted,#888);background:rgba(0,0,0,.04)">
+      <strong>Uwaga — 3 warstwy (czytaj uważnie):</strong>
+      <span class="mono">Infrastructure: Production (Fly iad)</span> ·
+      <span class="mono">Network: Public Testnet (network_status=TESTNET)</span> ·
+      <span class="mono">Release: Controlled Access (GO CONTROLLED)</span>.
+      Pole <span class="mono">"env": "production"</span> w <span class="mono">/health</span> oznacza
+      <strong>produkcyjną infrastrukturę</strong> (środowisko hostingowe), a <strong>NIE</strong> produkcyjną
+      sieć ani produkcyjne dane. Sieć działa w trybie publicznego testnetu; dane testowe/demo są jawnie oznaczone.
+    </p>
 
     <h3>Przykład: <span class="mono">/api/k0nsulat/status</span></h3>
     <pre class="out">{

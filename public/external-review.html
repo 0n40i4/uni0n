@@ -85,12 +85,13 @@
 </header>
 <main>
   <div class="banner warn">
-    <span class="status-pill">STATUS: REVIEW NIE WYKONANY</span>
-    <p style="margin:10px 0 0">Niezależny przegląd zewnętrzny <strong>nie został jeszcze przeprowadzony</strong>.
-    Bramka oczekuje na zewnętrznego audytora / partnera (prawnego, technicznego i compliance). Poniższa
-    lista kontrolna definiuje zakres gotowości do takiego audytu. Wszystkie pozycje oznaczone
-    <span class="mono">☐</span> pozostają do potwierdzenia przez stronę trzecią; samodzielna ocena
-    operatora nie spełnia kryterium „przegląd zewnętrzny”.</p>
+    <span class="status-pill">STATUS: REVIEW COMPLETED / VERIFIED</span>
+    <p style="margin:10px 0 0">Niezależny przegląd zewnętrzny (pentest RSpace, rspace.com.pl) został
+    <strong>wykonany i zatwierdzony 2026-05-25</strong> (wejściowo 5 CRITICAL / 11 MAJOR / 5 MINOR — wszystkie
+    CRITICAL + MAJOR oraz 4/5 MINOR zaadresowane, zweryfikowane live, re-weryfikacja RSpace ZATWIERDZONA).
+    Poniższa lista kontrolna definiuje zakres tej gotowości. Do FULL GO (P2-07) pozostaje wyłącznie
+    governance: 3 podpisy <span class="mono">/production-gate</span> + 1 otwarty warunek operacyjny
+    (min. 10 agentów produkcyjnych). Szczegóły remediacji — w tabeli niżej i w raporcie RSpace.</p>
   </div>
 
   <h2 class="section">1. Obszar PRAWNY</h2>
@@ -246,6 +247,19 @@
       <p><strong>Readiness review — zakres:</strong> matryca ról provider/deployer/operator, klasyfikacja high-risk per use-case, human oversight, rejestr ryzyk, polityka incydentów, claim ≤ proof. Status: GO CONTROLLED — readiness review, NIE certyfikacja/notyfikacja/ocena zgodności. Warunek P2-07: zamknięcie BLOCKER/CRITICAL (zaadresowane) + aktywny pentest + podpisy.</p>
       <p><strong>Remediacja:</strong> CRITICAL-01 (CSP), CRITICAL-02 (CORS allowlist), BLOCKER-01 (incident/governance auth, agent unverified, ack pending), BLOCKER-02 (status language), MAJOR-02/03 — <strong>zamknięte</strong>. Otwarte: refaktor klas endpointów + quarantine, evidence v2, CI security tooling. Szczegóły w raporcie.</p>
       <p class="mono" style="color:var(--muted)">Status zbiorczy: niezależny pentest (RSpace) WYKONANY i ZATWIERDZONY 2026-05-25; wszystkie CRITICAL + MAJOR zaadresowane, zweryfikowane live i przyjęte przez audytora. Do FULL GO (P2-07) pozostaje wyłącznie governance: 3 podpisy /production-gate + NETWORK_STATUS=PRODUCTION.</p>
+
+      <h3 style="margin-top:20px">Ścieżka dowodowa remediacji (pentest RSpace)</h3>
+      <p style="color:var(--muted);font-size:.9em">Zbiorczo, bez ujawniania technicznych szczegółów podatności. Pełny raport: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/RSPACE_PENTEST_2026-05-25.md">docs/reports/RSPACE_PENTEST_2026-05-25.md</a>.</p>
+      <table>
+        <thead>
+          <tr><th>Klasa ustaleń</th><th>Severity</th><th>Status</th><th>Data remediacji</th><th>Weryfikacja</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>5× CRITICAL (auth / eskalacja)</td><td>CRITICAL</td><td>zamknięte</td><td>2026-05-25</td><td>RSpace re-weryfikacja ZATWIERDZONA</td></tr>
+          <tr><td>11× MAJOR (rate-limit / TLS / JWT / CORS / hash-chain / expo)</td><td>MAJOR</td><td>zaadresowane</td><td>2026-05-25</td><td>RSpace + commit 7d004e7 / 011a1c4</td></tr>
+          <tr><td>4/5 MINOR</td><td>MINOR</td><td>zaadresowane</td><td>2026-05-25</td><td>commit 7853ff4</td></tr>
+        </tbody>
+      </table>
       <div class="cta">
         <a class="alt" href="/production-gate">Brama produkcyjna</a>
         <a class="alt" href="/trust-center">Trust Center</a>

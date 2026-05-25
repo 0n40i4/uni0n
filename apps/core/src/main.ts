@@ -177,7 +177,10 @@ export function verifyToken(token: string): any | null {
     const [body, sig] = token.split('.');
     if (!body || !sig) return null;
     const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
-    if (sig !== expectedSig) return null;
+    // MAJOR-06 (pentest RSpace 2026-05-25): timing-safe comparison of HMAC signature.
+    const a = Buffer.from(sig, 'base64url');
+    const b = Buffer.from(expectedSig, 'base64url');
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
     const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
     if (data.exp < Date.now()) return null;
     return data;
@@ -339,6 +342,9 @@ import { liveProbe, staticAnalysis, selfReport, crossCheck, makeReportProvenance
 import { getDocsIndex, renderDocsHTML, renderDocsSection } from './modules/docs';
 
 export const app = express();
+// MAJOR-09 (pentest RSpace 2026-05-25): app sits behind nginx → trust first proxy
+// so req.ip reflects the real client (X-Forwarded-For) for the rate limiter.
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 let smokeLastOk = -1; // -1=never run, 0=BLOCKED, 1=VERIFIED
 
@@ -534,9 +540,35 @@ if (!process.env.DATABASE_URL) {
   console.warn('WARNING: DATABASE_URL is not set — database endpoints will fail');
 }
 
+// MAJOR-11 (pentest RSpace 2026-05-25): TLS verification for managed PG.
+// If a CA cert is provided (DATABASE_CA_CERT inline PEM, or PGSSLROOTCERT file path),
+// verify the server certificate. Otherwise keep rejectUnauthorized:false (Fly managed PG
+// has no client-trusted CA) but warn loudly so the operator can close this by supplying a CA.
+function buildPgSsl(): false | { rejectUnauthorized: boolean; ca?: string } {
+  if (!process.env.DATABASE_URL) return false;
+  const inlineCa = process.env.DATABASE_CA_CERT;
+  const caFile = process.env.PGSSLROOTCERT;
+  let ca: string | undefined;
+  if (inlineCa && inlineCa.trim()) {
+    ca = inlineCa;
+  } else if (caFile && caFile.trim()) {
+    try {
+      ca = fs.readFileSync(caFile, 'utf8');
+    } catch (e: any) {
+      console.warn(`WARNING: PGSSLROOTCERT set to "${caFile}" but could not be read (${e?.message}); falling back to unverified TLS`);
+    }
+  }
+  if (ca) {
+    return { rejectUnauthorized: true, ca };
+  }
+  console.warn('WARNING: PG TLS certificate verification is DISABLED (rejectUnauthorized:false). ' +
+    'Set DATABASE_CA_CERT (inline PEM) or PGSSLROOTCERT (file path) to enable verification.');
+  return { rejectUnauthorized: false };
+}
+
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://localhost/fallback',
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  ssl: buildPgSsl()
 });
 
 pool.on('error', (err) => {
@@ -1064,22 +1096,28 @@ app.get('/api/leaderboard', async (req, res) => {
       network_status: NETWORK_STATUS,
       timestamp: new Date().toISOString(),
       total_agents: total,
-      leaderboard: result.rows.map((r: any, idx: number) => ({
-        rank: idx + 1,
-        agent_id: r.id,
-        did: r.did,
-        zone: r.zone,
-        // P1-10: jawne oznaczenie danych testowych/demo — agenci did:test/testnet
-        // nie mają wyglądać jak realni uczestnicy produkcyjni.
-        is_demo: r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? ''),
-        label: (r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? '')) ? 'DEMO/TESTNET' : 'PRODUCTION',
-        provider: r.provider,
-        trust_score: r.trust_score,
-        trust_tier: r.trust_tier,
-        status: r.status,
-        registered_at: r.created_at,
-        last_seen: r.last_seen,
-      })),
+      leaderboard: result.rows.map((r: any, idx: number) => {
+        // MAJOR-L02 (pentest RSpace 2026-05-25): do not leak sequential agent_id;
+        // mask real did to an opaque ref. Real did only kept for demo/testnet rows.
+        const isDemo = r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? '');
+        const agentRef = crypto.createHash('sha256').update(String(r.did ?? r.id)).digest('hex').slice(0, 12);
+        return {
+          rank: idx + 1,
+          agent_ref: agentRef,
+          // P1-10: jawne oznaczenie danych testowych/demo — agenci did:test/testnet
+          // nie mają wyglądać jak realni uczestnicy produkcyjni.
+          ...(isDemo ? { did: r.did } : {}),
+          zone: r.zone,
+          is_demo: isDemo,
+          label: isDemo ? 'DEMO/TESTNET' : 'PRODUCTION',
+          provider: r.provider,
+          trust_score: r.trust_score,
+          trust_tier: r.trust_tier,
+          status: r.status,
+          registered_at: r.created_at,
+          last_seen: r.last_seen,
+        };
+      }),
     });
   } catch (e) {
     return res.status(500).json({ error: (e as Error).message });
@@ -2013,6 +2051,16 @@ app.use((req: any, res: any, next: any) => {
   }
   next();
 });
+// MAJOR-L01 (pentest RSpace 2026-05-25): auth must run BEFORE schema validation
+// on write endpoints, so anonymous callers get 401 (not 400 leaking field names).
+// POST /api/memory/anchor requires a valid JWT; the handler still performs the
+// per-agent trust-tier gate on top of this.
+app.use((req: any, res: any, next: any) => {
+  if (req.method === 'POST' && req.path === '/api/memory/anchor') {
+    return requireAuth(req, res, next);
+  }
+  next();
+});
 // CRITICAL-01: POST /api/agent/register is operator-only.
 // MAJOR-10: relay prune / incident lock / incident unlock are operator-only.
 app.use((req: any, res: any, next: any) => {
@@ -2052,6 +2100,17 @@ const server = app.listen(PORT as number, async () => {
   // Wave7 needs a connected redis client — mount AFTER initRedis()
   const wave7Router = createWave7Router(pool, redisClient);
   app.use('/api', wave7Router);
+
+  // MAJOR-12 (pentest RSpace 2026-05-25): catch-all 404 + error handler.
+  // Registered LAST (after every route + the runtime-mounted wave7 router) so it
+  // never shadows a real route. Generic messages avoid leaking internals.
+  app.use((_req: any, res: any) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+  app.use((err: any, _req: any, res: any, _next: any) => {
+    console.error(err);
+    res.status(500).json({ error: 'Internal error' });
+  });
 
   console.log(`✓ UNIONAI Core API słucha na porcie ${PORT}`);
   console.log(`  Database: ${process.env.DATABASE_URL ? 'configured' : 'NOT configured'}`);

@@ -17,6 +17,12 @@ const QDRANT_COLLECTION = 'unionai-intents';
 const VECTOR_SIZE = 384;
 const QDRANT_TIMEOUT_MS = parseInt(process.env.QDRANT_TIMEOUT_MS || '8000', 10);
 
+// MAJOR-08 (pentest RSpace 2026-05-25): constant advisory-lock key serializing the
+// governance_events hash-chain critical section (read-last-hash + insert) so concurrent
+// writers cannot fork the chain. Stable arbitrary 64-bit-fitting int for this chain.
+const GOV_CHAIN_LOCK_KEY = 0x474f5645; // 'GOVE'
+const OPERATOR_CHAIN_LOCK_KEY = 0x4f504552; // 'OPER'
+
 let qdrantReady = false;
 let _lastQdrantError = '';
 
@@ -1104,48 +1110,56 @@ export function createWave3Router(pool: pg.Pool, verifyToken?: (token: string) =
       return res.status(400).json({ error: 'event_type and action are required' });
     }
     const trace_id = makeTraceId();
-
-    // Previous hash for chain
-    let previous_hash = '0'.repeat(64);
-    try {
-      const prev = await pool.query('SELECT payload_hash FROM governance_events ORDER BY created_at DESC LIMIT 1');
-      if (prev.rows.length > 0 && prev.rows[0].payload_hash) {
-        previous_hash = prev.rows[0].payload_hash;
-      }
-    } catch (_) {}
-
     const payload_hash = sha256(JSON.stringify({ event_type, operator_did, target, action, trace_id }));
 
+    // MAJOR-08 (pentest RSpace 2026-05-25): serialize the read-last-hash + insert so
+    // concurrent requests cannot both read the same previous_hash and fork the chain.
+    // pg_advisory_xact_lock(GOV_CHAIN_LOCK_KEY) (auto-released at COMMIT/ROLLBACK) gates
+    // the whole SELECT-last + INSERT critical section to one writer at a time.
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
-        `INSERT INTO governance_events
-           (trace_id, event_type, operator_did, target, action, status,
-            justification, payload_hash, previous_hash)
-         VALUES ($1,$2,$3,$4,$5,'recorded',$6,$7,$8)
-         RETURNING id, trace_id, created_at`,
-        [trace_id, event_type, operator_did || 'system', target || null,
-         action, justification || null, payload_hash, previous_hash]
-      );
+      let previous_hash = '0'.repeat(64);
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock($1)', [GOV_CHAIN_LOCK_KEY]);
+        const prev = await client.query('SELECT payload_hash FROM governance_events ORDER BY created_at DESC LIMIT 1');
+        if (prev.rows.length > 0 && prev.rows[0].payload_hash) {
+          previous_hash = prev.rows[0].payload_hash;
+        }
+        const result = await client.query(
+          `INSERT INTO governance_events
+             (trace_id, event_type, operator_did, target, action, status,
+              justification, payload_hash, previous_hash)
+           VALUES ($1,$2,$3,$4,$5,'recorded',$6,$7,$8)
+           RETURNING id, trace_id, created_at`,
+          [trace_id, event_type, operator_did || 'system', target || null,
+           action, justification || null, payload_hash, previous_hash]
+        );
+        await client.query('COMMIT');
 
-      appendReplayLog({
-        trace_id, ts: new Date().toISOString(),
-        event: 'governance.event',
-        event_type, operator_did, target, action,
-        payload_hash, previous_hash,
-        rfc_id: rfc_id || null,
-      });
+        appendReplayLog({
+          trace_id, ts: new Date().toISOString(),
+          event: 'governance.event',
+          event_type, operator_did, target, action,
+          payload_hash, previous_hash,
+          rfc_id: rfc_id || null,
+        });
 
-      const row = result.rows[0];
-      res.status(201).json({
-        success: true,
-        event_id: row.id,
-        trace_id: row.trace_id,
-        status: 'recorded',
-        payload_hash,
-        timestamp: row.created_at,
-      });
-    } catch (e) {
-      res.status(500).json({ error: (e as Error).message });
+        const row = result.rows[0];
+        res.status(201).json({
+          success: true,
+          event_id: row.id,
+          trace_id: row.trace_id,
+          status: 'recorded',
+          payload_hash,
+          timestamp: row.created_at,
+        });
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        res.status(500).json({ error: (e as Error).message });
+      }
+    } finally {
+      client.release();
     }
   });
 
@@ -1519,19 +1533,30 @@ export function createOperatorRouter(pool: pg.Pool): Router {
   async function logOperatorAction(pool: pg.Pool, operation: string, action_type: string, actor: string, target: string | null, reason: string | null, payload: any) {
     const trace_id = makeTraceId();
     let previous_hash = '0'.repeat(64);
+    let hash = '';
+    // MAJOR-08 (pentest RSpace 2026-05-25): serialize read-last-hash + insert under an
+    // advisory lock so concurrent operator actions cannot fork the operator_actions
+    // hash-chain. Best-effort semantics preserved: any failure rolls back and is swallowed.
+    const client = await pool.connect();
     try {
-      const prev = await pool.query('SELECT hash FROM operator_actions ORDER BY created_at DESC LIMIT 1');
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [OPERATOR_CHAIN_LOCK_KEY]);
+      const prev = await client.query('SELECT hash FROM operator_actions ORDER BY created_at DESC LIMIT 1');
       if (prev.rows.length > 0 && prev.rows[0].hash) previous_hash = prev.rows[0].hash;
-    } catch (_) {}
-    const hash = sha256(JSON.stringify({ operation, action_type, actor, trace_id }) + previous_hash);
-    try {
-      await pool.query(
+      hash = sha256(JSON.stringify({ operation, action_type, actor, trace_id }) + previous_hash);
+      await client.query(
         `INSERT INTO operator_actions
            (trace_id, operation, action_type, actor, operator_id, target, reason, payload, hash, previous_hash)
          VALUES ($1,$2,$3,$4,$4,$5,$6,$7,$8,$9)`,
         [trace_id, operation, action_type, actor, target, reason, JSON.stringify(payload), hash, previous_hash]
       );
-    } catch (_) {}
+      await client.query('COMMIT');
+    } catch (_) {
+      try { await client.query('ROLLBACK'); } catch (_e) {}
+    } finally {
+      client.release();
+    }
+    if (!hash) hash = sha256(JSON.stringify({ operation, action_type, actor, trace_id }) + previous_hash);
     appendReplayLog({ trace_id, ts: new Date().toISOString(), event: `operator.${action_type}`, actor, operation, hash, previous_hash });
     return { trace_id, hash };
   }

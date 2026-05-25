@@ -83,7 +83,18 @@ export function createWave7Router(pool: pg.Pool, redis?: any): Router {
     if (!VALID_SCOPES.includes(scope)) {
       return void res.status(400).json({ error: 'invalid_scope', valid: VALID_SCOPES });
     }
-    const callerTier = trust_tier_required || 'T0';
+    // MAJOR-07 (pentest RSpace 2026-05-25): NEVER trust caller-supplied tier from
+    // the request body. Resolve the real trust_tier from the agents table by
+    // source_did (same pattern as wave3). Unknown agent → lowest tier 'T0'.
+    let callerTier = 'T0';
+    try {
+      const agentRow = await pool.query('SELECT trust_tier FROM agents WHERE did = $1', [source_did]);
+      if (agentRow.rows.length > 0 && agentRow.rows[0].trust_tier) {
+        callerTier = agentRow.rows[0].trust_tier;
+      }
+    } catch (e: any) {
+      return void res.status(503).json({ error: 'trust_check_unavailable', message: e.message });
+    }
     const perm = checkTierPermission(scope, callerTier);
     if (!perm.ok) return void res.status(403).json({ error: 'insufficient_tier', reason: perm.reason });
 

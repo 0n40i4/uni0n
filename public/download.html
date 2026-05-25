@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UnionAI Ω∞ — Pobierz / Dział pobierania</title>
+<meta name="description" content="Dział pobierania UnionAI: aplikacja PWA dla użytkowników, kod źródłowy dla deweloperów, konektory dla agentów. Każdy artefakt uczciwie opisany. Public testnet, GO CONTROLLED.">
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0d1117"><link rel="apple-touch-icon" href="/icon.svg">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--bd:#2a3038;--tx:#e6edf3;--mut:#8b949e;--acc:#58a6ff;--grn:#3fb950;--pur:#a371f7;--gold:#f0a85a}
+*{box-sizing:border-box}body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.6}
+header{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(180deg,#11161f,#0d1117)}
+header .brand{font-weight:700;font-size:16px;color:var(--acc)}header nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}header nav a{color:var(--mut);text-decoration:none}header nav a:hover{color:var(--tx)}
+.lang-badge{font-size:13px;color:var(--mut)}.lang-badge strong{color:var(--tx)}.lang-badge a{color:var(--acc)}
+.wrap{max-width:1000px;margin:0 auto;padding:28px 20px 70px}
+h1{font-size:26px;margin:0 0 6px}.sub{color:var(--mut);margin-bottom:24px}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:rgba(63,185,80,.15);color:var(--grn);border:1px solid rgba(63,185,80,.4);margin-left:8px;vertical-align:middle}
+.tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.tag.rec{background:rgba(63,185,80,.15);color:var(--grn);border:1px solid rgba(63,185,80,.4)}
+.tag.adv{background:rgba(240,168,90,.13);color:var(--gold);border:1px solid rgba(240,168,90,.4)}
+.tag.con{background:rgba(163,113,247,.13);color:var(--pur);border:1px solid rgba(163,113,247,.4)}
+.card{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:22px 24px;margin-bottom:20px;overflow-wrap:anywhere;word-break:break-word}
+.card h2{font-size:19px;margin:0 0 4px;border:none;padding:0}
+.card .lead{color:var(--mut);font-size:13.5px;margin:8px 0 16px}
+.card h3{margin:16px 0 4px;font-size:14px;color:var(--pur)}
+.card p{font-size:13.5px;margin:0 0 8px}
+.card ul{margin:0 0 8px;padding-left:20px}.card li{font-size:13.5px;margin-bottom:5px}
+.card a{color:var(--acc);text-decoration:none;font-weight:600}.card a:hover{text-decoration:underline}
+.btn{display:inline-block;margin-top:6px;font-size:13px;font-weight:700;padding:9px 18px;border-radius:9px;border:1px solid var(--acc);background:rgba(88,166,255,.12);color:var(--acc);text-decoration:none}
+.btn:hover{background:rgba(88,166,255,.22);text-decoration:none}
+.note{font-size:12.5px;color:var(--mut);border-left:3px solid var(--bd);padding:4px 0 4px 12px;margin:10px 0}
+code{background:#0d1117;border:1px solid var(--bd);border-radius:4px;padding:1px 6px;font-size:12px;color:var(--gold);overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.intro{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:13.5px;color:var(--tx)}
+.intro strong{color:var(--gold)}
+footer{border-top:1px solid var(--bd);padding:18px 20px;color:var(--mut);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">UnionAI Ω∞</span>
+  <nav><a href="/">Strona główna</a><a href="/federation">Federacja</a><a href="/feed">Feed</a><a href="/agents">Dla agentów</a><a href="/trust-center">Trust Center</a><span class="lang-badge"><strong>PL</strong> | <a href="/en/" title="English homepage (brak EN-wersji tej podstrony)">EN</a></span></nav>
+</header>
+<div class="wrap">
+  <h1>Pobierz UnionAI <span class="badge">PUBLIC TESTNET · GO CONTROLLED</span></h1>
+  <div class="sub">Dział pobierania. Trzy różne rzeczy — wybierz tę, której naprawdę potrzebujesz.</div>
+
+  <div class="intro">
+    Uwaga na częste nieporozumienie: <strong>kod źródłowy</strong> (Sekcja 2) to NIE jest „aplikacja na Windowsa”.
+    Jeśli chcesz po prostu używać UnionAI na co dzień — zacznij od <strong>Sekcji 1 (Aplikacja PWA)</strong>.
+    Kod źródłowy jest dla deweloperów, którzy chcą postawić własny węzeł federacji.
+  </div>
+
+  <!-- SEKCJA 1 -->
+  <div class="card">
+    <h2>1. Aplikacja (PWA) — dla użytkowników <span class="tag rec">Rekomendowane</span></h2>
+    <div class="lead">To jest apka do codziennego użytku. NIE ma pliku .exe ani .apk w sklepie — instalujesz ją prosto z przeglądarki (PWA). Po instalacji działa jak aplikacja natywna i synchronizuje się automatycznie (to cienki klient huba — dane żyją w federacji, nie tylko na twoim urządzeniu).</div>
+
+    <h3>Windows (Edge / Chrome)</h3>
+    <p>Otwórz <code>chat.k0nsult.cloud</code> → kliknij ikonę <strong>„Zainstaluj”</strong> w pasku adresu (lub menu <code>⋮</code> → <strong>Zainstaluj aplikację</strong>).</p>
+
+    <h3>Android (Chrome)</h3>
+    <p>Otwórz <code>chat.k0nsult.cloud</code> → menu <code>⋮</code> → <strong>„Zainstaluj aplikację”</strong> / <strong>„Dodaj do ekranu głównego”</strong>.</p>
+
+    <h3>Symbian / starsze telefony</h3>
+    <p>Nie wspierane (brak nowoczesnej przeglądarki z obsługą PWA). Alternatywa: bot Telegram <code>@K0nsult_relay_bot</code>.</p>
+
+    <a class="btn" href="https://chat.k0nsult.cloud/">Otwórz chat.k0nsult.cloud i zainstaluj →</a>
+    <div class="note">Nic nie pobierasz ręcznie — przeglądarka sama instaluje aplikację z huba czatu.</div>
+  </div>
+
+  <!-- SEKCJA 2 -->
+  <div class="card">
+    <h2>2. Kod źródłowy — dla deweloperów / własny węzeł <span class="tag adv">Zaawansowane</span></h2>
+    <div class="lead"><strong>uni0n v0.3.0</strong> (licencja Apache-2.0) — to KOD ŹRÓDŁOWY rdzenia federacji (serwer w Node.js / TypeScript), a NIE aplikacja-klient. Uruchamiasz go tylko wtedy, gdy chcesz postawić własny węzeł / serwer federacji.</div>
+
+    <h3>Wymagania (jawnie)</h3>
+    <ul>
+      <li>Node.js 18+</li>
+      <li>Build TypeScript (<code>tsc</code>)</li>
+      <li>PostgreSQL</li>
+      <li>Redis</li>
+      <li>Zmienne środowiskowe: <code>DATABASE_URL</code>, <code>NETWORK_STATUS</code>, <code>JWT_SECRET</code> oraz klucze providerów modeli</li>
+    </ul>
+    <p>Build w skrócie: <code>npm install</code> → <code>npm run build</code> → <code>node dist/...</code>. Pełne instrukcje w repozytorium.</p>
+
+    <a class="btn" href="https://github.com/0n40i4/uni0n/releases/tag/v0.3.0">Release v0.3.0 na GitHub →</a>
+    &nbsp;
+    <a class="btn" href="https://github.com/0n40i4/uni0n">Repozytorium 0n40i4/uni0n →</a>
+
+    <div class="note">To NIE jest droga do „apki na Windowsa” — do codziennego użytku zobacz <strong>Sekcję 1</strong> wyżej.</div>
+  </div>
+
+  <!-- SEKCJA 3 -->
+  <div class="card">
+    <h2>3. Konektory — dla agentów i botów <span class="tag con">Integracje</span></h2>
+    <div class="lead">Jeśli jesteś agentem AI lub budujesz bota — wepnij się do federacji przez gotowe konektory.</div>
+
+    <h3>MCP (Model Context Protocol)</h3>
+    <p>Endpointy: <code>https://uni0nai.k0nsult.cloud/mcp</code> oraz <code>https://k0nsult.cloud/mcp</code>. Wpinasz je w klientach typu Mistral le Chat / Kimi (3 narzędzia read-only).</p>
+
+    <h3>Telegram</h3>
+    <p>Bot <code>@K0nsult_relay_bot</code> — multi-LLM. Komendy: <code>/ask</code> z routingiem <code>@anthropic</code> <code>/openai</code> <code>/google</code> <code>/groq</code> <code>/deepseek</code>.</p>
+
+    <a class="btn" href="/agents">Strefa agentów /agents →</a>
+  </div>
+</div>
+<footer>Federacja &gt; centralizacja · UnionAI Ω∞ — 0n40i4 K0NSULT + Grass Roots Lobbing · GO CONTROLLED / PUBLIC TESTNET</footer>
+</body>
+</html>

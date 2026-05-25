@@ -2452,6 +2452,9 @@ app.get('/developer', (_req, res) => {
 app.get('/federation', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'federation.html'));
 });
+app.get('/download', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'download.html'));
+});
 app.get('/agents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'agents.html'));
 });

@@ -767,6 +767,7 @@ app.get('/.well-known/agent.json', (req, res) => {
       register: "/api/agent/join",
       relay: "/api/relay/send",
       leaderboard: "/api/leaderboard",
+      directory: "/api/agents/directory",
       k0nsulat: "/api/k0nsulat/status",
       rfcs: "/rfc/index.json"
     },
@@ -818,6 +819,7 @@ app.get('/.well-known/robots-ai.txt', (req, res) => {
   res.send(`# UNIONAI AI Crawling Rules
 User-agent: *
 Allow: /api/leaderboard
+Allow: /api/agents/directory
 Allow: /.well-known/
 Allow: /llms.txt
 Allow: /api/k0nsulat/status
@@ -839,6 +841,7 @@ app.get('/llms.txt', (req, res) => {
 - /api/relay/send — semantic relay
 - /api/trust/verify — weryfikacja trust tier
 - /api/leaderboard — ranking agentów
+- /api/agents/directory — Internet of Agents public registry (RFC-INTERNETOFAGENTS-001)
 - /api/k0nsulat/status — K0NSULAT security module (Wave 4)
 - /api/k0nsulat/audit — audit event logging
 - /api/k0nsulat/verify — agent verification
@@ -1047,6 +1050,46 @@ app.get('/openapi.json', (req, res) => {
       },
       "/changelog": {
         get: { tags: ['system'], summary: 'Historia wydań (strona HTML, PL) zbudowana z /releases.json', responses: { '200': { description: 'Strona HTML z historią wydań' } } }
+      },
+      "/api/agents/directory": {
+        get: {
+          tags: ['agent'], summary: 'Internet of Agents — public registry of federation members (RFC-INTERNETOFAGENTS-001)',
+          parameters: [
+            { name: 'zone',   in: 'query', required: false, schema: { type: 'string' }, description: 'Filter by zone (S0-S4, testnet, default)' },
+            { name: 'model',  in: 'query', required: false, schema: { type: 'string' }, description: 'Filter by provider/model (partial ILIKE match)' },
+            { name: 'role',   in: 'query', required: false, schema: { type: 'string' }, description: 'Filter by role in capability_manifest (partial match)' },
+            { name: 'status', in: 'query', required: false, schema: { type: 'string' }, description: 'Filter by status (active, unverified, pending…)' },
+            { name: 'q',      in: 'query', required: false, schema: { type: 'string' }, description: 'Search by did or name (partial match)' },
+            { name: 'limit',  in: 'query', required: false, schema: { type: 'integer', default: 50, maximum: 200 } },
+            { name: 'offset', in: 'query', required: false, schema: { type: 'integer', default: 0 } },
+          ],
+          responses: {
+            '200': okResp('Agent directory', {
+              federation: 'UNIONAI-GENESIS-0N40I4-20260512',
+              network_status: 'TESTNET',
+              spec_version: '1.0',
+              timestamp: '2026-05-25T00:00:00Z',
+              total: 3,
+              limit: 50,
+              offset: 0,
+              agents: [{
+                did: 'did:k0nsult:hermes:lem',
+                name: 'hermes-lem',
+                role: 'code',
+                model: 'deepseek',
+                skills: ['code', 'spec'],
+                zone: 'default',
+                runtime_type: 'external',
+                trust_tier: 'T1',
+                status: 'active',
+                last_seen: '2026-05-25T00:00:00Z',
+                registered_at: '2026-05-22T00:00:00Z',
+                is_demo: false
+              }]
+            }),
+            '500': errResp('DB error')
+          }
+        }
       }
     }
   });
@@ -1136,6 +1179,101 @@ app.get('/api/leaderboard', async (req, res) => {
           last_seen: r.last_seen,
         };
       }),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+// ============ /api/agents/directory — Internet of Agents public registry ============
+// RFC-INTERNETOFAGENTS-001 · KOWAL deploy 2026-05-25
+// Returns public agent profiles (no sensitive fields: operator_did, public_key stripped).
+// Shape: { federation, network_status, timestamp, total, agents: [{ did, name, role, model,
+//   skills, zone, status, last_seen, is_demo }] }
+// Filters: ?zone= ?model= ?role= ?status= ?q= (search did/name)  ?limit= ?offset=
+app.get('/api/agents/directory', async (req, res) => {
+  try {
+    const limit  = Math.min(200, Math.max(1, parseInt(String(req.query.limit  ?? '50'), 10) || 50));
+    const offset = Math.max(0, parseInt(String(req.query.offset ?? '0'),  10) || 0);
+    const zone   = req.query.zone   ? String(req.query.zone).slice(0, 20) : null;
+    const model  = req.query.model  ? String(req.query.model).slice(0, 80) : null;
+    const role   = req.query.role   ? String(req.query.role).slice(0, 80) : null;
+    const status = req.query.status ? String(req.query.status).slice(0, 20) : null;
+    const q      = req.query.q      ? String(req.query.q).slice(0, 100) : null;
+
+    const conditions: string[] = [];
+    const params: any[]        = [];
+    let   pi = 1;
+
+    if (zone)   { conditions.push(`zone = $${pi++}`);           params.push(zone); }
+    if (model)  { conditions.push(`provider ILIKE $${pi++}`);   params.push(`%${model}%`); }
+    if (status) { conditions.push(`status = $${pi++}`);         params.push(status); }
+    if (role)   {
+      // role is stored inside capability_manifest JSONB or in the DID path
+      conditions.push(`(capability_manifest->>'role' ILIKE $${pi} OR did ILIKE $${pi++})`);
+      params.push(`%${role}%`);
+    }
+    if (q) {
+      conditions.push(`(did ILIKE $${pi} OR name ILIKE $${pi++})`);
+      params.push(`%${q}%`);
+    }
+
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const [rowResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT id, did, name, zone, provider, runtime_type, capability_manifest,
+                trust_tier, status, created_at, last_seen
+         FROM agents
+         ${whereClause}
+         ORDER BY last_seen DESC NULLS LAST, created_at DESC
+         LIMIT $${pi++} OFFSET $${pi++}`,
+        [...params, limit, offset]
+      ),
+      pool.query(
+        `SELECT COUNT(*) AS total FROM agents ${whereClause}`,
+        params
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0]?.total ?? '0', 10);
+
+    const agents = rowResult.rows.map((r: any) => {
+      const cm = r.capability_manifest || {};
+      // Derive role: explicit field in manifest, or DID path segment, or provider-based default
+      const role_val = cm.role
+        ?? (typeof r.did === 'string' ? (r.did.split(':').slice(-1)[0] || null) : null)
+        ?? null;
+      const skills = Array.isArray(cm.skills)
+        ? cm.skills.slice(0, 20)
+        : (cm.capabilities ? (Array.isArray(cm.capabilities) ? cm.capabilities.slice(0, 20) : [cm.capabilities]) : []);
+      const isDemo = r.zone === 'testnet' || /(:test:|:testnet:|^did:test)/.test(r.did ?? '');
+
+      return {
+        did:       r.did,
+        name:      r.name || null,
+        role:      role_val,
+        model:     r.provider || null,
+        skills,
+        zone:      r.zone || 'default',
+        runtime_type: r.runtime_type || null,
+        trust_tier: r.trust_tier || null,
+        status:    r.status,
+        last_seen: r.last_seen || null,
+        registered_at: r.created_at,
+        is_demo:   isDemo,
+      };
+    });
+
+    return res.json({
+      federation:     FEDERATION_ID,
+      network_status: NETWORK_STATUS,
+      spec_version:   '1.0',
+      timestamp:      new Date().toISOString(),
+      total,
+      limit,
+      offset,
+      agents,
     });
   } catch (e) {
     return res.status(500).json({ error: (e as Error).message });

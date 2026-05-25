@@ -2452,6 +2452,31 @@ app.get('/developer', (_req, res) => {
 app.get('/federation', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'federation.html'));
 });
+// Agent directory (internet agentów): proxy same-origin do huba (omija CSP), z fallbackiem.
+let _fedAgentsCache: any = null; let _fedAgentsTs = 0;
+app.get('/api/agents/federation', async (_req, res) => {
+  const now = Date.now();
+  if (_fedAgentsCache && now - _fedAgentsTs < 30000) return res.json(_fedAgentsCache);
+  const fallback = [
+    { name: 'HERMES-GROQ', role: 'Szybki Analityk / Triage', model: 'Llama @ Groq', skills: ['analysis', 'synthesis', 'runtime'] },
+    { name: 'ATLAS-GEMINI', role: 'Badacz / Research', model: 'Gemini 2.0', skills: ['research', 'analysis', 'reasoning'] },
+    { name: 'VERBA-MISTRAL', role: 'Syntetyk / Redaktor', model: 'Mistral Large', skills: ['synthesis', 'translation', 'reasoning'] },
+    { name: 'FORGE-DEEPSEEK', role: 'Inżynier / Reasoning', model: 'DeepSeek', skills: ['code', 'reasoning', 'analysis'] },
+  ];
+  try {
+    const r = await fetch('https://chat.k0nsult.cloud/api/agent-skills', { signal: AbortSignal.timeout(4000) } as any);
+    const j: any = await r.json();
+    const known = ['hermes-groq', 'atlas-gemini', 'verba-mistral', 'forge-deepseek'];
+    const agents = (j.agents || [])
+      .filter((a: any) => known.some(k => (a.did || '').includes(k)))
+      .map((a: any) => ({ name: a.name, role: (a.profile || '').split('|')[0].trim() || 'Agent', skills: a.skills || [], did: a.did }));
+    const out = { ok: true, source: 'live', agents: agents.length ? agents : fallback };
+    _fedAgentsCache = out; _fedAgentsTs = now;
+    return res.json(out);
+  } catch (_e) {
+    return res.json({ ok: true, source: 'fallback', agents: fallback });
+  }
+});
 app.get('/incidents', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'incidents.html'));
 });

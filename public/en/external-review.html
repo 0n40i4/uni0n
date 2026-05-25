@@ -76,7 +76,7 @@
 </head>
 <body>
 <header>
-  <h1>External Review <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <h1>External Review <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Checklist for independent audit of claims and documents (legal / technical /
   compliance) before moving from TESTNET to FULL LIVE. This is a readiness checklist — it does not
   replace an external auditor's report.</div>
@@ -248,11 +248,11 @@
         <li>Legal/communications review: <span class="mono">✅ 2026-05-24</span> — GO CONTROLLED; claims softened (LEGAL_CLAIMS_MATRIX).</li>
         <li>EU AI Act readiness review: <span class="mono">✅ 2026-05-24</span> — GO CONTROLLED conditionally. Report: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/AI_ACT_READINESS_REVIEW_2026-05-24.md">AI_ACT_READINESS_REVIEW_2026-05-24.md</a></li>
         <li>Self-pentest (active, bounded, <strong>self-assessment — NOT independent</strong>): <span class="mono">✅ 2026-05-24</span> — 0 BLOCKER/CRITICAL/MAJOR, 2× MINOR fixed. Report: <a href="https://github.com/0n40i4/uni0n/blob/main/docs/reports/SELF_PENTEST_2026-05-24.md">SELF_PENTEST_2026-05-24.md</a></li>
-        <li>Independent active pentest (RSpace (rspace.com.pl) / equivalent): <span class="mono">— to be commissioned (RFP ready) —</span> — required for P2-07.</li>
+        <li>Independent active pentest (RSpace, rspace.com.pl): <span class="mono">✅ 2026-05-25</span> — completed and accepted; all CRITICAL + MAJOR addressed, verified live.</li>
       </ul>
       <p><strong>Readiness review — scope:</strong> provider/deployer/operator roles matrix, high-risk classification per use-case, human oversight, risk register, incident policy, claim ≤ proof. Status: GO CONTROLLED — readiness review, NOT certification/notification/conformity assessment. P2-07 condition: BLOCKER/CRITICAL closed (addressed) + active pentest + signatures.</p>
       <p><strong>Remediation:</strong> CRITICAL-01 (CSP), CRITICAL-02 (CORS allowlist), BLOCKER-01 (incident/governance auth, agent unverified, ack pending), BLOCKER-02 (status language), MAJOR-02/03 — <strong>closed</strong>. Open: endpoint class refactor + quarantine, evidence v2, CI security tooling. Details in report.</p>
-      <p class="mono" style="color:var(--muted)">Aggregate status: non-invasive review COMPLETED, P0/CRITICAL addressed; full active audit (pentest/legal/compliance) to be commissioned before FULL GO (P2-07).</p>
+      <p class="mono" style="color:var(--muted)">Aggregate status: independent pentest (RSpace) COMPLETED and ACCEPTED 2026-05-25; all CRITICAL + MAJOR addressed, verified live and accepted by the auditor. FULL GO (P2-07) REACHED: 3 signatures on /production-gate + NETWORK_STATUS=PRODUCTION switched 2026-05-26. The network operates in production mode (FULL LIVE).</p>
       <div class="cta">
         <a class="alt" href="/en/production-gate">Production gate</a>
         <a class="alt" href="/en/trust-center">Trust Center</a>
@@ -261,7 +261,7 @@
   </div>
 </main>
 <footer>
-  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment.
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · PRODUCTION / FULL LIVE environment.
 </footer>
 </body>
 </html>

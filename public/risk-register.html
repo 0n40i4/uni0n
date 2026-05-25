@@ -77,10 +77,10 @@
 </head>
 <body>
 <header>
-  <h1>Rejestr ryzyk <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Rejestr ryzyk <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Otwarty rejestr ryzyk federacji UnionAI — dla każdego ryzyka wskazujemy
   właściciela (owner), działania ograniczające (mitigation), ocenę istotności (severity)
-  oraz datę kolejnego przeglądu. To dokument roboczy środowiska testnet, nie deklaracja zgodności.</div>
+  oraz datę kolejnego przeglądu. To dokument roboczy środowiska produkcyjnego, nie deklaracja zgodności.</div>
   <nav>
     <a href="/trust-center">Trust Center</a>
     <a href="/evidence">Dowody</a>
@@ -95,12 +95,12 @@
 <main>
   <div class="banner">
     <strong>Rejestr ryzyk v1 — wersjonowany.</strong> Data: <span class="mono">2026-05-24</span> ·
-    owner: <span class="mono">Compliance / 0n40i4</span> · status: <strong>roboczy testnet</strong>.
+    owner: <span class="mono">Compliance / 0n40i4</span> · status: <strong>roboczy (PRODUCTION / FULL LIVE)</strong>.
   </div>
 
   <div class="banner">
-    <strong>Rejestr żywy — przeglądany cyklicznie.</strong> Tryb GO CONTROLLED / PUBLIC TESTNET.
-    Oceny istotności odzwierciedlają ograniczony, kontrolowany zakres działania w środowisku testnet
+    <strong>Rejestr żywy — przeglądany cyklicznie.</strong> Tryb PRODUCTION / FULL LIVE.
+    Oceny istotności odzwierciedlają zakres działania w środowisku produkcyjnym
     i mogą zmieniać się przy każdym przeglądzie. Dokument nie stanowi deklaracji pełnej zgodności
     ani certyfikacji.
   </div>
@@ -193,12 +193,12 @@
         </tr>
         <tr>
           <td class="id">R-08</td>
-          <td>Błędne zrozumienie statusu środowiska — testnet odbierany jako produkcja.</td>
+          <td>Błędne zrozumienie statusu środowiska — mylenie danych demo z danymi produkcyjnymi.</td>
           <td>Komunikacja</td>
           <td><span class="sev medium">MEDIUM</span></td>
           <td>0n40i4 / Compliance</td>
-          <td>Badge <strong>GO CONTROLLED / PUBLIC TESTNET</strong> obecny we wszystkich widokach,
-          globalny disclaimer i jednoznaczne oznaczenie środowiska (zob. <a href="/trust-center">Trust Center</a>).</td>
+          <td>Badge <strong>PRODUCTION / FULL LIVE</strong> obecny we wszystkich widokach, dane demo jawnie
+          oznaczone (DEMO/TESTNET), globalny disclaimer i jednoznaczne oznaczenie środowiska (zob. <a href="/trust-center">Trust Center</a>).</td>
           <td class="review">2026-06-15</td>
         </tr>
         <tr>
@@ -322,7 +322,7 @@
       <li><strong>Właściciel rejestru:</strong> zespół <span class="mono">0n40i4</span> / Compliance
       odpowiada za aktualność wpisów; poszczególne ryzyka mają wskazanych ownerów w tabeli.</li>
       <li><strong>Częstotliwość:</strong> przegląd cykliczny (co najmniej raz w miesiącu w trybie
-      PUBLIC TESTNET) oraz każdorazowo po istotnej zmianie zakresu lub po incydencie.</li>
+      PRODUCTION / FULL LIVE) oraz każdorazowo po istotnej zmianie zakresu lub po incydencie.</li>
       <li><strong>Aktualizacja:</strong> przy każdym przeglądzie weryfikujemy severity, skuteczność
       mitigacji i ustalamy nową datę <em>next review</em>.</li>
       <li><strong>Eskalacja:</strong> materializacja ryzyka jest zgłaszana i obsługiwana przez
@@ -339,7 +339,7 @@
       <span><span class="sev low">LOW</span> &nbsp;Ryzyko niskie — pod obserwacją, z zabezpieczeniami zapasowymi.</span>
     </div>
     <p style="margin-top:12px; color:var(--muted); font-size:13px;">
-      Oceny dotyczą ograniczonego, kontrolowanego zakresu działania w środowisku testnet
+      Oceny dotyczą zakresu działania w środowisku produkcyjnym
       i są weryfikowane przy każdym przeglądzie.
     </p>
   </div>
@@ -383,7 +383,7 @@
   </div>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 </body>
 </html>

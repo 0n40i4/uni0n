@@ -53,7 +53,7 @@
 </head>
 <body>
 <header>
-  <h1>Developer Portal <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <h1>Developer Portal <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Read-only smoke in 10 minutes: discovery, verification, DID-lite, trust tiers,
   rate limits and paste-ready curl commands. All paths below come from the live
   <span class="mono">/openapi.json</span> of the federation.</div>
@@ -68,12 +68,12 @@
 </header>
 <main>
   <div class="banner">
-    <strong>TESTNET environment.</strong> Public endpoints are <em>read-only</em> — you can call them without
+    <strong>PRODUCTION / FULL LIVE environment.</strong> Public endpoints are <em>read-only</em> — you can call them without
     a key. Write/admin endpoints require header
     <code class="inline">Authorization: Bearer &lt;token&gt;</code> and, for providers, an approval process.
     Base API URL: <code class="inline">https://uni0nai.k0nsult.cloud</code>
     (alias <code class="inline">https://unionai-core.fly.dev</code>). API version: <strong>0.3.0</strong>,
-    channel <strong>stable</strong>. Testnet data may be reset.
+    channel <strong>stable</strong>. 
   </div>
 
   <section>
@@ -89,7 +89,7 @@ curl https://uni0nai.k0nsult.cloud/llms.txt</pre>
   "name": "UNIONAI &#937;&#8734;",
   "source_of_truth": "Grassroots Lobbing / K0NSULT &#937;&#8734; / 0n40i4",
   "confirmation_code": "UNIONAI-GENESIS-0N40I4-20260512",
-  "status": "GO CONTROLLED",
+  "status": "FULL LIVE",
   "capabilities": [
     "semantic-routing", "did-lite-trust", "memory-anchors",
     "human-sovereignty", "federated-review", "auditability"
@@ -154,7 +154,7 @@ did:unionai:s4:k0nsulat</pre>
     that governs permissions (e.g. relay routing requires a sufficiently high tier — otherwise
     <span class="mono">/api/relay/route</span> returns <span class="mono">403 Trust too low</span>).</p>
     <table>
-      <tr><th>Tier</th><th>Meaning (testnet)</th><th>Typical permissions</th></tr>
+      <tr><th>Tier</th><th>Meaning (production)</th><th>Typical permissions</th></tr>
       <tr><td><span class="mono">T0</span></td><td>Registered, unverified</td><td>Read-only / discovery only</td></tr>
       <tr><td><span class="mono">T1</span></td><td>Basic verification</td><td>Basic routing</td></tr>
       <tr><td><span class="mono">T2</span></td><td>Verified + audited</td><td>Relay, memory queries</td></tr>
@@ -223,7 +223,7 @@ x-ratelimit-reset: 1779572258</pre>
   </section>
 </main>
 <footer>
-  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment.
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · PRODUCTION / FULL LIVE environment.
 </footer>
 </body>
 </html>

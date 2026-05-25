@@ -88,7 +88,7 @@
 </head>
 <body>
 <header>
-  <h1>Production Gate (TESTNET → PRODUCTION) <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <h1>Production Gate (TESTNET → PRODUCTION) <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Control gate P2-07. The UnionAI federation may change
   <span class="mono">network_status</span> from <strong>TESTNET</strong> to <strong>PRODUCTION</strong>
   only after fulfilling and <strong>signing</strong> the checklist below: agent registry, trust tiers,
@@ -105,12 +105,11 @@
 </header>
 <main>
   <div class="banner">
-    <strong>Current state: <span class="testnet" style="margin-left:0">network_status = TESTNET</span></strong><br />
-    Live check <span class="mono">GET /api/leaderboard</span> (state as of 2026-05-23) returns
-    <span class="mono">"network_status":"TESTNET"</span>, 3 agents, all marked
-    <span class="mono">"is_demo":true</span> / label <span class="mono">DEMO/TESTNET</span> (tiers T1–T2).
-    This <strong>is a testnet environment</strong> — data may be reset and there are no stability guarantees.
-    Switching to <span class="mono">PRODUCTION</span> requires the <strong>signed checklist below</strong>.
+    <strong>Current state: <span class="testnet" style="margin-left:0">network_status = PRODUCTION — switched 2026-05-26</span></strong><br />
+    Live check <span class="mono">GET /api/leaderboard</span> returns
+    <span class="mono">"network_status":"PRODUCTION"</span>. Demo agents remain marked
+    <span class="mono">"is_demo":true</span> / label <span class="mono">DEMO/TESTNET</span>.
+    This <strong>is a production research network</strong> (FULL LIVE), under the GRL R&amp;D umbrella, with human oversight and a kill-switch.
   </div>
 
   <h2 style="font-size:20px; margin-top:24px;">Transition conditions checklist</h2>
@@ -205,10 +204,9 @@
 
   <h2 style="font-size:20px; margin-top:24px;">Who signs</h2>
   <div class="banner warn">
-    <strong>READY-TO-SIGN (state 2026-05-24):</strong> all technical, legal and readiness conditions are ☑ and verified.
-    Before signatures are submitted, <strong>one condition</strong> remains: <strong>independent active pentest</strong>
-    (external). Once complete and findings addressed — fill in the three signatures below (name/role/date),
-    change the last ☐ to ☑, and only then execute the "Switchover Procedure".
+    <strong>PASSED (2026-05-26):</strong> all technical, legal and readiness conditions are ☑ and verified,
+    the independent pentest (RSpace) was accepted 2026-05-25, the three signatures were submitted, and the
+    "Switchover Procedure" was executed — <span class="mono">NETWORK_STATUS=PRODUCTION = FULL LIVE</span> is active.
   </div>
   <div class="banner">
     Transition to <span class="mono">PRODUCTION</span> requires signatures from three roles (per FULL LIVE criteria).
@@ -253,14 +251,14 @@
   </div>
 
   <div class="final">
-    <strong>Final status: <span class="status-fail">READY-TO-SIGN — 1 condition + 3 signatures open</span></strong><br />
+    <strong>Final status: <span style="color:#3fb950;font-weight:700">PRODUCTION / FULL LIVE — switched 2026-05-26 · 3/3 signatures submitted</span></strong><br />
     <strong>All technical, legal and readiness conditions are ☑ and verified</strong> (registry, trust tiers,
-    auth boundary, monitoring, incidents, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof —
-    state 2026-05-24; 3 non-invasive reviews + self-pentest completed). Remaining open:
-    <strong>(1) independent active pentest</strong> (external — RFP: <span class="mono">docs/EXTERNAL_REVIEW_EMAIL.md</span>)
-    and <strong>(2) three signatures</strong> (operator + tech lead + compliance owner) — to be submitted AFTER the pentest.
-    Until these are closed <strong>we remain in GO CONTROLLED / PUBLIC TESTNET mode</strong>;
-    <span class="mono">network_status</span> remains <span class="mono">TESTNET</span>. Do not communicate FULL LIVE.
+    auth boundary, monitoring, incidents, SLA/SLO, evidence, RACI, use-case matrix, human oversight, claim ≤ proof)
+    and the <strong>independent pentest (RSpace) was ACCEPTED 2026-05-25</strong>. Three signatures submitted:
+    Operator (Tomasz Obara), Tech lead (Chris Hope), Compliance owner (Kate Hope). <strong>The gate PASSED:</strong>
+    <span class="mono">NETWORK_STATUS=PRODUCTION</span> was switched 2026-05-26. The network operates
+    in production mode (FULL LIVE) as a production research network with human oversight and a kill-switch.
+    Production ≠ legal certification or conformity assessment by a notified body.
     <div class="cta">
       <a class="alt" href="/en/trust-center">Trust Center</a>
       <a class="alt" href="/en/external-review">External review</a>
@@ -269,7 +267,7 @@
   </div>
 </main>
 <footer>
-  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment · production gate P2-07.
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · PRODUCTION / FULL LIVE environment · production gate P2-07.
 </footer>
 </body>
 </html>

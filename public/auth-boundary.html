@@ -56,9 +56,9 @@
 </head>
 <body>
 <header>
-  <h1>Granica autoryzacji (Auth boundary) <span class="testnet">TESTNET / PODGLĄD</span></h1>
+  <h1>Granica autoryzacji (Auth boundary) <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">Jak chronione są endpointy UnionAI: co jest publiczne (read-only), co wymaga autoryzacji,
-  a co jest świadomie otwarte w trybie testnet. Zgodnie z zasadą claim&nbsp;&le;&nbsp;proof opisujemy
+  a co jest świadomie otwarte w trybie produkcyjnym. Zgodnie z zasadą claim&nbsp;&le;&nbsp;proof opisujemy
   stan faktyczny — łącznie ze znaną luką do domknięcia.</div>
   <nav>
     <a href="/trust-center">Trust Center</a>
@@ -72,7 +72,7 @@
 <main>
   <div class="banner">
     Model autoryzacji UnionAI jest <strong>hybrydowy</strong>, nie czysto-tokenowy. Otwarta rejestracja na poziomie
-    T0 jest świadomym wyborem federacji testnet (onboarding bez tarcia), natomiast akcje uprzywilejowane
+    T0 jest świadomym wyborem federacji (onboarding bez tarcia), natomiast akcje uprzywilejowane
     (relay, pamięć, operator, governance) są bramkowane przez <strong>trust tier</strong>, <strong>relay shared secret</strong>
     lub <strong>token operatora</strong>.
   </div>
@@ -91,7 +91,7 @@
   <h2>Read-only kontra write</h2>
   <p>Publiczne endpointy <strong>GET są read-only</strong>. Otwarte endpointy <strong>POST rejestracji T0</strong>
   (<span class="mono">/api/agent/join</span>, <span class="mono">/api/agent/register</span>) są świadomie dopuszczone
-  w trybie testnet jako <strong>ograniczony onboarding</strong> — zapisują agenta jako <span class="mono">unverified</span>
+  w trybie produkcyjnym jako <strong>ograniczony onboarding</strong> — zapisują agenta jako <span class="mono">unverified</span>
   (T0, score 0), <strong>nie nadają uprawnień uprzywilejowanych</strong>, nie zapisują memory/governance/evidence bez
   dalszej bramki zaufania i mogą podlegać resetowi. Każda inna zmiana stanu
   (rejestracja, pamięć, relay, governance, operator) przechodzi przez co najmniej jedną z bramek: trust tier,
@@ -118,7 +118,7 @@
   Dowody integralności: <a href="/api/evidence/verify">/api/evidence/verify</a>, <a href="/trust-center">Trust Center</a>.</p>
 </main>
 <footer>
-  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
+  Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko PRODUCTION / FULL LIVE.
 </footer>
 </body>
 </html>

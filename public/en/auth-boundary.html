@@ -62,9 +62,9 @@
 </head>
 <body>
 <header>
-  <h1>Auth Boundary <span class="testnet">TESTNET / PREVIEW</span></h1>
+  <h1>Auth Boundary <span class="testnet">PRODUCTION / FULL LIVE</span></h1>
   <div class="lead">How UnionAI endpoints are protected: what is public (read-only), what requires
-  authorisation, and what is deliberately open in testnet mode. In accordance with the
+  authorisation, and what is deliberately open in production mode. In accordance with the
   claim&nbsp;&le;&nbsp;proof principle we describe the actual state — including known gaps to be closed.</div>
   <nav>
     <a href="/en/trust-center">Trust Center</a>
@@ -79,7 +79,7 @@
 <main>
   <div class="banner">
     The UnionAI authorisation model is <strong>hybrid</strong>, not purely token-based. Open T0 registration
-    is a deliberate testnet federation choice (frictionless onboarding), while privileged actions
+    is a deliberate federation choice (frictionless onboarding), while privileged actions
     (relay, memory, operator, governance) are gated by <strong>trust tier</strong>,
     <strong>relay shared secret</strong> or <strong>operator token</strong>.
   </div>
@@ -98,7 +98,7 @@
   <h2>Read-only vs write</h2>
   <p>Public <strong>GET endpoints are read-only</strong>. Open <strong>T0 registration POST endpoints</strong>
   (<span class="mono">/api/agent/join</span>, <span class="mono">/api/agent/register</span>) are deliberately
-  permitted in testnet mode as <strong>limited onboarding</strong> — they register the agent as
+  permitted in production mode as <strong>limited onboarding</strong> — they register the agent as
   <span class="mono">unverified</span> (T0, score 0), <strong>do not grant privileged permissions</strong>,
   do not write to memory/governance/evidence without a further trust gate, and may be subject to reset.
   Every other state change (registration, memory, relay, governance, operator) passes through at least one
@@ -126,7 +126,7 @@
   Integrity evidence: <a href="/api/evidence/verify">/api/evidence/verify</a>, <a href="/en/trust-center">Trust Center</a>.</p>
 </main>
 <footer>
-  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · TESTNET / PREVIEW environment.
+  Federation <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · PRODUCTION / FULL LIVE environment.
 </footer>
 </body>
 </html>

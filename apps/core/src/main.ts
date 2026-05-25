@@ -2788,11 +2788,23 @@ app.get('/production-gate', (_req, res) => {
 });
 
 // ============ EN mirror — clean URLs for /en/:page ============
-app.get('/en/:page', (req, res) => {
+app.get('/en/:page', (req, res, next) => {
   const page = req.params.page.replace(/[^a-z0-9\-]/gi, '');
   const filePath = path.join(process.cwd(), 'public', 'en', `${page}.html`);
   res.sendFile(filePath, (err) => {
-    if (err) res.status(404).send('Not found');
+    if (err) next();  // fall through to catch-all 404
+  });
+});
+
+// ============ PL clean URLs — any /<page> -> public/<page>.html (mirror of /en/:page) ============
+// Naprawia 404 dla bezrozszerzeniowych linkow PL (np. /provider-invitation z przelacznika
+// jezyka). Rejestrowane PO wszystkich konkretnych trasach; /api/* sa wielosegmentowe wiec
+// nie sa przyslaniane, a nieistniejace pliki spadaja do catch-all 404.
+app.get('/:page', (req, res, next) => {
+  const page = req.params.page.replace(/[^a-z0-9\-]/gi, '');
+  if (!page) return next();
+  res.sendFile(path.join(process.cwd(), 'public', `${page}.html`), (err) => {
+    if (err) next();
   });
 });
 

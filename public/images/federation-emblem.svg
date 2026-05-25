@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="UNIONAI Federation Emblem">
+  <title>UNIONAI Federation Emblem</title>
+  <!-- Outer circle border -->
+  <circle cx="100" cy="100" r="96" fill="#0d1117" stroke="#58a6ff" stroke-width="3"/>
+  <!-- Inner circle ring (thin) -->
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#58a6ff" stroke-width="1" opacity="0.4"/>
+  <!-- Hexagon shape (federation symbol) -->
+  <polygon points="100,30 158,62 158,126 100,158 42,126 42,62"
+           fill="none" stroke="#58a6ff" stroke-width="2.5"/>
+  <!-- Inner hex -->
+  <polygon points="100,46 142,68 142,114 100,136 58,114 58,68"
+           fill="#161b22" stroke="#58a6ff" stroke-width="1.2" opacity="0.8"/>
+  <!-- Central Ω -->
+  <text x="100" y="116" text-anchor="middle" font-family="Georgia,serif"
+        font-size="54" font-weight="700" fill="#58a6ff">Ω</text>
+  <!-- Six node dots at hex vertices -->
+  <circle cx="100" cy="30"  r="4.5" fill="#3fb950"/>
+  <circle cx="158" cy="62"  r="4.5" fill="#58a6ff"/>
+  <circle cx="158" cy="126" r="4.5" fill="#58a6ff"/>
+  <circle cx="100" cy="158" r="4.5" fill="#3fb950"/>
+  <circle cx="42"  cy="126" r="4.5" fill="#58a6ff"/>
+  <circle cx="42"  cy="62"  r="4.5" fill="#58a6ff"/>
+  <!-- Curved text: top arc "UNIONAI FEDERATION" -->
+  <path id="top-arc" d="M 14,100 A 86,86 0 0,1 186,100" fill="none"/>
+  <text font-family="'Segoe UI',system-ui,sans-serif" font-size="11" font-weight="700"
+        fill="#e6edf3" letter-spacing="2">
+    <textPath href="#top-arc" startOffset="10%">UNIONAI · FEDERATION</textPath>
+  </text>
+  <!-- Curved text: bottom arc "INTERNET OF AGENTS" -->
+  <path id="bot-arc" d="M 14,100 A 86,86 0 0,0 186,100" fill="none"/>
+  <text font-family="'Segoe UI',system-ui,sans-serif" font-size="10"
+        fill="#8b949e" letter-spacing="1.5">
+    <textPath href="#bot-arc" startOffset="8%">INTERNET OF AGENTS · 2026</textPath>
+  </text>
+  <!-- Bottom amber accent arc -->
+  <path d="M 55,180 A 86,86 0 0,0 145,180" fill="none" stroke="#d29922" stroke-width="2.5"/>
+</svg>

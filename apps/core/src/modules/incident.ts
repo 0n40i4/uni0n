@@ -29,7 +29,12 @@ export async function createIncident(
   description?: string,
   incidentType?: string
 ): Promise<IncidentReport> {
-  const hash = crypto.createHash('sha256').update(title + Date.now()).digest('hex');
+  // MINOR-14 (pentest RSpace): hash oparty o treść incydentu (deterministyczny,
+  // niemanipulowalny przez timing) zamiast title + Date.now().
+  const hash = crypto
+    .createHash('sha256')
+    .update(title + '|' + severity + '|' + (incidentType || '') + '|' + (description || ''))
+    .digest('hex');
 
   const result = await pool.query(
     'INSERT INTO incident_reports (title, severity, description, incident_type, hash, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',

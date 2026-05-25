@@ -381,6 +381,10 @@ const corsOrigin = corsOriginEnv === '*'
   : (corsOriginEnv
       ? corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean)
       : corsDefaultAllowlist);
+// MINOR-13 (pentest RSpace): ostrzeż gdy CORS wyłączony wildcardem w produkcji.
+if (corsOriginEnv === '*' && process.env.NODE_ENV === 'production') {
+  console.error('[SECURITY] CORS_ORIGIN=* w produkcji — ochrona CORS wyłączona');
+}
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
@@ -403,11 +407,11 @@ app.use(globalRateLimit);
 
 // ============ PROVENANCE: response headers on every request ============
 app.use((req, res, next) => {
+  // MINOR-L07 (pentest RSpace): nie ujawniaj szczegółów infrastruktury w domyślnych
+  // nagłówkach (X-Service-Channel / X-Build-Sha / X-Federation-Id = info-leak).
+  // Provenance dostępne nadal przez dedykowane endpointy (/version, /metrics/federation).
   res.set('X-Service-Name', SERVICE_NAME);
   res.set('X-Service-Version', SERVICE_VERSION);
-  res.set('X-Service-Channel', SERVICE_CHANNEL);
-  res.set('X-Build-Sha', BUILD_SHA);
-  res.set('X-Federation-Id', FEDERATION_ID);
   next();
 });
 
@@ -660,7 +664,8 @@ app.get('/health', async (req, res) => {
   });
 });
 
-app.get('/metrics', async (req, res) => {
+// MINOR-L06 (pentest RSpace): /metrics ujawnia liczniki operacyjne → wymaga auth.
+app.get('/metrics', requireAuth, async (req, res) => {
   const w6 = await getWave7Metrics(pool);
   const rm = getRelayMetrics();
   res.set('Content-Type', 'text/plain');

@@ -2377,6 +2377,15 @@ app.get('/production-gate', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'production-gate.html'));
 });
 
+// ============ EN mirror — clean URLs for /en/:page ============
+app.get('/en/:page', (req, res) => {
+  const page = req.params.page.replace(/[^a-z0-9\-]/gi, '');
+  const filePath = path.join(process.cwd(), 'public', 'en', `${page}.html`);
+  res.sendFile(filePath, (err) => {
+    if (err) res.status(404).send('Not found');
+  });
+});
+
 app.get('/status/:filename', async (req, res) => {
   const m = req.params.filename.match(/^(\d{4}-\d{2}-\d{2})-runtime-snapshot\.md$/);
   if (!m) return res.status(400).json({ error: 'Format: YYYY-MM-DD-runtime-snapshot.md' });

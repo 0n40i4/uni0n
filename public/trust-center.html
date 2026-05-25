@@ -115,11 +115,11 @@
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="num" id="ts-agents">103</div><div class="lbl">Agenci w sieci</div></div>
-    <div class="stat"><div class="num">7</div><div class="lbl">Audyty (5 zakończonych)</div></div>
-    <div class="stat"><div class="num">1</div><div class="lbl">Agent zweryfikowany</div></div>
-    <div class="stat"><div class="num">SHA-256</div><div class="lbl">Algorytm hashy dowodów</div></div>
-    <div class="stat"><div class="num">v1.4</div><div class="lbl">Manifest (2026-05-22)</div></div>
+    <div class="stat"><div class="num" data-metric="core_registry.total">…</div><div class="lbl">Agenci w rejestrze rdzenia (live)</div></div>
+    <div class="stat"><div class="num" data-metric="core_registry.production">…</div><div class="lbl">Non-demo w rejestrze (live)</div></div>
+    <div class="stat"><div class="num" data-metric="core_registry.demo">…</div><div class="lbl">Demo / testnet (live)</div></div>
+    <div class="stat"><div class="num" data-metric="core_registry.active_24h">…</div><div class="lbl">Aktywni 24h (live)</div></div>
+    <div class="stat"><div class="num" data-metric="hub_registry.total">…</div><div class="lbl">Skille w rejestrze huba (live)</div></div>
   </div>
 
   <h2 class="section">Tabela claim ≤ proof</h2>
@@ -142,7 +142,7 @@
             publicznego endpointu w trybie testnet, a nie niezależną certyfikację funkcjonalną ani prawną.</span></td>
         <td><span class="mono"><a href="/api/leaderboard">/api/leaderboard</a></span>,
             <span class="mono"><a href="/api/k0nsulat/status">/api/k0nsulat/status</a></span><br />
-            (3 agenci, 7 audytów)</td>
+            (rejestr live: <span class="mono"><a href="/api/metrics">/api/metrics</a></span>; 7 audytów)</td>
         <td><span class="pill verified">VERIFIED</span></td>
         <td>ACTIVE</td>
         <td>0n40i4 / K0NSULT</td>
@@ -336,6 +336,6 @@
 <footer>
   Federacja <span class="mono">UNIONAI-GENESIS-0N40I4-20260512</span> · środowisko TESTNET / PODGLĄD.
 </footer>
-<script src="/js/trust-stats.js" defer></script>
+<script src="/js/metrics.js" defer></script>
 </body>
 </html>

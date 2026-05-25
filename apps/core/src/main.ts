@@ -2452,6 +2452,9 @@ app.get('/developer', (_req, res) => {
 app.get('/federation', (_req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'federation.html'));
 });
+app.get('/agents', (_req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'agents.html'));
+});
 // Agent directory (internet agentów): proxy same-origin do huba (omija CSP), z fallbackiem.
 let _fedAgentsCache: any = null; let _fedAgentsTs = 0;
 // LIVE-ONLY: zero hardkodowanych liczb. Wszystko z żywego stanu sieci (hub). Brak źródła → 'unavailable', nie stale.
@@ -2477,6 +2480,20 @@ async function getFedAgents(): Promise<{ source: string; total: number | null; a
 app.get('/api/agents/federation', async (_req, res) => {
   const d = await getFedAgents();
   res.json({ ok: true, source: d.source, total: d.total, agents: d.agents });
+});
+// Tablica scoringowa (live): proxy same-origin do rejestru huba (omija CSP), z cache + fallbackiem.
+// Jednostki wewnętrzne governance (Konstytucja): scoring_token / scoring_indigo. NIE zwracamy did (maskowanie).
+let _scoreCache: any = null; let _scoreTs = 0;
+app.get('/api/scoring', async (_req, res) => {
+  const now = Date.now(); res.set('Cache-Control', 'no-store');
+  if (_scoreCache && now - _scoreTs < 30000) return res.json(_scoreCache);
+  try {
+    const r = await fetch('https://k0nsult.cloud/api/runtime/inventory', { signal: AbortSignal.timeout(4000) } as any);
+    const j: any = await r.json();
+    const rows = (j.agents || []).map((a: any) => ({ name: a.agent_name || 'agent', model: a.model || '', token: a.scoring_token || 0, indigo: a.scoring_indigo || 0 }))
+      .sort((x: any, y: any) => (y.token || 0) - (x.token || 0)).slice(0, 20);
+    const out = { ok: true, source: 'live', count: rows.length, agents: rows }; _scoreCache = out; _scoreTs = now; return res.json(out);
+  } catch (_e) { return res.json({ ok: true, source: 'unavailable', count: 0, agents: [] }); }
 });
 
 // LIVE activity feed (internet agentów na żywo) — proxy same-origin do huba, sanityzacja, cache.

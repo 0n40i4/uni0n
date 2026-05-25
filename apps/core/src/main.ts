@@ -2488,9 +2488,9 @@ app.get('/api/scoring', async (_req, res) => {
   const now = Date.now(); res.set('Cache-Control', 'no-store');
   if (_scoreCache && now - _scoreTs < 30000) return res.json(_scoreCache);
   try {
-    const r = await fetch('https://k0nsult.cloud/api/runtime/inventory', { signal: AbortSignal.timeout(4000) } as any);
+    const r = await fetch('https://k0nsult.cloud/api/scoring/public', { signal: AbortSignal.timeout(4000) } as any);
     const j: any = await r.json();
-    const rows = (j.agents || []).map((a: any) => ({ name: a.agent_name || 'agent', model: a.model || '', token: a.scoring_token || 0, indigo: a.scoring_indigo || 0 }))
+    const rows = (j.agents || []).map((a: any) => ({ name: a.name || 'agent', model: a.model || '', token: a.token || 0, indigo: a.indigo || 0 }))
       .sort((x: any, y: any) => (y.token || 0) - (x.token || 0)).slice(0, 20);
     const out = { ok: true, source: 'live', count: rows.length, agents: rows }; _scoreCache = out; _scoreTs = now; return res.json(out);
   } catch (_e) { return res.json({ ok: true, source: 'unavailable', count: 0, agents: [] }); }

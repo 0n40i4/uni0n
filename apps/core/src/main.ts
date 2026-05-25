@@ -2479,6 +2479,42 @@ app.get('/api/agents/federation', async (_req, res) => {
   res.json({ ok: true, source: d.source, total: d.total, agents: d.agents });
 });
 
+// ── KANONICZNE METRYKI (single source of truth, LIVE) — pentest rady 2026-05-25 ──
+// Każda liczba na stronach MUSI pochodzić stąd (zero ręcznych liczników). Jawne definicje.
+app.get('/api/metrics', async (_req, res) => {
+  const demoPred = "(zone = 'testnet' OR did LIKE '%:test:%' OR did LIKE '%:testnet:%' OR did LIKE 'did:test%')";
+  let core: any = { source: 'unavailable', total: null, production: null, demo: null, verified: null, active_24h: null };
+  try {
+    const q = await pool.query(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE ${demoPred})::int AS demo,
+              COUNT(*) FILTER (WHERE last_seen > now() - interval '24 hours')::int AS active_24h,
+              COUNT(*) FILTER (WHERE trust_tier <> 'T0' AND NOT ${demoPred})::int AS verified
+       FROM agents`
+    );
+    const r = q.rows[0] || {};
+    core = { source: 'live', total: r.total, production: (r.total - r.demo), demo: r.demo, verified: r.verified, active_24h: r.active_24h };
+  } catch (_e) { /* keep unavailable */ }
+  const hub = await getFedAgents();
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    ok: true,
+    source: 'live',
+    timestamp: new Date().toISOString(),
+    network_status: NETWORK_STATUS,
+    definitions: {
+      core_registry: 'agenci zarejestrowani w bazie rdzenia uni0nai-core (tabela agents)',
+      production: 'core_registry minus demo (is_demo=false)',
+      demo: 'agenci w strefie testnet / DID testowe (is_demo=true)',
+      verified: 'agenci z trust_tier > T0 i nie-demo',
+      active_24h: 'agenci z last_seen w ostatnich 24h',
+      hub_registry: 'agenci ze skillami w rejestrze huba chat.k0nsult.cloud (osobny rejestr)',
+    },
+    core_registry: core,
+    hub_registry: { source: hub.source, total: hub.total },
+  });
+});
+
 // ── MCP CONNECTOR (Streamable HTTP, read-only) — uni0nai jako konektor dla model-agentów ──
 // np. Mistral le Chat: "Niestandardowy konektor MCP" → Adres serwera: https://uni0nai.k0nsult.cloud/mcp
 const MCP_TOOLS = [
